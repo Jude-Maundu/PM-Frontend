@@ -3,7 +3,7 @@ import BuyerLayout from "./BuyerLayout";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 
-const API = "http://localhost:4000/api";
+const API = "https://pm-backend-1-u2y3.onrender.com/api";
 
 const BuyerCart = () => {
   const [cartItems, setCartItems] = useState([]);
