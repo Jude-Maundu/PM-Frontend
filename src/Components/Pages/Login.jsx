@@ -19,7 +19,7 @@ const Login = () => {
 
     try {
       const response = await axios.post(
-        "https://pm-backend-1-u2y3.onrender.com/api/auth",
+        "https://pm-backend-1-0s8f.onrender.com/api/auth/login",
         { email, password, role },
       );
 

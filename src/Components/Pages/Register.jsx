@@ -55,7 +55,7 @@ const Register = () => {
 
     try {
       await axios.post(
-        "http://localhost:4000/api/auth/register",
+        "https://pm-backend-1-u2y3.onrender.com/api/auth",
         { username, email, password, role }
       );
 
