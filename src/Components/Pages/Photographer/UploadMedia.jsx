@@ -17,66 +17,76 @@ const PhotographerUpload = () => {
   const [preview, setPreview] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
-  const [photographerId, setPhotographerId] = useState(null);
+  const [userId, setUserId] = useState(null);
+  const [userRole, setUserRole] = useState("");
   const [loading, setLoading] = useState(true);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [userRole, setUserRole] = useState("");
+  const [authChecked, setAuthChecked] = useState(false);
 
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
   const headers = { Authorization: `Bearer ${token}` };
 
-  // Get photographer ID from localStorage on component mount
+  // Check authentication and role on mount
   useEffect(() => {
-    const getUserData = () => {
-      try {
-        const userStr = localStorage.getItem("user");
-        const role = localStorage.getItem("role");
-        
-        console.log("User from localStorage:", userStr);
-        console.log("Role from localStorage:", role);
-        
-        setUserRole(role);
-        
-        // ✅ FIXED: Allow both photographers AND admins to upload
-        if (role !== "photographer" && role !== "admin") {
-          setError(`Access denied. Your role is "${role}". Photographers and admins only.`);
-          setTimeout(() => navigate("/dashboard"), 3000);
-          return;
-        }
-        
-        if (userStr) {
+    const checkAuth = () => {
+      const token = localStorage.getItem("token");
+      const userStr = localStorage.getItem("user");
+      const role = localStorage.getItem("role");
+      
+      console.log("🔐 Auth Check - Token:", token ? "Present" : "Missing");
+      console.log("🔐 Auth Check - Role:", role);
+      console.log("🔐 Auth Check - User:", userStr);
+
+      setUserRole(role);
+
+      if (!token) {
+        setError("No authentication token found. Please log in again.");
+        setTimeout(() => navigate("/login"), 2000);
+        return false;
+      }
+
+      // ✅ FIXED: Allow both photographers AND admins
+      if (role !== "photographer" && role !== "admin") {
+        setError(`Access denied. Your role is "${role}". Photographers and admins only.`);
+        setTimeout(() => navigate("/dashboard"), 2000);
+        return false;
+      }
+
+      if (userStr) {
+        try {
           const user = JSON.parse(userStr);
-          // Check different possible ID fields
           const id = user._id || user.id || user.photographerId || user.userId;
-          setPhotographerId(id);
-          console.log("User ID found:", id);
-          console.log("Role:", role, "- Access granted");
-        } else {
-          console.error("No user data found in localStorage");
-          setError("User data not found. Please log in again.");
+          setUserId(id);
+          console.log("✅ User ID found:", id);
+          console.log("✅ Role:", role, "- Access granted");
+          return true;
+        } catch (err) {
+          console.error("Error parsing user data:", err);
+          setError("Invalid user data. Please log in again.");
+          setTimeout(() => navigate("/login"), 2000);
+          return false;
         }
-      } catch (err) {
-        console.error("Error getting user data:", err);
-        setError("Failed to load user data");
-      } finally {
-        setLoading(false);
+      } else {
+        setError("User data not found. Please log in again.");
+        setTimeout(() => navigate("/login"), 2000);
+        return false;
       }
     };
 
-    getUserData();
+    const isAuthenticated = checkAuth();
+    setAuthChecked(true);
+    setLoading(false);
   }, [navigate]);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Check file size (limit to 10MB)
       if (file.size > 10 * 1024 * 1024) {
         setError("File size must be less than 10MB");
         return;
       }
       
-      // Check file type
       if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
         setError("Only image and video files are allowed");
         return;
@@ -84,7 +94,7 @@ const PhotographerUpload = () => {
       
       setImageFile(file);
       setPreview(URL.createObjectURL(file));
-      setError(""); // Clear any previous errors
+      setError("");
       setUploadProgress(0);
     }
   };
@@ -93,11 +103,10 @@ const PhotographerUpload = () => {
     e.preventDefault();
     
     console.log("Starting upload process...");
-    console.log("User ID:", photographerId);
+    console.log("User ID:", userId);
     console.log("File:", imageFile);
-    console.log("Form data:", formData);
 
-    if (!photographerId) {
+    if (!userId) {
       setError("User ID not found. Please log in again.");
       return;
     }
@@ -111,35 +120,21 @@ const PhotographerUpload = () => {
     setError("");
 
     try {
-      // Create ONE FormData object with ALL fields
       const formDataToSend = new FormData();
-      
-      // Append the file (MUST match 'file' in uploadPhoto.single("file"))
       formDataToSend.append("file", imageFile);
-      
-      // Append all other fields as form data
       formDataToSend.append("title", formData.title);
       formDataToSend.append("description", formData.description || "");
       formDataToSend.append("price", formData.price);
       formDataToSend.append("mediaType", formData.mediaType);
-      formDataToSend.append("photographer", photographerId); // This is CRITICAL!
+      formDataToSend.append("photographer", userId);
       
-      // Handle tags - send as JSON string
       if (formData.tags) {
         const tagsArray = formData.tags.split(",").map(tag => tag.trim());
         formDataToSend.append("tags", JSON.stringify(tagsArray));
       }
 
-      // Log FormData contents for debugging
-      console.log("FormData contents:");
-      for (let pair of formDataToSend.entries()) {
-        console.log(`  ${pair[0]}: ${pair[1]}`);
-      }
-
       console.log("Sending request to:", API);
-      console.log("Headers:", headers);
 
-      // Send ONE request with ALL data
       const response = await axios.post(API, formDataToSend, {
         headers: {
           ...headers,
@@ -148,22 +143,15 @@ const PhotographerUpload = () => {
         onUploadProgress: (progressEvent) => {
           const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
           setUploadProgress(percentCompleted);
-          console.log(`Upload progress: ${percentCompleted}%`);
         },
       });
 
-      console.log("Upload successful! Response:", response.data);
-      
+      console.log("Upload successful!", response.data);
       alert("Media uploaded successfully!");
       navigate("/photographer/media");
       
     } catch (error) {
-      console.error("Upload error details:");
-      console.error("Message:", error.message);
-      console.error("Response:", error.response);
-      console.error("Response data:", error.response?.data);
-      console.error("Response status:", error.response?.status);
-      
+      console.error("Upload error:", error);
       setError(
         error.response?.data?.message || 
         error.message || 
@@ -175,34 +163,17 @@ const PhotographerUpload = () => {
     }
   };
 
-  // Test API connection
   const testConnection = async () => {
     try {
-      console.log("Testing API connection to:", API);
       const response = await axios.get(API);
       console.log("API connection successful:", response.data);
-      alert("✅ API is reachable! Check console for details.");
+      alert("✅ API is reachable!");
     } catch (error) {
       console.error("API connection failed:", error);
-      alert("❌ Cannot reach API. Check if server is running at " + API);
+      alert("❌ Cannot reach API. Check if server is running");
     }
   };
 
-  // Show loading state
-  if (loading) {
-    return (
-      <PhotographerLayout>
-        <div className="text-center py-5">
-          <div className="spinner-border text-warning" role="status">
-            <span className="visually-hidden">Loading...</span>
-          </div>
-          <p className="text-white-50 mt-3">Loading upload form...</p>
-        </div>
-      </PhotographerLayout>
-    );
-  }
-
-  // Glass card style matching your theme
   const glassStyle = {
     background: "rgba(255, 255, 255, 0.05)",
     backdropFilter: "blur(10px)",
@@ -210,9 +181,22 @@ const PhotographerUpload = () => {
     border: "1px solid rgba(255, 255, 255, 0.1)",
   };
 
+  if (!authChecked || loading) {
+    return (
+      <PhotographerLayout>
+        <div className="text-center py-5">
+          <div className="spinner-border text-warning" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="text-white-50 mt-3">Checking authentication...</p>
+        </div>
+      </PhotographerLayout>
+    );
+  }
+
   return (
     <PhotographerLayout>
-      {/* Background Image with Overlay */}
+      {/* Background Image */}
       <div
         className="position-fixed top-0 start-0 w-100 h-100"
         style={{
@@ -227,7 +211,7 @@ const PhotographerUpload = () => {
 
       {/* Content */}
       <div className="position-relative" style={{ zIndex: 1 }}>
-        {/* Header with Test Button */}
+        {/* Header */}
         <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
           <div>
             <h4 className="fw-bold mb-1">
@@ -259,7 +243,7 @@ const PhotographerUpload = () => {
           </div>
         </div>
 
-        {/* Debug Info Card */}
+        {/* Debug Info */}
         <div 
           className="alert mb-4"
           style={{
@@ -276,16 +260,16 @@ const PhotographerUpload = () => {
                 <strong>Debug Info:</strong>
               </small>
               <small className="d-block">
-                API URL: {API} | 
-                User ID: {photographerId || "❌ Not found"} | 
-                Token: {token ? "✅ Present" : "❌ Missing"} |
+                User ID: {userId || "❌ Not found"} | 
                 Role: {userRole || "❌ No role"} |
-                Status: {userRole === "photographer" || userRole === "admin" ? "✅ Access granted" : "❌ Access denied"}
+                Token: {token ? "✅ Present" : "❌ Missing"} |
+                Status: {(userRole === "photographer" || userRole === "admin") ? "✅ Access granted" : "❌ Access denied"}
               </small>
             </div>
           </div>
         </div>
 
+        {/* Rest of your form remains the same... */}
         <div className="row g-4">
           {/* Upload Form */}
           <div className="col-lg-8">
@@ -454,16 +438,6 @@ const PhotographerUpload = () => {
                       style={{
                         border: "2px dashed rgba(255, 255, 255, 0.1)",
                         background: "rgba(255, 255, 255, 0.02)",
-                        transition: "all 0.3s ease",
-                      }}
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        const file = e.dataTransfer.files[0];
-                        if (file) {
-                          const input = { target: { files: [file] } };
-                          handleFileChange(input);
-                        }
                       }}
                     >
                       <input
@@ -498,27 +472,16 @@ const PhotographerUpload = () => {
                           className="progress-bar bg-warning" 
                           role="progressbar" 
                           style={{ width: `${uploadProgress}%` }}
-                          aria-valuenow={uploadProgress} 
-                          aria-valuemin="0" 
-                          aria-valuemax="100"
                         ></div>
                       </div>
                     </div>
-                  )}
-
-                  {/* User ID (hidden field for debugging) */}
-                  {photographerId && (
-                    <input type="hidden" name="photographer" value={photographerId} />
                   )}
 
                   {/* Submit Button */}
                   <button
                     type="submit"
                     className="btn btn-warning w-100 py-3 fw-bold rounded-pill mt-3"
-                    style={{
-                      transition: "all 0.3s ease",
-                    }}
-                    disabled={uploading || !photographerId || !imageFile}
+                    disabled={uploading || !userId || !imageFile}
                   >
                     {uploading ? (
                       <>
@@ -532,12 +495,6 @@ const PhotographerUpload = () => {
                       </>
                     )}
                   </button>
-
-                  {/* Required Fields Note */}
-                  <p className="text-white-50 small text-center mt-3 mb-0">
-                    <i className="fas fa-asterisk text-danger me-1"></i>
-                    Required fields
-                  </p>
                 </form>
               </div>
             </div>
@@ -583,51 +540,22 @@ const PhotographerUpload = () => {
                         <h6 className="text-white mb-2">{formData.title}</h6>
                       )}
                       
-                      {formData.description && (
-                        <p className="small text-white-50 mb-2">
-                          {formData.description.length > 50 
-                            ? formData.description.substring(0, 50) + "..." 
-                            : formData.description}
-                        </p>
-                      )}
-                      
                       <div className="d-flex justify-content-center gap-2">
                         {formData.price && (
                           <span className="badge bg-warning text-dark px-3 py-2 rounded-pill">
-                            <i className="fas fa-tag me-2"></i>
                             KES {formData.price}
                           </span>
                         )}
-                        
                         <span className="badge bg-info bg-opacity-25 text-info px-3 py-2 rounded-pill">
-                          <i className={`fas ${formData.mediaType === "video" ? "fa-video" : "fa-camera"} me-2`}></i>
                           {formData.mediaType}
                         </span>
                       </div>
-
-                      {formData.tags && (
-                        <div className="mt-3">
-                          {formData.tags.split(",").map((tag, idx) => (
-                            tag.trim() && (
-                              <span 
-                                key={idx}
-                                className="badge bg-secondary bg-opacity-25 text-white-50 me-1 mb-1 px-2 py-1"
-                              >
-                                #{tag.trim()}
-                              </span>
-                            )
-                          ))}
-                        </div>
-                      )}
                     </div>
                   </>
                 ) : (
                   <div className="py-5">
                     <i className="fas fa-image fa-4x text-white-50 mb-3"></i>
                     <p className="text-white-50">No file selected</p>
-                    <small className="text-white-50 d-block">
-                      Upload a file to see preview
-                    </small>
                   </div>
                 )}
               </div>

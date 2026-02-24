@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import PhotographerLayout from "./PhotographerLayout";
+import { useNavigate } from "react-router-dom";
 
 const API = "https://pm-backend-1-0s8f.onrender.com/api/media";
 
@@ -15,14 +16,66 @@ const PhotographerMedia = () => {
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [imageErrors, setImageErrors] = useState({});
   const [videoErrors, setVideoErrors] = useState({});
+  const [userId, setUserId] = useState(null);
+  const [userRole, setUserRole] = useState("");
+  const [authChecked, setAuthChecked] = useState(false);
 
+  const navigate = useNavigate();
   const token = localStorage.getItem("token");
-  const userStr = localStorage.getItem("user");
-  const user = userStr ? JSON.parse(userStr) : {};
-  
-  const photographerId = user._id || user.id || user.userId || user.photographerId;
-  
   const headers = { Authorization: `Bearer ${token}` };
+
+  // Check authentication and role on mount
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = localStorage.getItem("token");
+      const userStr = localStorage.getItem("user");
+      const role = localStorage.getItem("role");
+      
+      console.log("🔐 Auth Check - Token:", token ? "Present" : "Missing");
+      console.log("🔐 Auth Check - Role:", role);
+      console.log("🔐 Auth Check - User:", userStr);
+
+      if (!token) {
+        setError("No authentication token found. Please log in again.");
+        setTimeout(() => navigate("/login"), 2000);
+        return false;
+      }
+
+      // ✅ FIXED: Allow both photographers AND admins
+      if (role !== "photographer" && role !== "admin") {
+        setError(`Access denied. Your role is "${role}". Photographers and admins only.`);
+        setTimeout(() => navigate("/dashboard"), 2000);
+        return false;
+      }
+
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          const id = user._id || user.id || user.userId || user.photographerId;
+          setUserId(id);
+          setUserRole(role);
+          console.log("✅ User ID found:", id);
+          console.log("✅ Role:", role, "- Access granted");
+          return true;
+        } catch (err) {
+          console.error("Error parsing user data:", err);
+          setError("Invalid user data. Please log in again.");
+          setTimeout(() => navigate("/login"), 2000);
+          return false;
+        }
+      } else {
+        setError("User data not found. Please log in again.");
+        setTimeout(() => navigate("/login"), 2000);
+        return false;
+      }
+    };
+
+    const isAuthenticated = checkAuth();
+    setAuthChecked(true);
+    if (isAuthenticated) {
+      fetchMedia();
+    }
+  }, []);
 
   const fetchMedia = async () => {
     setLoading(true);
@@ -36,36 +89,29 @@ const PhotographerMedia = () => {
         return;
       }
 
-      // Filter media by photographer
+      // Filter media by user ID
       const myMedia = res.data.filter(item => {
         const matches = 
-          item.photographer === photographerId ||
-          item.photographerId === photographerId ||
-          item.userId === photographerId ||
-          item.uploadedBy === photographerId ||
-          item.photographer?._id === photographerId ||
-          item.photographer?.id === photographerId;
+          item.photographer === userId ||
+          item.photographerId === userId ||
+          item.userId === userId ||
+          item.uploadedBy === userId ||
+          item.photographer?._id === userId ||
+          item.photographer?.id === userId;
         
         return matches;
       });
 
-      setMedia(myMedia.length > 0 ? myMedia : res.data);
+      console.log(`📸 Found ${myMedia.length} media items for user ${userId}`);
+      setMedia(myMedia.length > 0 ? myMedia : []);
 
     } catch (error) {
+      console.error("Error fetching media:", error);
       setError(error.response?.data?.message || "Failed to load media");
     } finally {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (!token) {
-      setError("No authentication token found. Please log in again.");
-      setLoading(false);
-      return;
-    }
-    fetchMedia();
-  }, []);
 
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this media permanently?")) return;
@@ -124,11 +170,9 @@ const PhotographerMedia = () => {
     }
   };
 
-  // FIXED: Get media URL with multiple fallback paths
   const getMediaUrl = (item) => {
     if (!item || !item.fileUrl) return null;
 
-    // Check if this media previously failed
     if (item.mediaType === "video" && videoErrors[item._id]) {
       return null;
     }
@@ -136,30 +180,15 @@ const PhotographerMedia = () => {
       return null;
     }
 
-    // Extract filename from the fileUrl path
     const filename = item.fileUrl.split('/').pop();
     if (!filename) return null;
 
-    // Try different possible paths
     const baseUrl = "https://pm-backend-1-0s8f.onrender.com";
-    const possiblePaths = [
-      `${baseUrl}/uploads/photos/${filename}`,  // Photos folder
-      `${baseUrl}/uploads/videos/${filename}`,  // Videos folder
-      `${baseUrl}/uploads/${filename}`,         // Root uploads folder
-      `${baseUrl}${item.fileUrl}`               // Original path
-    ];
-
-    // For debugging - log all possible paths
-    console.log(`🎬 Trying paths for ${item.title}:`, possiblePaths);
-
-    // Return the first path (we'll try others on error)
-    return possiblePaths[0];
+    return `${baseUrl}/uploads/photos/${filename}`;
   };
 
-  // Handle media load error - try next path
   const handleMediaError = (item, errorType) => {
     console.log(`❌ Media failed to load: ${item.title}`);
-    
     if (item.mediaType === "video") {
       setVideoErrors(prev => ({ ...prev, [item._id]: true }));
     } else {
@@ -167,7 +196,6 @@ const PhotographerMedia = () => {
     }
   };
 
-  // Calculate stats
   const stats = {
     total: media.length,
     photos: media.filter(item => item.mediaType === "photo").length,
@@ -178,13 +206,23 @@ const PhotographerMedia = () => {
     totalDownloads: media.reduce((sum, item) => sum + (item.downloads || 0), 0),
   };
 
-  // Glass style
   const glassStyle = {
     background: "rgba(255, 255, 255, 0.05)",
     backdropFilter: "blur(10px)",
     WebkitBackdropFilter: "blur(10px)",
     border: "1px solid rgba(255, 255, 255, 0.1)",
   };
+
+  if (!authChecked) {
+    return (
+      <PhotographerLayout>
+        <div className="text-center py-5">
+          <div className="spinner-border text-warning mb-3"></div>
+          <p className="text-white-50">Checking authentication...</p>
+        </div>
+      </PhotographerLayout>
+    );
+  }
 
   return (
     <PhotographerLayout>
@@ -227,6 +265,32 @@ const PhotographerMedia = () => {
               <i className="fas fa-plus me-2"></i>
               Upload
             </Link>
+          </div>
+        </div>
+
+        {/* Debug Info */}
+        <div 
+          className="alert mb-4"
+          style={{
+            background: "rgba(0, 123, 255, 0.1)",
+            border: "1px solid rgba(0, 123, 255, 0.3)",
+            borderRadius: "12px",
+            color: "#17a2b8",
+          }}
+        >
+          <div className="d-flex align-items-center">
+            <i className="fas fa-bug me-3 fa-lg"></i>
+            <div>
+              <small className="d-block">
+                <strong>Debug Info:</strong>
+              </small>
+              <small className="d-block">
+                User ID: {userId || "❌ Not found"} | 
+                Role: {userRole || "❌ No role"} |
+                Token: {token ? "✅ Present" : "❌ Missing"} |
+                Status: {(userRole === "photographer" || userRole === "admin") ? "✅ Access granted" : "❌ Access denied"}
+              </small>
+            </div>
           </div>
         </div>
 
@@ -363,8 +427,6 @@ const PhotographerMedia = () => {
                 {media.map((item) => {
                   const mediaUrl = getMediaUrl(item);
                   const isEditing = editingItem === item._id;
-                  const hasVideoError = item.mediaType === "video" && videoErrors[item._id];
-                  const hasImageError = item.mediaType === "photo" && imageErrors[item._id];
                   
                   return (
                     <div className="col-lg-3 col-md-4 col-6" key={item._id}>
@@ -393,39 +455,25 @@ const PhotographerMedia = () => {
                         <div className="position-relative">
                           {item.mediaType === "video" ? (
                             <div className="position-relative">
-                              {hasVideoError ? (
-                                <div 
-                                  className="d-flex align-items-center justify-content-center bg-dark"
-                                  style={{ height: "180px" }}
-                                >
-                                  <div className="text-center">
-                                    <i className="fas fa-exclamation-triangle text-warning fa-2x mb-2"></i>
-                                    <p className="text-white-50 small">Video unavailable</p>
-                                  </div>
+                              <video
+                                src={mediaUrl}
+                                className="card-img-top"
+                                style={{ 
+                                  height: "180px", 
+                                  objectFit: "cover",
+                                  background: "#1a1a1a"
+                                }}
+                                onError={() => handleMediaError(item, "video")}
+                              />
+                              <div className="position-absolute top-50 start-50 translate-middle">
+                                <div className="bg-dark bg-opacity-75 rounded-circle p-3">
+                                  <i className="fas fa-play text-warning fa-2x"></i>
                                 </div>
-                              ) : (
-                                <>
-                                  <video
-                                    src={mediaUrl}
-                                    className="card-img-top"
-                                    style={{ 
-                                      height: "180px", 
-                                      objectFit: "cover",
-                                      background: "#1a1a1a"
-                                    }}
-                                    onError={() => handleMediaError(item, "video")}
-                                  />
-                                  <div className="position-absolute top-50 start-50 translate-middle">
-                                    <div className="bg-dark bg-opacity-75 rounded-circle p-3">
-                                      <i className="fas fa-play text-warning fa-2x"></i>
-                                    </div>
-                                  </div>
-                                </>
-                              )}
+                              </div>
                             </div>
                           ) : (
                             <img
-                              src={!hasImageError ? mediaUrl : "https://via.placeholder.com/300?text=Image+Not+Found"}
+                              src={mediaUrl}
                               alt={item.title}
                               className="card-img-top"
                               style={{ 
@@ -492,10 +540,6 @@ const PhotographerMedia = () => {
                                 id={`price-${item._id}`}
                                 min="0"
                                 step="0.01"
-                                style={{
-                                  background: "rgba(255, 255, 255, 0.1)",
-                                  border: "1px solid rgba(255, 193, 7, 0.3)",
-                                }}
                               />
                               <button
                                 className="btn btn-sm btn-success"
@@ -541,239 +585,6 @@ const PhotographerMedia = () => {
           </>
         )}
       </div>
-
-      {/* Preview Modal */}
-      {showPreviewModal && selectedMedia && (
-        <div
-          className="modal show d-block"
-          style={{
-            backgroundColor: "rgba(0, 0, 0, 0.8)",
-            backdropFilter: "blur(5px)",
-            zIndex: 1050,
-          }}
-          onClick={() => {
-            setShowPreviewModal(false);
-            setSelectedMedia(null);
-          }}
-        >
-          <div className="modal-dialog modal-lg modal-dialog-centered">
-            <div 
-              className="modal-content bg-dark"
-              style={{
-                ...glassStyle,
-                borderRadius: "24px",
-                border: "1px solid rgba(255, 193, 7, 0.3)",
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="modal-header border-warning border-opacity-25">
-                <h5 className="modal-title text-white">
-                  <i className="fas fa-edit me-2 text-warning"></i>
-                  Edit Media
-                </h5>
-                <button
-                  type="button"
-                  className="btn-close btn-close-white"
-                  onClick={() => {
-                    setShowPreviewModal(false);
-                    setSelectedMedia(null);
-                  }}
-                ></button>
-              </div>
-              <div className="modal-body p-4">
-                <div className="row">
-                  <div className="col-md-6">
-                    {selectedMedia.mediaType === "video" ? (
-                      <div className="position-relative">
-                        {videoErrors[selectedMedia._id] ? (
-                          <div 
-                            className="d-flex align-items-center justify-content-center bg-dark rounded-3"
-                            style={{ height: "300px" }}
-                          >
-                            <div className="text-center">
-                              <i className="fas fa-exclamation-triangle text-warning fa-3x mb-3"></i>
-                              <h6 className="text-white">Video Failed to Load</h6>
-                              <p className="text-white-50 small">The video file might be missing or corrupted</p>
-                            </div>
-                          </div>
-                        ) : (
-                          <video
-                            key={selectedMedia._id} // Force re-render on change
-                            className="img-fluid rounded-3 mb-3 w-100"
-                            controls
-                            autoPlay={false}
-                            style={{ maxHeight: "300px", objectFit: "contain" }}
-                            onError={() => handleMediaError(selectedMedia, "video")}
-                          >
-                            <source src={getMediaUrl(selectedMedia)} type="video/mp4" />
-                            <source src={getMediaUrl(selectedMedia)} type="video/webm" />
-                            <source src={getMediaUrl(selectedMedia)} type="video/ogg" />
-                            Your browser does not support the video tag.
-                          </video>
-                        )}
-                        
-                        {/* Debug info */}
-                        <div className="mt-2 p-2 rounded" style={{ background: "rgba(0,0,0,0.3)" }}>
-                          <small className="text-white-50 d-block">
-                            <strong>File:</strong> {selectedMedia.fileUrl?.split('/').pop()}
-                          </small>
-                          <small className="text-white-50 d-block">
-                            <strong>URL:</strong> {getMediaUrl(selectedMedia)}
-                          </small>
-                        </div>
-                      </div>
-                    ) : (
-                      <img
-                        src={!imageErrors[selectedMedia._id] ? getMediaUrl(selectedMedia) : "https://via.placeholder.com/300?text=Image+Not+Found"}
-                        alt={selectedMedia.title}
-                        className="img-fluid rounded-3 mb-3"
-                        style={{ width: "100%", maxHeight: "300px", objectFit: "contain" }}
-                        onError={() => handleMediaError(selectedMedia, "photo")}
-                      />
-                    )}
-                    
-                    <div className="d-flex justify-content-around p-3 rounded-3" style={{ background: "rgba(0,0,0,0.3)" }}>
-                      <div className="text-center">
-                        <i className="fas fa-heart text-danger"></i>
-                        <p className="text-white mb-0">{selectedMedia.likes || 0}</p>
-                        <small className="text-white-50">Likes</small>
-                      </div>
-                      <div className="text-center">
-                        <i className="fas fa-eye text-info"></i>
-                        <p className="text-white mb-0">{selectedMedia.views || 0}</p>
-                        <small className="text-white-50">Views</small>
-                      </div>
-                      <div className="text-center">
-                        <i className="fas fa-download text-success"></i>
-                        <p className="text-white mb-0">{selectedMedia.downloads || 0}</p>
-                        <small className="text-white-50">Downloads</small>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="col-md-6">
-                    <form onSubmit={(e) => {
-                      e.preventDefault();
-                      const formData = new FormData(e.target);
-                      const updatedData = {
-                        title: formData.get('title'),
-                        description: formData.get('description'),
-                        price: parseFloat(formData.get('price')),
-                        mediaType: formData.get('mediaType'),
-                      };
-                      handleUpdateMedia(selectedMedia._id, updatedData);
-                    }}>
-                      <div className="mb-3">
-                        <label className="form-label text-white-50 small fw-semibold">
-                          <i className="fas fa-heading me-2 text-warning"></i>
-                          Title
-                        </label>
-                        <input
-                          type="text"
-                          name="title"
-                          className="form-control bg-transparent text-white"
-                          defaultValue={selectedMedia.title}
-                          style={{
-                            background: "rgba(255, 255, 255, 0.05)",
-                            border: "1px solid rgba(255, 255, 255, 0.1)",
-                          }}
-                          required
-                        />
-                      </div>
-
-                      <div className="mb-3">
-                        <label className="form-label text-white-50 small fw-semibold">
-                          <i className="fas fa-align-left me-2 text-warning"></i>
-                          Description
-                        </label>
-                        <textarea
-                          name="description"
-                          className="form-control bg-transparent text-white"
-                          rows="3"
-                          defaultValue={selectedMedia.description}
-                          style={{
-                            background: "rgba(255, 255, 255, 0.05)",
-                            border: "1px solid rgba(255, 255, 255, 0.1)",
-                          }}
-                        ></textarea>
-                      </div>
-
-                      <div className="mb-3">
-                        <label className="form-label text-white-50 small fw-semibold">
-                          <i className="fas fa-tag me-2 text-warning"></i>
-                          Price (KES)
-                        </label>
-                        <input
-                          type="number"
-                          name="price"
-                          className="form-control bg-transparent text-white"
-                          defaultValue={selectedMedia.price}
-                          style={{
-                            background: "rgba(255, 255, 255, 0.05)",
-                            border: "1px solid rgba(255, 255, 255, 0.1)",
-                          }}
-                          min="0"
-                          step="0.01"
-                          required
-                        />
-                      </div>
-
-                      <div className="mb-3">
-                        <label className="form-label text-white-50 small fw-semibold">
-                          <i className="fas fa-film me-2 text-warning"></i>
-                          Media Type
-                        </label>
-                        <select
-                          name="mediaType"
-                          className="form-select bg-transparent text-white"
-                          defaultValue={selectedMedia.mediaType || "photo"}
-                          style={{
-                            background: "rgba(255, 255, 255, 0.05)",
-                            border: "1px solid rgba(255, 255, 255, 0.1)",
-                          }}
-                        >
-                          <option value="photo" className="bg-dark">Photo</option>
-                          <option value="video" className="bg-dark">Video</option>
-                        </select>
-                      </div>
-
-                      <div className="d-flex gap-2 justify-content-end mt-4">
-                        <button
-                          type="button"
-                          className="btn btn-outline-secondary rounded-pill px-4"
-                          onClick={() => {
-                            setShowPreviewModal(false);
-                            setSelectedMedia(null);
-                          }}
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          type="submit"
-                          className="btn btn-warning rounded-pill px-4"
-                          disabled={updating}
-                        >
-                          {updating ? (
-                            <>
-                              <span className="spinner-border spinner-border-sm me-2"></span>
-                              Updating...
-                            </>
-                          ) : (
-                            <>
-                              <i className="fas fa-save me-2"></i>
-                              Save Changes
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    </form>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </PhotographerLayout>
   );
 };
