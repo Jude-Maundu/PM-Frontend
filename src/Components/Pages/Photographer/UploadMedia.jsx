@@ -20,6 +20,7 @@ const PhotographerUpload = () => {
   const [photographerId, setPhotographerId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [userRole, setUserRole] = useState("");
 
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
@@ -35,9 +36,12 @@ const PhotographerUpload = () => {
         console.log("User from localStorage:", userStr);
         console.log("Role from localStorage:", role);
         
-        if (role !== "photographer") {
-          setError("Access denied. Photographers only.");
-          setTimeout(() => navigate("/dashboard"), 2000);
+        setUserRole(role);
+        
+        // ✅ FIXED: Allow both photographers AND admins to upload
+        if (role !== "photographer" && role !== "admin") {
+          setError(`Access denied. Your role is "${role}". Photographers and admins only.`);
+          setTimeout(() => navigate("/dashboard"), 3000);
           return;
         }
         
@@ -46,7 +50,8 @@ const PhotographerUpload = () => {
           // Check different possible ID fields
           const id = user._id || user.id || user.photographerId || user.userId;
           setPhotographerId(id);
-          console.log("Photographer ID found:", id);
+          console.log("User ID found:", id);
+          console.log("Role:", role, "- Access granted");
         } else {
           console.error("No user data found in localStorage");
           setError("User data not found. Please log in again.");
@@ -88,12 +93,12 @@ const PhotographerUpload = () => {
     e.preventDefault();
     
     console.log("Starting upload process...");
-    console.log("Photographer ID:", photographerId);
+    console.log("User ID:", photographerId);
     console.log("File:", imageFile);
     console.log("Form data:", formData);
 
     if (!photographerId) {
-      setError("Photographer ID not found. Please log in again.");
+      setError("User ID not found. Please log in again.");
       return;
     }
 
@@ -272,9 +277,10 @@ const PhotographerUpload = () => {
               </small>
               <small className="d-block">
                 API URL: {API} | 
-                Photographer ID: {photographerId || "❌ Not found"} | 
+                User ID: {photographerId || "❌ Not found"} | 
                 Token: {token ? "✅ Present" : "❌ Missing"} |
-                Role: {localStorage.getItem("role") || "❌ No role"}
+                Role: {userRole || "❌ No role"} |
+                Status: {userRole === "photographer" || userRole === "admin" ? "✅ Access granted" : "❌ Access denied"}
               </small>
             </div>
           </div>
@@ -500,7 +506,7 @@ const PhotographerUpload = () => {
                     </div>
                   )}
 
-                  {/* Photographer ID (hidden field for debugging) */}
+                  {/* User ID (hidden field for debugging) */}
                   {photographerId && (
                     <input type="hidden" name="photographer" value={photographerId} />
                   )}

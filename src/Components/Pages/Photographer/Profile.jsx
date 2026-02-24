@@ -3,7 +3,7 @@ import axios from "axios";
 import PhotographerLayout from "./PhotographerLayout";
 import { Link } from "react-router-dom";
 
-const API = "http://localhost:4000/api";
+const API = "https://pm-backend-1-0s8f.onrender.com/api";
 
 const PhotographerProfile = () => {
   const [profile, setProfile] = useState({
@@ -32,8 +32,8 @@ const PhotographerProfile = () => {
     totalLikes: 0,
     totalViews: 0,
     followers: 0,
-    rating: 0,
-    reviewCount: 0,
+    rating: 4.8,
+    reviewCount: 24,
   });
 
   const [editing, setEditing] = useState(false);
@@ -43,12 +43,53 @@ const PhotographerProfile = () => {
   const [portfolio, setPortfolio] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageError, setImageError] = useState({ profile: false, cover: false });
 
   const token = localStorage.getItem("token");
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
-  const photographerId = user?.id;
+  const userStr = localStorage.getItem("user");
+  const user = userStr ? JSON.parse(userStr) : {};
+  const photographerId = user?.id || user?._id;
 
-  const headers = { Authorization: `Bearer ${token}` };
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+  // Helper function to get image URL with fallback
+  const getImageUrl = (type) => {
+    if (type === 'profile') {
+      if (profile.profileImage && !imageError.profile) {
+        // If it's a Base64 image (starts with data:image)
+        if (profile.profileImage.startsWith('data:image')) {
+          return profile.profileImage;
+        }
+        // If it's a full URL
+        if (profile.profileImage.startsWith('http')) {
+          return profile.profileImage;
+        }
+      }
+      // Fallback to avatar with name
+      return `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name || 'Photographer')}&background=ffc107&color=000&size=200`;
+    } else {
+      // Cover image
+      if (profile.coverImage && !imageError.cover) {
+        if (profile.coverImage.startsWith('data:image') || profile.coverImage.startsWith('http')) {
+          return profile.coverImage;
+        }
+      }
+      return "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=2070&q=80";
+    }
+  };
+
+  // Load saved images from localStorage
+  useEffect(() => {
+    const savedProfileImage = localStorage.getItem(`photographer_profile_${photographerId}`);
+    const savedCoverImage = localStorage.getItem(`photographer_cover_${photographerId}`);
+    
+    if (savedProfileImage) {
+      setProfile(prev => ({ ...prev, profileImage: savedProfileImage }));
+    }
+    if (savedCoverImage) {
+      setProfile(prev => ({ ...prev, coverImage: savedCoverImage }));
+    }
+  }, [photographerId]);
 
   // Fetch photographer profile
   const fetchProfile = async () => {
@@ -56,59 +97,84 @@ const PhotographerProfile = () => {
       setLoading(true);
       
       // Get user details
-      const userRes = await axios.get(`${API}/users/${photographerId}`, { headers })
-        .catch(() => ({ data: user }));
+      let userData = user;
+      try {
+        const userRes = await axios.get(`${API}/users/${photographerId}`, { headers });
+        userData = userRes.data;
+      } catch (err) {
+        console.log("Using cached user data");
+      }
 
       // Get photographer's media
-      const mediaRes = await axios.get(`${API}/media`, { headers });
-      const myMedia = (mediaRes.data || []).filter(m => m.userId === photographerId);
+      let myMedia = [];
+      try {
+        const mediaRes = await axios.get(`${API}/media`, { headers });
+        myMedia = (mediaRes.data || []).filter(m => 
+          m.photographerId === photographerId || m.userId === photographerId
+        );
+      } catch (err) {
+        console.log("Could not fetch media");
+      }
 
       // Get earnings
-      const earningsRes = await axios.get(`${API}/payments/earnings-summary/${photographerId}`, { headers })
-        .catch(() => ({ data: { total: 0 } }));
+      let earnings = 0;
+      try {
+        const earningsRes = await axios.get(`${API}/payments/earnings-summary/${photographerId}`, { headers });
+        earnings = earningsRes.data?.total || 0;
+      } catch (err) {
+        console.log("Could not fetch earnings");
+      }
 
       // Get sales
-      const salesRes = await axios.get(`${API}/payments/transactions/${photographerId}`, { headers })
-        .catch(() => ({ data: [] }));
+      let sales = [];
+      try {
+        const salesRes = await axios.get(`${API}/payments/transactions/${photographerId}`, { headers });
+        sales = salesRes.data || [];
+      } catch (err) {
+        console.log("Could not fetch sales");
+      }
 
       // Calculate stats
       const totalLikes = myMedia.reduce((sum, m) => sum + (m.likes || 0), 0);
       const totalViews = myMedia.reduce((sum, m) => sum + (m.views || 0), 0);
 
+      // Load saved images from localStorage
+      const savedProfileImage = localStorage.getItem(`photographer_profile_${photographerId}`);
+      const savedCoverImage = localStorage.getItem(`photographer_cover_${photographerId}`);
+
       setProfile({
         id: photographerId,
-        name: userRes.data?.name || user?.name || "Photographer",
-        email: userRes.data?.email || user?.email || "photographer@example.com",
-        bio: userRes.data?.bio || "Passionate photographer capturing moments and creating visual stories. Specializing in landscape, portrait, and commercial photography.",
-        location: userRes.data?.location || "Nairobi, Kenya",
-        website: userRes.data?.website || "www.photographer.com",
-        social: userRes.data?.social || {
+        name: userData?.name || user?.name || "Photographer",
+        email: userData?.email || user?.email || "photographer@example.com",
+        bio: userData?.bio || "Passionate photographer capturing moments and creating visual stories. Specializing in landscape, portrait, and commercial photography.",
+        location: userData?.location || "Nairobi, Kenya",
+        website: userData?.website || "www.photographer.com",
+        social: userData?.social || {
           instagram: "@photographer",
           twitter: "@photographer",
           facebook: "photographer.page",
         },
-        skills: userRes.data?.skills || ["Landscape", "Portrait", "Commercial", "Wedding"],
-        equipment: userRes.data?.equipment || ["Canon EOS R5", "Sony A7III", "DJI Mavic 3"],
-        joinedDate: userRes.data?.createdAt || new Date().toISOString(),
-        profileImage: userRes.data?.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Photographer')}&background=ffc107&color=000&size=200`,
-        coverImage: userRes.data?.coverImage || "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=2070&q=80",
+        skills: userData?.skills || ["Landscape", "Portrait", "Commercial", "Wedding"],
+        equipment: userData?.equipment || ["Canon EOS R5", "Sony A7III", "DJI Mavic 3"],
+        joinedDate: userData?.createdAt || new Date().toISOString(),
+        profileImage: savedProfileImage || userData?.profileImage || "",
+        coverImage: savedCoverImage || userData?.coverImage || "",
       });
 
       setStats({
         totalMedia: myMedia.length,
-        totalSales: (salesRes.data || []).length,
-        totalEarnings: earningsRes.data?.total || 0,
+        totalSales: sales.length,
+        totalEarnings: earnings,
         totalLikes,
         totalViews,
-        followers: userRes.data?.followers || 156,
+        followers: userData?.followers || 156,
         rating: 4.8,
         reviewCount: 24,
       });
 
-      // Get portfolio (recent media)
       setPortfolio(myMedia.slice(0, 6));
 
-      // Mock reviews - replace with actual API call
+      // Mock reviews
       setReviews([
         {
           id: 1,
@@ -173,7 +239,17 @@ const PhotographerProfile = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await axios.put(`${API}/users/${photographerId}`, profile, { headers });
+      // Save to localStorage
+      const updatedUser = { ...user, ...profile };
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      
+      // Try to save to backend
+      try {
+        await axios.put(`${API}/users/${photographerId}`, profile, { headers });
+      } catch (err) {
+        console.log("Backend save failed, saved locally only");
+      }
+      
       alert("Profile updated successfully!");
       setEditing(false);
     } catch (error) {
@@ -184,16 +260,55 @@ const PhotographerProfile = () => {
   };
 
   const handleImageUpload = async (type, file) => {
+    if (!file) return;
+
+    // Validate file
+    if (!file.type.startsWith('image/')) {
+      alert("Please select an image file");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("File size must be less than 5MB");
+      return;
+    }
+
     setUploadingImage(true);
-    // Simulate image upload
-    setTimeout(() => {
-      if (type === 'profile') {
-        setProfile({ ...profile, profileImage: URL.createObjectURL(file) });
-      } else {
-        setProfile({ ...profile, coverImage: URL.createObjectURL(file) });
-      }
+    setImageError(prev => ({ ...prev, [type]: false }));
+
+    try {
+      // Convert to Base64
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const base64Image = reader.result;
+        
+        // Update state
+        if (type === 'profile') {
+          setProfile({ ...profile, profileImage: base64Image });
+          localStorage.setItem(`photographer_profile_${photographerId}`, base64Image);
+        } else {
+          setProfile({ ...profile, coverImage: base64Image });
+          localStorage.setItem(`photographer_cover_${photographerId}`, base64Image);
+        }
+
+        // Update user object in localStorage
+        const updatedUser = { 
+          ...user, 
+          ...(type === 'profile' ? { profileImage: base64Image } : { coverImage: base64Image }) 
+        };
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+
+        setUploadingImage(false);
+      };
+    } catch (error) {
+      console.error("Error uploading image:", error);
       setUploadingImage(false);
-    }, 1000);
+    }
+  };
+
+  const handleImageError = (type) => {
+    setImageError(prev => ({ ...prev, [type]: true }));
   };
 
   if (loading) {
@@ -215,7 +330,7 @@ const PhotographerProfile = () => {
           className="rounded-3"
           style={{
             height: "300px",
-            backgroundImage: `url(${profile.coverImage})`,
+            backgroundImage: `url(${getImageUrl('cover')})`,
             backgroundSize: "cover",
             backgroundPosition: "center",
             position: "relative",
@@ -231,13 +346,18 @@ const PhotographerProfile = () => {
           {editing && (
             <div className="position-absolute bottom-0 end-0 m-3">
               <label className="btn btn-sm btn-warning">
-                <i className="fas fa-camera me-2"></i>
+                {uploadingImage ? (
+                  <span className="spinner-border spinner-border-sm me-2"></span>
+                ) : (
+                  <i className="fas fa-camera me-2"></i>
+                )}
                 Change Cover
                 <input
                   type="file"
                   className="d-none"
                   accept="image/*"
                   onChange={(e) => handleImageUpload('cover', e.target.files[0])}
+                  disabled={uploadingImage}
                 />
               </label>
             </div>
@@ -248,20 +368,26 @@ const PhotographerProfile = () => {
         <div className="position-absolute bottom-0 start-0 translate-middle-y ms-4">
           <div className="position-relative">
             <img
-              src={profile.profileImage}
+              src={getImageUrl('profile')}
               alt={profile.name}
               className="rounded-circle border border-4 border-warning"
               style={{ width: "150px", height: "150px", objectFit: "cover" }}
+              onError={() => handleImageError('profile')}
             />
             {editing && (
               <label className="position-absolute bottom-0 end-0 btn btn-sm btn-warning rounded-circle p-2"
                      style={{ transform: "translate(10%, 10%)" }}>
-                <i className="fas fa-camera"></i>
+                {uploadingImage ? (
+                  <span className="spinner-border spinner-border-sm"></span>
+                ) : (
+                  <i className="fas fa-camera"></i>
+                )}
                 <input
                   type="file"
                   className="d-none"
                   accept="image/*"
                   onChange={(e) => handleImageUpload('profile', e.target.files[0])}
+                  disabled={uploadingImage}
                 />
               </label>
             )}
@@ -283,7 +409,7 @@ const PhotographerProfile = () => {
               <button
                 className="btn btn-success"
                 onClick={handleSave}
-                disabled={saving}
+                disabled={saving || uploadingImage}
               >
                 {saving ? (
                   <>
@@ -347,6 +473,7 @@ const PhotographerProfile = () => {
                       name="email"
                       value={profile.email}
                       onChange={handleInputChange}
+                      disabled
                     />
                   </div>
                   <div className="mb-3">
@@ -472,11 +599,11 @@ const PhotographerProfile = () => {
                 </>
               ) : (
                 <div className="d-flex gap-3">
-                  <a href={`https://instagram.com/${profile.social.instagram}`} target="_blank"
+                  <a href={`https://instagram.com/${profile.social.instagram.replace('@', '')}`} target="_blank"
                      className="text-white-50 hover-text-warning">
                     <i className="fab fa-instagram fa-lg"></i>
                   </a>
-                  <a href={`https://twitter.com/${profile.social.twitter}`} target="_blank"
+                  <a href={`https://twitter.com/${profile.social.twitter.replace('@', '')}`} target="_blank"
                      className="text-white-50 hover-text-warning">
                     <i className="fab fa-twitter fa-lg"></i>
                   </a>
@@ -621,6 +748,9 @@ const PhotographerProfile = () => {
                           alt={item.title}
                           className="card-img-top"
                           style={{ height: "150px", objectFit: "cover" }}
+                          onError={(e) => {
+                            e.target.src = "https://via.placeholder.com/300";
+                          }}
                         />
                         <div className="card-body p-2">
                           <small className="fw-bold d-block text-truncate">{item.title}</small>
@@ -674,6 +804,9 @@ const PhotographerProfile = () => {
                         className="rounded-circle"
                         width="50"
                         height="50"
+                        onError={(e) => {
+                          e.target.src = "https://via.placeholder.com/50";
+                        }}
                       />
                       <div className="flex-grow-1">
                         <div className="d-flex justify-content-between align-items-center mb-1">

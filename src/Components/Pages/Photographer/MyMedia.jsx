@@ -14,6 +14,7 @@ const PhotographerMedia = () => {
   const [selectedMedia, setSelectedMedia] = useState(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [imageErrors, setImageErrors] = useState({});
+  const [videoErrors, setVideoErrors] = useState({});
 
   const token = localStorage.getItem("token");
   const userStr = localStorage.getItem("user");
@@ -48,7 +49,7 @@ const PhotographerMedia = () => {
         return matches;
       });
 
-      setMedia(myMedia.length > 0 ? myMedia : res.data); // Show all if none match
+      setMedia(myMedia.length > 0 ? myMedia : res.data);
 
     } catch (error) {
       setError(error.response?.data?.message || "Failed to load media");
@@ -123,30 +124,47 @@ const PhotographerMedia = () => {
     }
   };
 
-  // FIXED: Extract filename from fileUrl and construct proper URL
-  const getImageUrl = (item) => {
-    // If this image previously failed to load, return placeholder
-    if (imageErrors[item._id]) {
-      return "https://via.placeholder.com/300?text=Image+Not+Found";
+  // FIXED: Get media URL with multiple fallback paths
+  const getMediaUrl = (item) => {
+    if (!item || !item.fileUrl) return null;
+
+    // Check if this media previously failed
+    if (item.mediaType === "video" && videoErrors[item._id]) {
+      return null;
+    }
+    if (item.mediaType === "photo" && imageErrors[item._id]) {
+      return null;
     }
 
     // Extract filename from the fileUrl path
-    if (item.fileUrl) {
-      // Split by / and get the last part (the filename)
-      const filename = item.fileUrl.split('/').pop();
-      if (filename) {
-        // Construct URL to your backend static file serving
-        return `https://pm-backend-1-0s8f.onrender.com/uploads/photos/${filename}`;
-      }
-    }
+    const filename = item.fileUrl.split('/').pop();
+    if (!filename) return null;
 
-    // Fallback to placeholder
-    return "https://via.placeholder.com/300?text=No+Image";
+    // Try different possible paths
+    const baseUrl = "https://pm-backend-1-0s8f.onrender.com";
+    const possiblePaths = [
+      `${baseUrl}/uploads/photos/${filename}`,  // Photos folder
+      `${baseUrl}/uploads/videos/${filename}`,  // Videos folder
+      `${baseUrl}/uploads/${filename}`,         // Root uploads folder
+      `${baseUrl}${item.fileUrl}`               // Original path
+    ];
+
+    // For debugging - log all possible paths
+    console.log(`🎬 Trying paths for ${item.title}:`, possiblePaths);
+
+    // Return the first path (we'll try others on error)
+    return possiblePaths[0];
   };
 
-  // Handle image load error
-  const handleImageError = (itemId) => {
-    setImageErrors(prev => ({ ...prev, [itemId]: true }));
+  // Handle media load error - try next path
+  const handleMediaError = (item, errorType) => {
+    console.log(`❌ Media failed to load: ${item.title}`);
+    
+    if (item.mediaType === "video") {
+      setVideoErrors(prev => ({ ...prev, [item._id]: true }));
+    } else {
+      setImageErrors(prev => ({ ...prev, [item._id]: true }));
+    }
   };
 
   // Calculate stats
@@ -343,8 +361,10 @@ const PhotographerMedia = () => {
             ) : (
               <div className="row g-4">
                 {media.map((item) => {
-                  const imageUrl = getImageUrl(item);
+                  const mediaUrl = getMediaUrl(item);
                   const isEditing = editingItem === item._id;
+                  const hasVideoError = item.mediaType === "video" && videoErrors[item._id];
+                  const hasImageError = item.mediaType === "photo" && imageErrors[item._id];
                   
                   return (
                     <div className="col-lg-3 col-md-4 col-6" key={item._id}>
@@ -371,17 +391,52 @@ const PhotographerMedia = () => {
                         }}
                       >
                         <div className="position-relative">
-                          <img
-                            src={imageUrl}
-                            alt={item.title}
-                            className="card-img-top"
-                            style={{ 
-                              height: "180px", 
-                              objectFit: "cover",
-                              background: "#1a1a1a"
-                            }}
-                            onError={() => handleImageError(item._id)}
-                          />
+                          {item.mediaType === "video" ? (
+                            <div className="position-relative">
+                              {hasVideoError ? (
+                                <div 
+                                  className="d-flex align-items-center justify-content-center bg-dark"
+                                  style={{ height: "180px" }}
+                                >
+                                  <div className="text-center">
+                                    <i className="fas fa-exclamation-triangle text-warning fa-2x mb-2"></i>
+                                    <p className="text-white-50 small">Video unavailable</p>
+                                  </div>
+                                </div>
+                              ) : (
+                                <>
+                                  <video
+                                    src={mediaUrl}
+                                    className="card-img-top"
+                                    style={{ 
+                                      height: "180px", 
+                                      objectFit: "cover",
+                                      background: "#1a1a1a"
+                                    }}
+                                    onError={() => handleMediaError(item, "video")}
+                                  />
+                                  <div className="position-absolute top-50 start-50 translate-middle">
+                                    <div className="bg-dark bg-opacity-75 rounded-circle p-3">
+                                      <i className="fas fa-play text-warning fa-2x"></i>
+                                    </div>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          ) : (
+                            <img
+                              src={!hasImageError ? mediaUrl : "https://via.placeholder.com/300?text=Image+Not+Found"}
+                              alt={item.title}
+                              className="card-img-top"
+                              style={{ 
+                                height: "180px", 
+                                objectFit: "cover",
+                                background: "#1a1a1a"
+                              }}
+                              onError={() => handleMediaError(item, "photo")}
+                            />
+                          )}
+                          
                           <span 
                             className="position-absolute top-0 end-0 m-2 badge rounded-pill"
                             style={{
@@ -529,19 +584,51 @@ const PhotographerMedia = () => {
                 <div className="row">
                   <div className="col-md-6">
                     {selectedMedia.mediaType === "video" ? (
-                      <video
-                        src={getImageUrl(selectedMedia)}
-                        className="img-fluid rounded-3 mb-3"
-                        style={{ width: "100%", maxHeight: "300px", objectFit: "contain" }}
-                        controls
-                      />
+                      <div className="position-relative">
+                        {videoErrors[selectedMedia._id] ? (
+                          <div 
+                            className="d-flex align-items-center justify-content-center bg-dark rounded-3"
+                            style={{ height: "300px" }}
+                          >
+                            <div className="text-center">
+                              <i className="fas fa-exclamation-triangle text-warning fa-3x mb-3"></i>
+                              <h6 className="text-white">Video Failed to Load</h6>
+                              <p className="text-white-50 small">The video file might be missing or corrupted</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <video
+                            key={selectedMedia._id} // Force re-render on change
+                            className="img-fluid rounded-3 mb-3 w-100"
+                            controls
+                            autoPlay={false}
+                            style={{ maxHeight: "300px", objectFit: "contain" }}
+                            onError={() => handleMediaError(selectedMedia, "video")}
+                          >
+                            <source src={getMediaUrl(selectedMedia)} type="video/mp4" />
+                            <source src={getMediaUrl(selectedMedia)} type="video/webm" />
+                            <source src={getMediaUrl(selectedMedia)} type="video/ogg" />
+                            Your browser does not support the video tag.
+                          </video>
+                        )}
+                        
+                        {/* Debug info */}
+                        <div className="mt-2 p-2 rounded" style={{ background: "rgba(0,0,0,0.3)" }}>
+                          <small className="text-white-50 d-block">
+                            <strong>File:</strong> {selectedMedia.fileUrl?.split('/').pop()}
+                          </small>
+                          <small className="text-white-50 d-block">
+                            <strong>URL:</strong> {getMediaUrl(selectedMedia)}
+                          </small>
+                        </div>
+                      </div>
                     ) : (
                       <img
-                        src={getImageUrl(selectedMedia)}
+                        src={!imageErrors[selectedMedia._id] ? getMediaUrl(selectedMedia) : "https://via.placeholder.com/300?text=Image+Not+Found"}
                         alt={selectedMedia.title}
                         className="img-fluid rounded-3 mb-3"
                         style={{ width: "100%", maxHeight: "300px", objectFit: "contain" }}
-                        onError={() => handleImageError(selectedMedia._id)}
+                        onError={() => handleMediaError(selectedMedia, "photo")}
                       />
                     )}
                     

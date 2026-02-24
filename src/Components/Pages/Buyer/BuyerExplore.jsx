@@ -3,7 +3,7 @@ import BuyerLayout from "./BuyerLayout";
 import { Link } from "react-router-dom";
 import axios from "axios";
 
-const API = "http://localhost:4000/api";
+const API = process.env.REACT_APP_API_URL || "https://pm-backend-1-0s8f.onrender.com/api";
 
 const BuyerExplore = () => {
   const [media, setMedia] = useState([]);
@@ -19,26 +19,39 @@ const BuyerExplore = () => {
   const userId = user.id || user._id;
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-  // Categories
-  const categories = [
-    "All", "Nature", "Travel", "Lifestyle", "Food", "Technology", "Architecture"
-  ];
+  const categories = ["All", "Nature", "Travel", "Lifestyle", "Food", "Technology", "Architecture"];
 
-  // Fetch media
-  const fetchMedia = async () => {
-    try {
-      setLoading(true);
-      const res = await axios.get(`${API}/media`, { headers });
-      setMedia(res.data || []);
-    } catch (err) {
-      console.error("Error fetching media:", err);
-      setError("Failed to load photos");
-    } finally {
-      setLoading(false);
+  const getImageUrl = (item) => {
+    if (!item) return "https://via.placeholder.com/300";
+    if (item.imageUrl) return item.imageUrl;
+    if (item.fileUrl) {
+      const filename = item.fileUrl.split('/').pop();
+      if (filename) {
+        return `${API.replace('/api', '')}/uploads/photos/${filename}`;
+      }
     }
+    return "https://via.placeholder.com/300";
   };
 
-  // Add to cart
+  useEffect(() => {
+    const fetchMedia = async () => {
+      try {
+        setLoading(true);
+        const res = await axios.get(`${API}/media`, { 
+          headers,
+          timeout: 10000 
+        });
+        setMedia(res.data || []);
+      } catch (err) {
+        console.error("Error fetching media:", err);
+        setError("Failed to load photos. Please refresh the page.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMedia();
+  }, []);
+
   const addToCart = async (mediaId) => {
     if (!token) {
       alert("Please login to add items to cart");
@@ -60,7 +73,6 @@ const BuyerExplore = () => {
     }
   };
 
-  // Filter and sort media
   const filteredMedia = media.filter(item => {
     const matchesCategory = selectedCategory === "all" || 
       (item.category || "").toLowerCase() === selectedCategory.toLowerCase();
@@ -75,21 +87,10 @@ const BuyerExplore = () => {
         return (b.price || 0) - (a.price || 0);
       case "popular":
         return (b.likes || 0) - (a.likes || 0);
-      default: // newest
+      default:
         return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
     }
   });
-
-  useEffect(() => {
-    fetchMedia();
-  }, []);
-
-  // Helper for image URL
-  const getImageUrl = (item) => {
-    if (!item?.fileUrl) return "https://via.placeholder.com/300";
-    const filename = item.fileUrl.split('/').pop();
-    return `http://localhost:4000/uploads/photos/${filename}`;
-  };
 
   return (
     <BuyerLayout>
@@ -100,14 +101,14 @@ const BuyerExplore = () => {
             <i className="fas fa-compass me-2 text-warning"></i>
             Explore Photos
           </h2>
-          <div className="d-flex gap-2">
+          <div className="d-flex gap-2 flex-column flex-sm-row">
             <input
               type="text"
               className="form-control bg-dark border-secondary text-white"
               placeholder="Search photos..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ minWidth: "250px" }}
+              style={{ minWidth: "200px" }}
             />
             <select
               className="form-select bg-dark border-secondary text-white"
@@ -184,6 +185,7 @@ const BuyerExplore = () => {
                       className="card-img-top"
                       style={{ height: "180px", objectFit: "cover" }}
                       alt={item.title}
+                      loading="lazy"
                       onError={(e) => {
                         e.target.src = "https://via.placeholder.com/300";
                       }}
@@ -191,19 +193,12 @@ const BuyerExplore = () => {
                     <span className="position-absolute top-0 start-0 m-2 badge bg-warning text-dark">
                       KES {item.price}
                     </span>
-                    <span className="position-absolute top-0 end-0 m-2 badge bg-info">
-                      <i className="fas fa-heart me-1"></i>
-                      {item.likes || 0}
-                    </span>
                   </div>
                   <div className="card-body">
                     <h6 className="fw-bold text-truncate mb-1">{item.title}</h6>
                     <small className="text-white-50 d-block mb-2">
                       By {item.photographer?.username || "Anonymous"}
                     </small>
-                    <p className="small text-white-50 mb-3 text-truncate">
-                      {item.description || "No description"}
-                    </p>
                     <button
                       className="btn btn-warning w-100"
                       onClick={() => addToCart(item._id)}

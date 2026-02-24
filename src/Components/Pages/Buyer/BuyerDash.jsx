@@ -3,7 +3,8 @@ import axios from "axios";
 import BuyerLayout from "./BuyerLayout";
 import { Link } from "react-router-dom";
 
-const API = "http://localhost:4000/api";
+// Production API URL
+const API = process.env.REACT_APP_API_URL || "https://pm-backend-1-0s8f.onrender.com/api";
 
 const BuyerDashboard = () => {
   const [featuredMedia, setFeaturedMedia] = useState([]);
@@ -11,25 +12,35 @@ const BuyerDashboard = () => {
   const [recommended, setRecommended] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [stats, setStats] = useState({
     purchases: 0,
     downloads: 0,
     favorites: 0,
-    wallet: 0
+    wallet: 5000
   });
 
   const token = localStorage.getItem("token");
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const userStr = localStorage.getItem("user");
+  const user = userStr ? JSON.parse(userStr) : {};
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-  // Function to get image URL
+  // Production-ready image URL constructor
   const getImageUrl = (item) => {
-    if (item?.fileUrl) {
+    if (!item) return "https://via.placeholder.com/300?text=No+Image";
+    
+    // If imageUrl is already provided
+    if (item.imageUrl) return item.imageUrl;
+    
+    // Extract filename from fileUrl
+    if (item.fileUrl) {
       const filename = item.fileUrl.split('/').pop();
-      return `http://localhost:4000/uploads/photos/${filename}`;
+      if (filename) {
+        return `${API.replace('/api', '')}/uploads/photos/${filename}`;
+      }
     }
-    if (item?.thumbnail) return item.thumbnail;
-    if (item?.image) return item.image;
+    
+    // Fallback
     return "https://via.placeholder.com/300?text=No+Image";
   };
 
@@ -37,65 +48,71 @@ const BuyerDashboard = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
+        setError(null);
         
         // Get all media
-        const mediaRes = await axios.get(`${API}/media`, { headers });
-        const allMedia = mediaRes.data || [];
+        const mediaRes = await axios.get(`${API}/media`, { 
+          headers,
+          timeout: 10000 
+        });
         
-        // Get user's purchase history if user has id
+        const allMedia = mediaRes.data || [];
+        console.log(`✅ Loaded ${allMedia.length} media items`);
+
+        // Get user's purchase history
         let purchases = [];
         if (user?.id || user?._id) {
           try {
             const purchasesRes = await axios.get(
               `${API}/payments/purchase-history/${user.id || user._id}`, 
-              { headers }
+              { headers, timeout: 5000 }
             );
             purchases = purchasesRes.data || [];
           } catch (err) {
-            console.log("No purchase history yet");
+            console.log("ℹ️ No purchase history yet");
           }
         }
 
-        // Get user's favorites (if you have this endpoint)
+        // Get user's favorites
         let favorites = [];
         try {
-          const favRes = await axios.get(`${API}/users/favorites`, { headers });
+          const favRes = await axios.get(`${API}/users/favorites`, { 
+            headers, 
+            timeout: 5000 
+          });
           favorites = favRes.data || [];
         } catch (err) {
-          console.log("Favorites not available");
+          console.log("ℹ️ Favorites not available");
         }
 
+        // Update state
         setFeaturedMedia(allMedia.slice(0, 8));
         setRecentPurchases(purchases.slice(0, 5));
         setRecommended(allMedia.slice(8, 14));
         
-        // Update stats
         setStats({
-          purchases: purchases.length || 24,
-          downloads: purchases.length || 18,
-          favorites: favorites.length || 12,
+          purchases: purchases.length || 0,
+          downloads: purchases.length || 0,
+          favorites: favorites.length || 0,
           wallet: 5000
         });
         
-        // Categories with counts
-        const categoryCounts = {};
-        allMedia.forEach(item => {
-          if (item.category) {
-            categoryCounts[item.category] = (categoryCounts[item.category] || 0) + 1;
-          }
-        });
-        
+        // Categories
         setCategories([
-          { name: "Nature", icon: "fa-leaf", count: categoryCounts.nature || 124 },
-          { name: "Travel", icon: "fa-plane", count: categoryCounts.travel || 98 },
-          { name: "Lifestyle", icon: "fa-camera-retro", count: categoryCounts.lifestyle || 156 },
-          { name: "Food", icon: "fa-utensils", count: categoryCounts.food || 67 },
-          { name: "Technology", icon: "fa-microchip", count: categoryCounts.tech || 89 },
-          { name: "Architecture", icon: "fa-building", count: categoryCounts.architecture || 45 },
+          { name: "Nature", icon: "fa-leaf", count: 124 },
+          { name: "Travel", icon: "fa-plane", count: 98 },
+          { name: "Lifestyle", icon: "fa-camera-retro", count: 156 },
+          { name: "Food", icon: "fa-utensils", count: 67 },
+          { name: "Technology", icon: "fa-microchip", count: 89 },
+          { name: "Architecture", icon: "fa-building", count: 45 },
         ]);
 
-      } catch (error) {
-        console.error("Error fetching dashboard data:", error);
+      } catch (err) {
+        console.error("❌ Error fetching data:", err);
+        setError(
+          err.response?.data?.message || 
+          "Failed to load content. Please refresh the page."
+        );
       } finally {
         setLoading(false);
       }
@@ -103,6 +120,26 @@ const BuyerDashboard = () => {
 
     fetchData();
   }, []);
+
+  // Show error state
+  if (error) {
+    return (
+      <BuyerLayout>
+        <div className="text-center py-5">
+          <i className="fas fa-exclamation-triangle text-warning fa-4x mb-3"></i>
+          <h4 className="text-white mb-3">Oops! Something went wrong</h4>
+          <p className="text-white-50 mb-4">{error}</p>
+          <button 
+            className="btn btn-warning"
+            onClick={() => window.location.reload()}
+          >
+            <i className="fas fa-sync-alt me-2"></i>
+            Refresh Page
+          </button>
+        </div>
+      </BuyerLayout>
+    );
+  }
 
   return (
     <BuyerLayout>
@@ -112,7 +149,7 @@ const BuyerDashboard = () => {
           <div className="row align-items-center">
             <div className="col-md-8">
               <h4 className="fw-bold text-white mb-2">
-                Welcome back, {user?.name || "Buyer"}! 👋
+                Welcome back, {user?.name || user?.username || "Buyer"}! 👋
               </h4>
               <p className="text-white-50 mb-md-0">
                 Discover stunning photos from talented photographers worldwide.
@@ -232,12 +269,19 @@ const BuyerDashboard = () => {
 
         {loading ? (
           <div className="text-center py-4">
-            <div className="spinner-border text-warning"></div>
+            <div className="spinner-border text-warning" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+          </div>
+        ) : featuredMedia.length === 0 ? (
+          <div className="text-center py-4">
+            <i className="fas fa-images fa-3x text-white-50 mb-3"></i>
+            <p className="text-white-50">No photos available yet</p>
           </div>
         ) : (
           <div className="row g-3">
-            {featuredMedia.map((item, idx) => (
-              <div className="col-lg-3 col-md-4 col-6" key={item._id || idx}>
+            {featuredMedia.map((item) => (
+              <div className="col-lg-3 col-md-4 col-6" key={item._id}>
                 <div className="card bg-dark border-secondary h-100">
                   <div className="position-relative">
                     <img
@@ -245,13 +289,12 @@ const BuyerDashboard = () => {
                       alt={item.title}
                       className="card-img-top"
                       style={{ height: "150px", objectFit: "cover" }}
+                      loading="lazy"
                       onError={(e) => {
-                        e.target.src = "https://via.placeholder.com/300?text=Image+Not+Found";
+                        e.target.onerror = null;
+                        e.target.src = "https://via.placeholder.com/300?text=Error";
                       }}
                     />
-                    <button className="position-absolute top-0 end-0 m-2 btn btn-sm btn-link text-danger">
-                      <i className="far fa-heart"></i>
-                    </button>
                     <span className="position-absolute bottom-0 start-0 m-2 badge bg-warning text-dark">
                       KES {item.price || 0}
                     </span>
@@ -296,8 +339,8 @@ const BuyerDashboard = () => {
             <div className="card-body p-0">
               {recentPurchases.length > 0 ? (
                 <div className="list-group list-group-flush bg-dark">
-                  {recentPurchases.map((purchase, idx) => (
-                    <div key={idx} className="list-group-item bg-transparent text-white border-secondary">
+                  {recentPurchases.map((purchase) => (
+                    <div key={purchase._id} className="list-group-item bg-transparent text-white border-secondary">
                       <div className="d-flex align-items-center gap-3">
                         <img
                           src={getImageUrl(purchase)}
@@ -346,14 +389,15 @@ const BuyerDashboard = () => {
             </div>
             <div className="card-body">
               <div className="row g-2">
-                {recommended.slice(0, 4).map((item, idx) => (
-                  <div className="col-6" key={item._id || idx}>
+                {recommended.slice(0, 4).map((item) => (
+                  <div className="col-6" key={item._id}>
                     <div className="card bg-dark border-secondary">
                       <img
                         src={getImageUrl(item)}
                         alt=""
                         className="card-img-top"
                         style={{ height: "100px", objectFit: "cover" }}
+                        loading="lazy"
                         onError={(e) => {
                           e.target.src = "https://via.placeholder.com/150";
                         }}
