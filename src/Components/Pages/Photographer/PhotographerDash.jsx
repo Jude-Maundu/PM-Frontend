@@ -3,7 +3,7 @@ import axios from "axios";
 import PhotographerLayout from "./PhotographerLayout";
 import { Link } from "react-router-dom";
 
-const API = "http://localhost:4000/api";
+const API = "https://pm-backend-1-0s8f.onrender.com/api";
 
 const PhotographerDashboard = () => {
   const [stats, setStats] = useState({
@@ -28,9 +28,10 @@ const PhotographerDashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
+
       
-      // Fetch photographer's media
-      const mediaRes = await axios.get(`${API}/media`, { headers });
+      // Fetch photographer's media https://pm-backend-1-0s8f.onrender.com/api/media 
+      const mediaRes = await axios.get(`https://pm-backend-1-0s8f.onrender.com/api/media`, { headers });
       const myMedia = (mediaRes.data || []).filter(m => m.userId === photographerId);
       
       // Fetch earnings
