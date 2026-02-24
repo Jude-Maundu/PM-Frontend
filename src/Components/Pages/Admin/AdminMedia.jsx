@@ -12,7 +12,7 @@ const AdminMedia = () => {
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [filter, setFilter] = useState("all");
 
-  const API = "http://localhost:4000/api/media";
+  const API = "https://pm-backend-1-0s8f.onrender.com/api/media";
 
   const fetchMedia = async () => {
     try {
@@ -68,7 +68,7 @@ const AdminMedia = () => {
     if (!fileUrl) return "https://via.placeholder.com/400";
     // If it's a local file path, you might need to construct the full URL
     if (fileUrl.startsWith('/')) {
-      return `http://localhost:4000${fileUrl}`;
+      return `https://pm-backend-1-0s8f.onrender.com${fileUrl}`;
     }
     return fileUrl;
   };
