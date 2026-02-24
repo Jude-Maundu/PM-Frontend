@@ -17,6 +17,9 @@ const Register = () => {
 
   const navigate = useNavigate();
 
+  // Your working API URL
+  const API_URL = "https://pm-backend-1-0s8f.onrender.com/api";
+
   // Password strength indicator
   const getPasswordStrength = () => {
     if (password.length === 0) return 0;
@@ -34,6 +37,7 @@ const Register = () => {
   const handleRegister = async (e) => {
     e.preventDefault();
     
+    // Validation
     if (password !== confirmPassword) {
       setError("Passwords do not match!");
       return;
@@ -54,21 +58,50 @@ const Register = () => {
     setSuccess(null);
 
     try {
-      await axios.post(
-        "https://pm-backend-1-u2y3.onrender.com/api/auth",
+      const response = await axios.post(
+        `${API_URL}/auth/register`,
         { username, email, password, role }
       );
 
-      setSuccess("Account created! Redirecting...");
-      setTimeout(() => navigate("/login"), 2000);
+      console.log("✅ Registration successful:", response.data);
+
+      // Save user data to localStorage
+      if (response.data.token) {
+        localStorage.setItem("token", response.data.token);
+      }
+      
+      if (response.data.user) {
+        localStorage.setItem("user", JSON.stringify(response.data.user));
+        localStorage.setItem("role", response.data.user.role || role);
+      }
+
+      setSuccess("Account created successfully! Redirecting to your dashboard...");
+
+      // Redirect based on role
+      setTimeout(() => {
+        if (role === "photographer") {
+          navigate("/photographer/dashboard");
+        } else {
+          navigate("/buyer/dashboard");
+        }
+      }, 2000);
 
     } catch (err) {
-      setError(err.response?.data?.message || "Registration failed. Try again.");
+      console.error("❌ Registration error:", err);
+      
+      if (err.response) {
+        setError(err.response.data?.message || `Error: ${err.response.status}`);
+      } else if (err.request) {
+        setError("Cannot connect to server. Please check your connection.");
+      } else {
+        setError(err.message || "Registration failed. Try again.");
+      }
     } finally {
       setLoading(false);
     }
   };
 
+  // Glass card style
   const glassCardStyle = {
     background: "rgba(255, 255, 255, 0.08)",
     backdropFilter: "blur(12px)",
@@ -90,7 +123,7 @@ const Register = () => {
            style={{ backgroundColor: "rgba(0, 0, 0, 0.3)" }}>
       </div>
 
-      {/* Register Card - Smaller size */}
+      {/* Register Card */}
       <div className="container position-relative" style={{ maxWidth: "400px", zIndex: 2 }}>
         <div className="card border-0"
              style={{
@@ -99,7 +132,7 @@ const Register = () => {
                overflow: "hidden",
              }}>
           
-          {/* Card Header - Compact */}
+          {/* Card Header */}
           <div className="card-header bg-transparent border-0 text-center pt-4 pb-2">
             <div className="mb-2">
               <div className="d-inline-flex align-items-center justify-content-center"
@@ -117,8 +150,9 @@ const Register = () => {
             <p className="text-white-50 small mb-0">Join our community</p>
           </div>
 
-          {/* Card Body - Compact */}
+          {/* Card Body */}
           <div className="card-body px-4 py-2">
+            {/* Error Alert */}
             {error && (
               <div className="alert d-flex align-items-center mb-2 py-2" 
                    style={{
@@ -134,6 +168,7 @@ const Register = () => {
               </div>
             )}
 
+            {/* Success Alert */}
             {success && (
               <div className="alert d-flex align-items-center mb-2 py-2"
                    style={{
@@ -231,7 +266,7 @@ const Register = () => {
                   </button>
                 </div>
                 
-                {/* Password Strength - Smaller */}
+                {/* Password Strength Indicator */}
                 {password.length > 0 && (
                   <div className="mt-1">
                     <div className="d-flex align-items-center gap-2">
@@ -287,7 +322,7 @@ const Register = () => {
                 </div>
               </div>
 
-              {/* Role Selection - User and Photographer only */}
+              {/* Role Selection */}
               <div className="mb-2">
                 <label className="form-label text-white small fw-semibold mb-1">
                   <i className="fas fa-user-tag me-1" style={{ fontSize: "0.7rem" }}></i>
@@ -323,7 +358,7 @@ const Register = () => {
                 </div>
               </div>
 
-              {/* Terms & Conditions - Compact */}
+              {/* Terms & Conditions */}
               <div className="mb-2">
                 <div className="form-check">
                   <input 
