@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 import PhotographerLayout from "./PhotographerLayout";
 
-const API = "http://localhost:4000/api/media";
+const API = "https://pm-backend-1-0s8f.onrender.com/api/media";
 
 const PhotographerMedia = () => {
   const [media, setMedia] = useState([]);
@@ -136,7 +136,7 @@ const PhotographerMedia = () => {
       const filename = item.fileUrl.split('/').pop();
       if (filename) {
         // Construct URL to your backend static file serving
-        return `http://localhost:4000/uploads/photos/${filename}`;
+        return `https://pm-backend-1-0s8f.onrender.com/uploads/photos/${filename}`;
       }
     }
 

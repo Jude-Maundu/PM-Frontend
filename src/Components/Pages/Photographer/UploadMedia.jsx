@@ -3,7 +3,7 @@ import axios from "axios";
 import PhotographerLayout from "./PhotographerLayout";
 import { useNavigate } from "react-router-dom";
 
-const API = "http://localhost:4000/api/media";
+const API = "https://pm-backend-1-0s8f.onrender.com/api/media";
 
 const PhotographerUpload = () => {
   const [formData, setFormData] = useState({
