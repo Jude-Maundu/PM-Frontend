@@ -1,9 +1,45 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 
 const PhotographerLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
+
+  // Force Bootstrap to re-initialize when component mounts
+  useEffect(() => {
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      // Re-initialize dropdowns if Bootstrap is available
+      if (typeof window !== 'undefined' && window.bootstrap) {
+        // Initialize all dropdowns
+        const dropdowns = document.querySelectorAll('[data-bs-toggle="dropdown"]');
+        dropdowns.forEach(dropdown => {
+          try {
+            new window.bootstrap.Dropdown(dropdown);
+          } catch (e) {
+            console.log("Dropdown init error:", e);
+          }
+        });
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Re-initialize when route changes
+  useEffect(() => {
+    // This runs every time the component renders (including route changes)
+    if (typeof window !== 'undefined' && window.bootstrap) {
+      const dropdowns = document.querySelectorAll('[data-bs-toggle="dropdown"]');
+      dropdowns.forEach(dropdown => {
+        try {
+          new window.bootstrap.Dropdown(dropdown);
+        } catch (e) {
+          // Ignore if already initialized
+        }
+      });
+    }
+  });
 
   const handleLogout = () => {
     localStorage.clear();
@@ -64,20 +100,23 @@ const PhotographerLayout = ({ children }) => {
                 <button
                   className="btn btn-link text-white text-decoration-none dropdown-toggle p-0"
                   data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                  id="userDropdown"
                 >
                   <i className="fas fa-user-circle me-1"></i>
                   <span className="d-none d-md-inline">
                     {JSON.parse(localStorage.getItem("user") || "{}")?.name ||
+                      JSON.parse(localStorage.getItem("user") || "{}")?.username ||
                       "Photographer"}
                   </span>
                 </button>
-                <ul className="dropdown-menu dropdown-menu-end bg-dark border-secondary">
+                <ul className="dropdown-menu dropdown-menu-end bg-dark border-secondary" aria-labelledby="userDropdown">
                   <li>
                     <Link
                       className="dropdown-item text-white"
                       to="/photographer/profile"
                     >
-                      <i className="fas fa-user me-2"></i>Profile
+                      <i className="fas fa-user me-2 text-warning"></i>Profile
                     </Link>
                   </li>
                   <li>
@@ -85,7 +124,7 @@ const PhotographerLayout = ({ children }) => {
                       className="dropdown-item text-white"
                       to="/photographer/settings"
                     >
-                      <i className="fas fa-cog me-2"></i>Settings
+                      <i className="fas fa-cog me-2 text-warning"></i>Settings
                     </Link>
                   </li>
                   <li>

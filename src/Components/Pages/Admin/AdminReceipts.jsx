@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import AdminLayout from "./AdminLayout";
 
-const API = "http://localhost:4000/api";
+const API = "https://pm-backend-1-0s8f.onrender.com/api";
 
 const AdminReceipts = () => {
   const [receipts, setReceipts] = useState([]);

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import PhotographerLayout from "./PhotographerLayout";
 
-const API = "http://localhost:4000/api";
+const API = "https://pm-backend-1-0s8f.onrender.com/api";
 
 const PhotographerSales = () => {
   const [sales, setSales] = useState([]);

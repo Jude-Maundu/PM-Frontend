@@ -411,4 +411,4 @@ const BuyerProfile = () => {
   );
 };
 
-export default BuyerProfile;
+export default BuyerProfile; 

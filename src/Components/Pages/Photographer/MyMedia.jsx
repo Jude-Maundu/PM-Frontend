@@ -24,6 +24,54 @@ const PhotographerMedia = () => {
   const token = localStorage.getItem("token");
   const headers = { Authorization: `Bearer ${token}` };
 
+  // Modified fetchMedia to accept userId parameter
+  const fetchMedia = async (id) => {
+    setLoading(true);
+    setError("");
+    try {
+      console.log("🔍 Fetching media for user ID:", id);
+      const res = await axios.get(API, { headers });
+      
+      if (!Array.isArray(res.data)) {
+        setMedia([]);
+        setLoading(false);
+        return;
+      }
+
+      console.log(`📦 Total media in DB: ${res.data.length}`);
+      console.log(`👤 Current user ID: ${id}`);
+
+      // Filter using the passed ID, not state
+      const myMedia = res.data.filter(item => {
+        let photographerId = null;
+        
+        if (item.photographer && typeof item.photographer === 'object') {
+          photographerId = item.photographer._id || item.photographer.id;
+        } else {
+          photographerId = item.photographer || item.photographerId;
+        }
+        
+        const photographerIdStr = photographerId ? String(photographerId).trim() : null;
+        const userIdStr = id ? String(id).trim() : null;
+        
+        const matches = photographerIdStr === userIdStr;
+        
+        if (matches) console.log(`✅ Match found: ${item.title}`);
+        
+        return matches;
+      });
+
+      console.log(`📸 Found ${myMedia.length} media items for user ${id}`);
+      setMedia(myMedia);
+
+    } catch (error) {
+      console.error("Error fetching media:", error);
+      setError(error.response?.data?.message || "Failed to load media");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Check authentication and role on mount
   useEffect(() => {
     const checkAuth = () => {
@@ -41,7 +89,7 @@ const PhotographerMedia = () => {
         return false;
       }
 
-      // ✅ FIXED: Allow both photographers AND admins
+      // ✅ Allow both photographers AND admins
       if (role !== "photographer" && role !== "admin") {
         setError(`Access denied. Your role is "${role}". Photographers and admins only.`);
         setTimeout(() => navigate("/dashboard"), 2000);
@@ -51,11 +99,19 @@ const PhotographerMedia = () => {
       if (userStr) {
         try {
           const user = JSON.parse(userStr);
+          // Get the ID from the user object
           const id = user._id || user.id || user.userId || user.photographerId;
+          
+          // Set state FIRST
           setUserId(id);
           setUserRole(role);
-          console.log("✅ User ID found:", id);
+          
+          console.log("✅ User ID found and set:", id);
           console.log("✅ Role:", role, "- Access granted");
+          
+          // THEN fetch media with the ID
+          fetchMedia(id); // Pass ID directly
+          
           return true;
         } catch (err) {
           console.error("Error parsing user data:", err);
@@ -72,46 +128,7 @@ const PhotographerMedia = () => {
 
     const isAuthenticated = checkAuth();
     setAuthChecked(true);
-    if (isAuthenticated) {
-      fetchMedia();
-    }
-  }, []);
-
-  const fetchMedia = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const res = await axios.get(API, { headers });
-      
-      if (!Array.isArray(res.data)) {
-        setMedia([]);
-        setLoading(false);
-        return;
-      }
-
-      // Filter media by user ID
-      const myMedia = res.data.filter(item => {
-        const matches = 
-          item.photographer === userId ||
-          item.photographerId === userId ||
-          item.userId === userId ||
-          item.uploadedBy === userId ||
-          item.photographer?._id === userId ||
-          item.photographer?.id === userId;
-        
-        return matches;
-      });
-
-      console.log(`📸 Found ${myMedia.length} media items for user ${userId}`);
-      setMedia(myMedia.length > 0 ? myMedia : []);
-
-    } catch (error) {
-      console.error("Error fetching media:", error);
-      setError(error.response?.data?.message || "Failed to load media");
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, []); // Empty dependency array - runs once on mount
 
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this media permanently?")) return;
@@ -256,7 +273,7 @@ const PhotographerMedia = () => {
           <div className="d-flex gap-2 mt-3 mt-md-0">
             <button 
               className="btn btn-outline-warning rounded-pill px-4" 
-              onClick={fetchMedia}
+              onClick={() => fetchMedia(userId)}
             >
               <i className="fas fa-sync-alt me-2"></i>
               Refresh

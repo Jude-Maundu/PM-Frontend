@@ -3,7 +3,7 @@ import axios from "axios";
 import AdminLayout from "./AdminLayout";
 import { Link } from "react-router-dom";
 
-const API = "http://localhost:4000/api";
+const API = "https://pm-backend-1-0s8f.onrender.com/api";
 
 const AdminDash= () => {
   const [stats, setStats] = useState({
