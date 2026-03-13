@@ -22,6 +22,10 @@ const API_ENDPOINTS = {
     UPDATE_PHONE: (id) => `${API_BASE_URL}/auth/photographers/${id}/phone`,
   },
 
+  USERS: {
+    FAVORITES: `${API_BASE_URL}/users/favorites`,
+  },
+
   // ==================== MEDIA ====================
   MEDIA: {
     GET_ALL: `${API_BASE_URL}/media`,

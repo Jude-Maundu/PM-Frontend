@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import BuyerLayout from "./BuyerLayout";
 import { Link } from "react-router-dom";
 import { getAllMedia, getPurchaseHistory, getUserFavorites } from "../../../api/API";
+import { API_BASE_URL } from "../../../api/apiConfig";
 
 const BuyerDashboard = () => {
   const [featuredMedia, setFeaturedMedia] = useState([]);
@@ -33,14 +34,13 @@ const BuyerDashboard = () => {
     if (item.fileUrl) {
       const filename = item.fileUrl.split('/').pop();
       if (filename) {
-        return `${API.replace('/api', '')}/uploads/photos/${filename}`;
+        return `${API_BASE_URL.replace('/api', '')}/uploads/photos/${filename}`;
       }
     }
-    
+
     // Fallback
     return "https://via.placeholder.com/300?text=No+Image";
   };
-
   useEffect(() => {
     const fetchData = async () => {
       try {

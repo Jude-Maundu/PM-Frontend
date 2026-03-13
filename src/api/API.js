@@ -48,6 +48,7 @@ export const deleteUser = (id) => remove(API_ENDPOINTS.AUTH.DELETE_USER(id));
 
 // Payments
 export const getPurchaseHistory = (userId) => get(API_ENDPOINTS.PAYMENTS.PURCHASE_HISTORY(userId));
+export const getUserFavorites = () => get(API_ENDPOINTS.USERS.FAVORITES);
 export const getEarnings = (photographerId) => get(API_ENDPOINTS.PAYMENTS.EARNINGS(photographerId));
 export const getEarningsSummary = (photographerId) => get(API_ENDPOINTS.PAYMENTS.EARNINGS_SUMMARY(photographerId));
 export const mpesa = (payload) => post(API_ENDPOINTS.PAYMENTS.MPESA, payload);
@@ -99,6 +100,7 @@ export default {
   updateUser,
   deleteUser,
   getPurchaseHistory,
+  getUserFavorites,
   getEarnings,
   getEarningsSummary,
   mpesa,
