@@ -28,7 +28,9 @@ const BuyerWallet = () => {
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const userId = user.id || user._id;
-  const headers = { Authorization: `Bearer ${token}` };
+  
+  // ✅ FIXED: Define headers properly
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
   const quickAmounts = [100, 500, 1000, 2000, 5000];
 
@@ -149,7 +151,7 @@ const BuyerWallet = () => {
     } finally {
       setLoading(false);
     }
-  }, [userId, token, headers, API]);
+  }, [userId, token]);
 
   const validatePhoneNumber = (phone) => {
     const phoneRegex = /^254\d{9}$/;
@@ -632,55 +634,6 @@ const BuyerWallet = () => {
           </div>
         )}
       </div>
-
-      <style jsx="true">{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        .card {
-          animation: fadeIn 0.5s ease-out;
-        }
-        
-        .btn-warning:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(255,193,7,0.3);
-        }
-        
-        .btn-outline-warning:hover {
-          transform: translateY(-2px);
-        }
-        
-        .form-control:focus {
-          box-shadow: 0 0 0 3px rgba(255,193,7,0.2);
-          border-color: #ffc107;
-        }
-        
-        ::-webkit-scrollbar {
-          width: 8px;
-        }
-        
-        ::-webkit-scrollbar-track {
-          background: rgba(255,255,255,0.05);
-          border-radius: 4px;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-          background: rgba(255,193,7,0.5);
-          border-radius: 4px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-          background: rgba(255,193,7,0.7);
-        }
-      `}</style>
     </BuyerLayout>
   );
 };

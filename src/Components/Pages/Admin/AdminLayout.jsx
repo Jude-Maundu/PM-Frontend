@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { NavLink, Link, useNavigate, useLocation } from "react-router-dom";
+import NotificationDropdown from "../../NotificationDropdown";
 
 const AdminLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -118,7 +119,12 @@ const AdminLayout = ({ children }) => {
             </div>
 
             <div className="d-flex align-items-center gap-2 gap-md-3">
-              {/* Admin Badge - Desktop */}
+              {/* Notifications - NOW VISIBLE ON ALL SCREENS */}
+              <div className="notification-wrapper">
+                <NotificationDropdown userRole="admin" />
+              </div>
+
+              {/* Admin Badge - Hidden on very small screens, visible on tablet+ */}
               <div className="d-none d-md-block">
                 <span className="badge bg-info bg-opacity-25 text-info p-2">
                   <i className="fas fa-shield-alt me-2"></i>
@@ -352,6 +358,19 @@ const AdminLayout = ({ children }) => {
       {isMobile && !sidebarOpen && (
         <div style={{ paddingBottom: "70px" }}></div>
       )}
+
+      <style jsx>{`
+        .notification-wrapper {
+          display: block;
+        }
+        
+        /* Ensure notification dropdown is properly positioned on mobile */
+        @media (max-width: 768px) {
+          .notification-wrapper {
+            margin-right: 0;
+          }
+        }
+      `}</style>
     </div>
   );
 };

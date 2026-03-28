@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
+import axios from 'axios';
+import { API_BASE_URL } from '../api/apiConfig';
 
 const ProtectedRoute = ({ children, requiredRole }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
@@ -8,30 +10,64 @@ const ProtectedRoute = ({ children, requiredRole }) => {
   const location = useLocation();
 
   useEffect(() => {
-    const checkAuth = () => {
+    const checkAuth = async () => {
       try {
         const token = localStorage.getItem('token');
-        const role = localStorage.getItem('role');
-        const user = localStorage.getItem('user');
+        const storedUser = localStorage.getItem('user');
 
-        if (!token || !user) {
+        // No token or user data
+        if (!token || !storedUser) {
+          console.warn('[ProtectedRoute] No token/user found');
           setIsAuthenticated(false);
           setIsLoading(false);
           return;
         }
 
-        setIsAuthenticated(true);
-        setUserRole(role || 'user');
-        setIsLoading(false);
+        // Try to verify token with backend
+        try {
+          const response = await axios.get(
+            `${API_BASE_URL}/auth/users/me`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+              timeout: 5000
+            }
+          );
+
+          const user = response.data;
+          const actualRole = user.role || 'user';
+
+          console.log('[ProtectedRoute] Backend verification:', { userId: user.id, role: actualRole });
+
+          // Update localStorage with fresh data from backend
+          localStorage.setItem('user', JSON.stringify(user));
+          localStorage.setItem('role', actualRole);
+
+          setIsAuthenticated(true);
+          setUserRole(actualRole);
+        } catch (backendError) {
+          // Backend verification failed - fall back to localStorage
+          console.warn('[ProtectedRoute] Backend verification failed, using localStorage:', backendError.message);
+          
+          try {
+            const storedUserObj = JSON.parse(storedUser);
+            const storedRole = storedUserObj.role || localStorage.getItem('role') || 'user';
+            
+            setIsAuthenticated(true);
+            setUserRole(storedRole);
+          } catch {
+            setIsAuthenticated(false);
+          }
+        }
       } catch (error) {
-        console.error('Auth check error:', error);
+        console.error('[ProtectedRoute] Auth check error:', error);
         setIsAuthenticated(false);
+      } finally {
         setIsLoading(false);
       }
     };
 
     checkAuth();
-  }, []);
+  }, [location.pathname]); // Re-verify when route changes
 
   // Show loading spinner while checking authentication
   if (isLoading) {

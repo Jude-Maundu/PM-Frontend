@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import PhotographerLayout from "./PhotographerLayout";
 import { Link } from "react-router-dom";
@@ -8,6 +8,80 @@ import { getImageUrl, fetchProtectedUrl } from "../../../utils/imageUrl";
 import { getAuthHeaders, getCurrentUserId, getDisplayName, getStoredUser } from "../../../utils/auth";
 
 const API = API_BASE_URL;
+
+const startOfDay = (date) => {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
+
+const endOfDay = (date) => {
+  const d = new Date(date);
+  d.setHours(23, 59, 59, 999);
+  return d;
+};
+
+const buildChartIntervals = (range) => {
+  const now = new Date();
+  const intervals = [];
+  const labels = [];
+
+  if (range === "week") {
+    for (let offset = 6; offset >= 0; offset -= 1) {
+      const target = new Date(now);
+      target.setDate(now.getDate() - offset);
+      labels.push(target.toLocaleDateString("en-US", { weekday: "short" }));
+      intervals.push({
+        start: startOfDay(target),
+        end: endOfDay(target),
+      });
+    }
+  } else if (range === "month") {
+    for (let offset = 6; offset >= 0; offset -= 1) {
+      const end = new Date(now);
+      end.setDate(now.getDate() - offset * 7);
+      const start = new Date(end);
+      start.setDate(end.getDate() - 6);
+      labels.push(`W${7 - offset}`);
+      intervals.push({
+        start: startOfDay(start),
+        end: endOfDay(end),
+      });
+    }
+  } else {
+    for (let offset = 6; offset >= 0; offset -= 1) {
+      const monthStart = new Date(now.getFullYear(), now.getMonth() - offset, 1);
+      const monthLabel = monthStart.toLocaleString("default", { month: "short" });
+      const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0, 23, 59, 59, 999);
+      labels.push(monthLabel);
+      intervals.push({
+        start: startOfDay(monthStart),
+        end: monthEnd,
+      });
+    }
+  }
+
+  return { labels, intervals };
+};
+
+const buildChartData = (transactions, range) => {
+  const { labels, intervals } = buildChartIntervals(range);
+  const values = intervals.map(() => 0);
+
+  transactions.forEach((tx) => {
+    const dateValue = tx.date || tx.createdAt || tx.transactionDate;
+    const txDate = new Date(dateValue);
+    if (Number.isNaN(txDate.getTime())) return;
+
+    intervals.forEach((interval, idx) => {
+      if (txDate >= interval.start && txDate <= interval.end) {
+        values[idx] += Number(tx.amount || 0);
+      }
+    });
+  });
+
+  return { labels, values };
+};
 
 const PhotographerDashboard = () => {
   const [stats, setStats] = useState({
@@ -23,25 +97,32 @@ const PhotographerDashboard = () => {
   const [imageUrls, setImageUrls] = useState({});
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState("week");
+  const [error, setError] = useState(null);
+  const [transactions, setTransactions] = useState([]);
+  const [chartLabels, setChartLabels] = useState([]);
+  const [chartSeries, setChartSeries] = useState([]);
 
   const photographerId = getCurrentUserId();
   const user = getStoredUser();
   const displayName = getDisplayName(user) || "Photographer";
   const headers = getAuthHeaders();
 
-  const fetchDashboardData = useCallback(async () => {
+  console.log("PhotographerDash Debug:", { photographerId, user, headers, token: localStorage.getItem('token') });
+
+  const fetchDashboardData = async () => {
     if (!photographerId) {
-      console.warn("Photographer ID missing; cannot load dashboard data.");
+      console.error("❌ Photographer ID missing; cannot load dashboard data.");
+      setError("Could not identify photographer. Please log in again.");
       setLoading(false);
       return;
     }
 
     try {
       setLoading(true);
+      setError(null);
 
-      
-      // Fetch photographer's media - use /media/mine endpoint with auth
       const mediaRes = await axios.get(`${API}/media/mine`, { headers });
+      console.log("✅ Media fetched:", mediaRes.data);
       const myMedia = Array.isArray(mediaRes.data)
         ? mediaRes.data
         : Array.isArray(mediaRes.data?.media)
@@ -49,28 +130,26 @@ const PhotographerDashboard = () => {
           : Array.isArray(mediaRes.data?.data)
             ? mediaRes.data.data
             : [];
-      
-      // Fetch earnings
-      const earningsRes = await axios.get(API_ENDPOINTS.PAYMENTS.EARNINGS_SUMMARY(photographerId), { headers })
-        .catch(() => ({ data: { total: 0, pending: 0, available: 0 } }));
-      
-      // Fetch sales history
-      const salesRes = await axios.get(API_ENDPOINTS.PAYMENTS.TRANSACTIONS(photographerId), { headers })
-        .catch(() => ({ data: [] }));
 
-      // Calculate stats
+      const earningsRes = await axios.get(API_ENDPOINTS.PAYMENTS.EARNINGS_SUMMARY(photographerId), { headers })
+        .catch((err) => {
+          console.warn("⚠️ Earnings fetch failed:", err.message);
+          return { data: { total: 0, pending: 0, available: 0 } };
+        });
+      console.log("✅ Earnings fetched:", earningsRes.data);
+
+      const salesRes = await axios.get(API_ENDPOINTS.PAYMENTS.TRANSACTIONS(photographerId), { headers })
+        .catch((err) => {
+          console.warn("⚠️ Sales fetch failed:", err.message);
+          return { data: [] };
+        });
+      console.log("✅ Sales fetched:", salesRes.data);
+
       const totalViews = myMedia.reduce((sum, m) => sum + (m.views || 0), 0);
       const totalLikes = myMedia.reduce((sum, m) => sum + (m.likes || 0), 0);
-      
-      // Get recent sales for photographer's media
-      const photographerSales = (salesRes.data || []).filter((sale) => {
-        return sale.items?.some((item) => {
-          const mediaId = item.mediaId || item.media?._id || item.media;
-          return myMedia.some((m) => String(m._id || m.id) === String(mediaId));
-        });
-      });
 
-      // Get popular media (most liked)
+      const photographerSales = Array.isArray(salesRes.data) ? salesRes.data : [];
+
       const popular = [...myMedia].sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 5);
 
       setStats({
@@ -84,6 +163,10 @@ const PhotographerDashboard = () => {
 
       setRecentSales(photographerSales.slice(0, 5));
       setPopularMedia(popular);
+      setTransactions(photographerSales);
+      const chartData = buildChartData(photographerSales, timeRange);
+      setChartLabels(chartData.labels);
+      setChartSeries(chartData.values);
 
       // Prefetch protected URLs for any items that may have non-public paths
       const urls = {};
@@ -109,15 +192,25 @@ const PhotographerDashboard = () => {
       setImageUrls(urls);
 
     } catch (error) {
-      console.error("Dashboard error:", error);
+      console.error("❌ Dashboard error:", error.response?.data || error.message);
+      setError(`Error loading dashboard: ${error.message}`);
     } finally {
       setLoading(false);
     }
-  }, [photographerId, headers, API]);
+  };
 
   useEffect(() => {
+    if (!photographerId) return;
     fetchDashboardData();
-  }, [fetchDashboardData]);
+    const interval = setInterval(fetchDashboardData, 15000);
+    return () => clearInterval(interval);
+  }, [photographerId, timeRange]);
+
+  useEffect(() => {
+    const chartData = buildChartData(transactions, timeRange);
+    setChartLabels(chartData.labels);
+    setChartSeries(chartData.values);
+  }, [transactions, timeRange]);
 
   const statsCards = [
     {
@@ -164,6 +257,12 @@ const PhotographerDashboard = () => {
     },
   ];
 
+  const chartPoints = chartSeries.length === 7 ? chartSeries : [0, 0, 0, 0, 0, 0, 0];
+  const chartLabelsToShow = chartLabels.length === 7
+    ? chartLabels
+    : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const chartMaxValue = Math.max(...chartPoints, 1);
+
   return (
     <PhotographerLayout>
       {/* Header */}
@@ -200,7 +299,16 @@ const PhotographerDashboard = () => {
         </div>
       )}
 
-      {!loading && (
+      {/* Error Alert */}
+      {error && (
+        <div className="alert alert-danger alert-dismissible fade show" role="alert">
+          <i className="fas fa-exclamation-circle me-2"></i>
+          <strong>Error:</strong> {error}
+          <button type="button" className="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      )}
+
+      {!loading && !error && (
         <>
           {/* Stats Cards */}
           <div className="row g-3 mb-4">
@@ -239,21 +347,27 @@ const PhotographerDashboard = () => {
                 </div>
                 <div className="card-body">
                   <div className="d-flex justify-content-between align-items-end" style={{ height: "200px" }}>
-                    {[45, 65, 55, 75, 85, 60, 50].map((height, idx) => (
-                      <div key={idx} className="text-center" style={{ width: "12%" }}>
-                        <div
-                          className="bg-warning rounded-3 mb-2"
-                          style={{
-                            height: `${height}px`,
-                            width: "100%",
-                            opacity: 0.7,
-                          }}
-                        ></div>
-                        <small className="text-white-50" style={{ fontSize: "0.6rem" }}>
-                          {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][idx]}
-                        </small>
-                      </div>
-                    ))}
+                    {chartPoints.map((value, idx) => {
+                      const barHeight = chartMaxValue > 0 ? Math.max(10, (value / chartMaxValue) * 100) : 10;
+                      return (
+                        <div key={idx} className="text-center" style={{ width: "12%" }}>
+                          <div
+                            className="bg-warning rounded-3 mb-2"
+                            style={{
+                              height: `${barHeight}px`,
+                              width: "100%",
+                              opacity: 0.7,
+                            }}
+                          ></div>
+                          <small className="text-white-50" style={{ fontSize: "0.6rem" }}>
+                            {chartLabelsToShow[idx]}
+                          </small>
+                          <small className="d-block text-white-50" style={{ fontSize: "0.6rem" }}>
+                            {value > 0 ? `KES ${value.toLocaleString()}` : "-"}
+                          </small>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -336,14 +450,14 @@ const PhotographerDashboard = () => {
                       <tr key={idx}>
                         <td className="ps-3">
                           <i className="fas fa-user-circle text-warning me-2"></i>
-                          {sale.user?.email || "Anonymous"}
+                          {sale.buyer?.email || sale.description || "Anonymous"}
                         </td>
-                        <td>{sale.items?.[0]?.title || "Media"}</td>
+                        <td>{sale.mediaTitle || sale.description || "Media"}</td>
                         <td>
-                          <span className="badge bg-success">KES {sale.amount}</span>
+                          <span className="badge bg-success">KES {Number(sale.amount || 0).toLocaleString()}</span>
                         </td>
                         <td>
-                          <small>{new Date(sale.createdAt).toLocaleDateString()}</small>
+                          <small>{new Date(sale.date || sale.createdAt || sale.transactionDate).toLocaleDateString()}</small>
                         </td>
                         <td>
                           <span className="badge bg-success">Completed</span>

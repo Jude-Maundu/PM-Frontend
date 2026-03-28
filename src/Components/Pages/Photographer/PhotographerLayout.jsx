@@ -127,12 +127,12 @@ const PhotographerLayout = ({ children }) => {
             </div>
 
             <div className="d-flex align-items-center gap-2 gap-md-3">
-              {/* Notifications */}
-              <div className="d-none d-sm-block">
+              {/* Notifications - NOW VISIBLE ON ALL SCREENS */}
+              <div className="notification-wrapper">
                 <NotificationDropdown userRole="photographer" />
               </div>
 
-              {/* Earnings Badge - Desktop */}
+              {/* Earnings Badge - Hidden on very small screens, visible on tablet+ */}
               <div className="d-none d-md-block">
                 <span className="badge bg-success bg-opacity-25 text-success p-2">
                   <i className="fas fa-wallet me-2"></i>
@@ -365,6 +365,19 @@ const PhotographerLayout = ({ children }) => {
       {isMobile && !sidebarOpen && (
         <div style={{ paddingBottom: "70px" }}></div>
       )}
+
+      <style jsx>{`
+        .notification-wrapper {
+          display: block;
+        }
+        
+        /* Ensure notification dropdown is properly positioned on mobile */
+        @media (max-width: 768px) {
+          .notification-wrapper {
+            margin-right: 0;
+          }
+        }
+      `}</style>
     </div>
   );
 };

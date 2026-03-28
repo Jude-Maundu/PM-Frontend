@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import BuyerLayout from "./BuyerLayout";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import { API_BASE_URL, API_ENDPOINTS } from "../../../api/apiConfig";
 import { placeholderMedium } from "../../../utils/placeholders";
-import { getImageUrl, fetchProtectedUrl } from "../../../utils/imageUrl";
+import { getImageUrl } from "../../../utils/imageUrl";
 import {
   getLocalFavorites,
   setLocalFavorites,
@@ -14,7 +14,7 @@ import {
   disableApi,
 } from "../../../utils/localStore";
 
-const API = API_BASE_URL; // ← ADD THIS LINE - defines the API base URL
+const API = API_BASE_URL;
 
 const BuyerFavorites = () => {
   const [favorites, setFavorites] = useState([]);
@@ -25,12 +25,93 @@ const BuyerFavorites = () => {
 
   const token = localStorage.getItem("token");
   const userStr = localStorage.getItem("user");
-  const user = userStr ? JSON.parse(userStr) : {};
+  const user = useMemo(() => userStr ? JSON.parse(userStr) : {}, [userStr]);
   const userId = user.id || user._id;
-  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+  const headers = useMemo(() => token ? { Authorization: `Bearer ${token}` } : {}, [token]);
 
-  // Use shared image URL resolver for better compatibility across backend formats
-  const resolveImage = (item) => getImageUrl(item, placeholderMedium);
+  // 🔧 Extract image URL from favorite item
+  const extractImageUrl = useCallback((item) => {
+    if (!item) return placeholderMedium;
+    
+    // Try all possible locations where the image URL might be stored
+    const possibleUrlFields = [
+      item.media?.fileUrl,
+      item.media?.imageUrl,
+      item.media?.url,
+      item.media?.thumbnail,
+      item.fileUrl,
+      item.imageUrl,
+      item.url,
+      item.thumbnail,
+      item.mediaDetails?.fileUrl,
+      item.mediaDetails?.imageUrl,
+    ];
+    
+    for (const url of possibleUrlFields) {
+      if (url && typeof url === 'string' && url.startsWith('http')) {
+        return url;
+      }
+    }
+    
+    // Try to construct from fileUrl
+    for (const url of possibleUrlFields) {
+      if (url && typeof url === 'string') {
+        const filename = url.split('/').pop();
+        if (filename && (filename.includes('.jpg') || filename.includes('.png') || filename.includes('.jpeg'))) {
+          return `${API.replace('/api', '')}/uploads/photos/${filename}`;
+        }
+      }
+    }
+    
+    return placeholderMedium;
+  }, [API]);
+
+  // 🔧 Extract title from favorite item
+  const extractTitle = useCallback((item) => {
+    if (!item) return "Untitled";
+    
+    return item.media?.title || 
+           item.title || 
+           item.mediaDetails?.title || 
+           "Untitled";
+  }, []);
+
+  // 🔧 Extract photographer from favorite item
+  const extractPhotographer = useCallback((item) => {
+    if (!item) return "Anonymous";
+    
+    const photographer = item.media?.photographer || 
+                         item.photographer || 
+                         item.mediaDetails?.photographer;
+    
+    if (photographer) {
+      if (typeof photographer === 'object') {
+        return photographer.username || photographer.name || photographer.email || "Anonymous";
+      }
+      return photographer;
+    }
+    return "Anonymous";
+  }, []);
+
+  // 🔧 Extract price from favorite item
+  const extractPrice = useCallback((item) => {
+    if (!item) return 0;
+    
+    return item.media?.price || 
+           item.price || 
+           item.mediaDetails?.price || 
+           0;
+  }, []);
+
+  // 🔧 Extract media ID from favorite item
+  const extractMediaId = useCallback((item) => {
+    if (!item) return null;
+    
+    return item.mediaId || 
+           item.media?._id || 
+           item._id || 
+           item.id;
+  }, []);
 
   // Fetch favorites from backend
   const fetchFavorites = useCallback(async () => {
@@ -46,7 +127,6 @@ const BuyerFavorites = () => {
       
       console.log("❤️ Fetching favorites for user:", userId);
       
-      // Try to get favorites from dedicated endpoint
       const res = await axios.get(API_ENDPOINTS.USERS.FAVORITES.GET(userId), {
         headers,
         timeout: 10000
@@ -54,7 +134,6 @@ const BuyerFavorites = () => {
       
       console.log("✅ Favorites response:", res.data);
       
-      // Handle different response formats
       let favoritesData = [];
       if (Array.isArray(res.data)) {
         favoritesData = res.data;
@@ -64,28 +143,23 @@ const BuyerFavorites = () => {
         favoritesData = res.data.items;
       } else if (res.data?.data && Array.isArray(res.data.data)) {
         favoritesData = res.data.data;
-      } else {
-        favoritesData = [];
       }
       
-      setFavorites(Array.isArray(favoritesData) ? favoritesData : []);
-      // Cache favorites locally so the UI can work even if this endpoint becomes unavailable.
+      // Log first item structure for debugging
+      if (favoritesData.length > 0) {
+        console.log("🔍 First favorite item structure:", JSON.stringify(favoritesData[0], null, 2));
+      }
+      
+      setFavorites(favoritesData);
       setLocalFavorites(favoritesData);
       
     } catch (err) {
       console.error("❌ Error fetching favorites:", err);
       
-      if (err.response?.status === 404 || err.response?.status === 400) {
-        // Endpoint doesn't exist - fall back to local favorites
-        console.log("ℹ️ Favorites endpoint not found - using local favorites");
-        disableApi("favorites");
-        setFavorites(getLocalFavorites());
-        setError("Using local favorites (backend endpoint unavailable)");
-      } else if (err.code === 'ECONNABORTED') {
-        setError("Request timeout. Please check your connection.");
-      } else if (err.response?.status === 401) {
-        setError("Session expired. Please login again.");
-        localStorage.clear();
+      const localFavs = getLocalFavorites();
+      if (localFavs && localFavs.length > 0) {
+        setFavorites(localFavs);
+        setError("Using locally saved favorites (server error)");
       } else {
         setError(err.response?.data?.message || "Failed to load favorites");
       }
@@ -94,8 +168,8 @@ const BuyerFavorites = () => {
     }
   }, [token, userId, headers]);
 
-  // Add to cart from favorites
-  const addToCart = async (mediaId, item) => {
+  // Add to cart
+  const addToCart = useCallback(async (mediaId, item) => {
     if (!mediaId) {
       alert("Cannot add to cart: Media ID not found");
       return;
@@ -111,42 +185,39 @@ const BuyerFavorites = () => {
       console.log("🛒 Adding to cart:", mediaId);
 
       if (!apiAvailable) {
-        addToLocalCart(mediaId, { title: item?.title, price: item?.price });
-        setSuccess(`${item.title || "Item"} added to cart (local fallback)!`);
+        const title = extractTitle(item);
+        addToLocalCart(mediaId, { title, price: extractPrice(item) });
+        setSuccess(`${title} added to cart (local fallback)!`);
         setTimeout(() => setSuccess(null), 3000);
         return;
       }
 
-      // ✅ FIXED: Use the defined API variable
       await axios.post(`${API}/payments/cart/add`, {
         userId,
         mediaId,
       }, { headers });
 
-      setSuccess(`${item.title || "Item"} added to cart!`);
+      setSuccess(`${extractTitle(item)} added to cart!`);
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       console.error("❌ Error adding to cart:", err);
-
       const status = err.response?.status;
       if (status === 404 || status === 400) {
         disableApi(feature);
-        addToLocalCart(mediaId, { title: item?.title, price: item?.price });
-        setSuccess(`${item.title || "Item"} added to cart (local fallback)!`);
+        const title = extractTitle(item);
+        addToLocalCart(mediaId, { title, price: extractPrice(item) });
+        setSuccess(`${title} added to cart (local fallback)!`);
         setTimeout(() => setSuccess(null), 3000);
-      } else if (status === 401) {
-        setError("Session expired. Please login again.");
-        localStorage.clear();
       } else {
         setError(err.response?.data?.message || "Failed to add to cart");
       }
     } finally {
       setUpdating(false);
     }
-  };
+  }, [userId, headers, extractTitle, extractPrice]);
 
   // Remove from favorites
-  const removeFromFavorites = async (mediaId, title) => {
+  const removeFromFavorites = useCallback(async (mediaId, title) => {
     if (!mediaId) {
       alert("Cannot remove: Media ID not found");
       return;
@@ -167,23 +238,23 @@ const BuyerFavorites = () => {
 
       if (!apiAvailable) {
         removeFromLocalFavorites(mediaId);
-        setFavorites(prev => prev.filter(item => (item.mediaId || item._id) !== mediaId));
+        setFavorites(prev => prev.filter(item => extractMediaId(item) !== mediaId));
         return;
       }
 
       try {
         await axios.delete(API_ENDPOINTS.USERS.FAVORITES.DELETE(userId, mediaId), { headers });
+        setFavorites(prev => prev.filter(item => extractMediaId(item) !== mediaId));
       } catch (deleteErr) {
         const status = deleteErr.response?.status;
         if (status === 404 || status === 400) {
           disableApi(feature);
           removeFromLocalFavorites(mediaId);
+          setFavorites(prev => prev.filter(item => extractMediaId(item) !== mediaId));
         } else {
           throw deleteErr;
         }
       }
-
-      setFavorites(prev => prev.filter(item => (item.mediaId || item._id) !== mediaId));
 
     } catch (err) {
       console.error("❌ Error removing from favorites:", err);
@@ -191,17 +262,17 @@ const BuyerFavorites = () => {
     } finally {
       setUpdating(false);
     }
-  };
+  }, [userId, headers, extractMediaId]);
 
-  // Check authentication on mount
+  // Fetch favorites on mount only
   useEffect(() => {
     if (!token || !userId) {
       setError("Please login to view your favorites");
       setLoading(false);
-    } else {
-      fetchFavorites();
+      return;
     }
-  }, [fetchFavorites]);
+    fetchFavorites();
+  }, []);
 
   // If not authenticated, show login prompt
   if (!token || !userId) {
@@ -223,45 +294,43 @@ const BuyerFavorites = () => {
   return (
     <BuyerLayout>
       <div className="text-white">
-        {/* Header with Refresh Button */}
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <h2 className="fw-bold">
-            <i className="fas fa-heart me-2 text-warning"></i>
-            My Favorites
-          </h2>
+        {/* Header */}
+        <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+          <div>
+            <h2 className="fw-bold mb-1">
+              <i className="fas fa-heart me-2 text-warning"></i>
+              My Favorites
+            </h2>
+            <p className="text-white-50 small">
+              <i className="fas fa-images me-1"></i> 
+              {favorites.length} {favorites.length === 1 ? 'photo' : 'photos'} saved
+            </p>
+          </div>
           <button 
-            className="btn btn-outline-warning btn-sm"
+            className="btn btn-outline-warning rounded-pill px-4"
             onClick={fetchFavorites}
             disabled={loading}
           >
-            <i className="fas fa-sync-alt me-2"></i>
+            <i className={`fas fa-sync-alt me-2 ${loading ? 'fa-spin' : ''}`}></i>
             Refresh
           </button>
         </div>
 
         {/* Success Alert */}
         {success && (
-          <div className="alert alert-success alert-dismissible fade show" role="alert">
+          <div className="alert alert-success alert-dismissible fade show mb-4" role="alert">
             <i className="fas fa-check-circle me-2"></i>
             {success}
-            <button 
-              type="button" 
-              className="btn-close" 
-              onClick={() => setSuccess(null)}
-            ></button>
+            <button type="button" className="btn-close" onClick={() => setSuccess(null)}></button>
           </div>
         )}
 
         {/* Error Alert */}
         {error && (
-          <div className="alert alert-danger alert-dismissible fade show" role="alert">
-            <i className="fas fa-exclamation-circle me-2"></i>
+          <div className="alert alert-warning alert-dismissible fade show mb-4" role="alert">
+            <i className="fas fa-exclamation-triangle me-2"></i>
             {error}
-            <button 
-              type="button" 
-              className="btn-close" 
-              onClick={() => setError(null)}
-            ></button>
+            <button type="button" className="btn-close" onClick={() => setError(null)}></button>
           </div>
         )}
 
@@ -285,49 +354,51 @@ const BuyerFavorites = () => {
           </div>
         ) : (
           <div className="row g-4">
-            {favorites.map((item, idx) => {
-              // Extract media details safely
-              const mediaId = item.mediaId || item._id;
-              const title = item.mediaDetails?.title || item.title || "Untitled";
-              const photographer = item.mediaDetails?.photographerName || item.photographerName || "Anonymous";
-              const price = item.mediaDetails?.price || item.price || 0;
-              const fileUrl = item.mediaDetails?.fileUrl || item.fileUrl;
+            {favorites.map((item, index) => {
+              const mediaId = extractMediaId(item);
+              const title = extractTitle(item);
+              const photographer = extractPhotographer(item);
+              const price = extractPrice(item);
+              const imageUrl = extractImageUrl(item);
+              
+              console.log(`🎨 Rendering: ${title}, imageUrl: ${imageUrl?.substring(0, 60)}...`);
               
               return (
-                <div className="col-lg-3 col-md-4 col-6" key={mediaId || idx}>
-                  <div className="card bg-dark border-secondary h-100">
+                <div className="col-xl-3 col-lg-4 col-md-6 col-sm-6" key={mediaId || index}>
+                  <div className="card bg-dark border-secondary h-100 position-relative overflow-hidden">
                     <div className="position-relative">
                       <img
-                        src={resolveImage({ fileUrl })}
+                        src={imageUrl}
                         className="card-img-top"
-                        style={{ height: "150px", objectFit: "contain", backgroundColor: "#1a1a1a" }}
+                        style={{ height: "180px", objectFit: "cover", backgroundColor: "#1a1a1a" }}
                         alt={title}
                         loading="lazy"
-                        onError={async (e) => {
+                        onError={(e) => {
+                          console.log(`❌ Image failed: ${title}, URL: ${imageUrl}`);
                           e.target.onerror = null;
-                          const mediaId = item.mediaId || item._id;
-                          const protectedUrl = await fetchProtectedUrl(mediaId);
-                          if (protectedUrl) {
-                            e.target.src = protectedUrl;
-                          } else {
-                            e.target.src = placeholderMedium;
-                          }
+                          e.target.src = placeholderMedium;
                         }}
                       />
+                      
+                      {/* Price Badge */}
+                      {price > 0 && (
+                        <span className="position-absolute top-0 start-0 m-2 badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold">
+                          KES {price.toLocaleString()}
+                        </span>
+                      )}
+                      
+                      {/* Remove Favorite Button */}
                       <button
-                        className="position-absolute top-0 end-0 m-2 btn btn-sm btn-danger"
+                        className="position-absolute top-0 end-0 m-2 btn btn-sm btn-danger rounded-circle p-2"
                         onClick={() => removeFromFavorites(mediaId, title)}
                         disabled={updating}
                         title="Remove from favorites"
+                        style={{ width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center" }}
                       >
-                        <i className="fas fa-heart"></i>
+                        <i className="fas fa-heart-broken"></i>
                       </button>
-                      {price > 0 && (
-                        <span className="position-absolute bottom-0 start-0 m-2 badge bg-warning text-dark">
-                          KES {price}
-                        </span>
-                      )}
                     </div>
+                    
                     <div className="card-body d-flex flex-column">
                       <h6 className="fw-bold text-truncate mb-1" title={title}>
                         {title}
@@ -336,18 +407,22 @@ const BuyerFavorites = () => {
                         <i className="fas fa-camera me-1"></i>
                         {photographer}
                       </small>
-                      <div className="d-flex justify-content-between align-items-center mt-auto">
-                        <span className="text-warning fw-bold">KES {price}</span>
+                      
+                      <div className="d-flex justify-content-between align-items-center mt-auto pt-2">
+                        <span className="text-warning fw-bold">KES {price.toLocaleString()}</span>
                         <button
-                          className="btn btn-sm btn-warning"
-                          onClick={() => addToCart(mediaId, { title })}
+                          className="btn btn-sm btn-warning rounded-pill px-3"
+                          onClick={() => addToCart(mediaId, item)}
                           disabled={updating}
                           title="Add to cart"
                         >
                           {updating ? (
                             <span className="spinner-border spinner-border-sm"></span>
                           ) : (
-                            <i className="fas fa-cart-plus"></i>
+                            <>
+                              <i className="fas fa-cart-plus me-1"></i>
+                              Cart
+                            </>
                           )}
                         </button>
                       </div>
@@ -356,6 +431,17 @@ const BuyerFavorites = () => {
                 </div>
               );
             })}
+          </div>
+        )}
+        
+        {/* Quick Stats Footer */}
+        {favorites.length > 0 && (
+          <div className="mt-4 p-3 rounded-3 bg-dark bg-opacity-50 text-center">
+            <small className="text-white-50">
+              <i className="fas fa-info-circle me-2 text-warning"></i>
+              You have <strong className="text-warning">{favorites.length}</strong> favorite 
+              {favorites.length !== 1 ? 's' : ''}. Click the heart icon to remove.
+            </small>
           </div>
         )}
       </div>

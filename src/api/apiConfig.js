@@ -18,11 +18,12 @@ const isLocalHost = typeof window !== "undefined" && ["localhost", "127.0.0.1", 
 
 let API_BASE_URL;
 if (isLocalHost) {
-  if (explicitApiBaseUrl && explicitApiBaseUrl.includes("pm-backend-f3b6.onrender.com")) {
-    console.warn("[API] Localhost detected but explicit API URL points to remote backend. Overriding to local backend.");
+  const normalizedExplicitApiUrl = explicitApiBaseUrl?.replace(/\/+$/, "");
+  if (normalizedExplicitApiUrl && normalizedExplicitApiUrl.includes("pm-backend-f3b6.onrender.com")) {
+    console.warn("[API] Localhost detected and explicit API URL points to remote backend. Overriding to local backend to avoid CORS issues.");
     API_BASE_URL = DEFAULT_DEV_API_BASE_URL;
   } else {
-    API_BASE_URL = explicitApiBaseUrl?.replace(/\/+$/, "") || DEFAULT_DEV_API_BASE_URL;
+    API_BASE_URL = normalizedExplicitApiUrl || DEFAULT_DEV_API_BASE_URL;
   }
 } else {
   API_BASE_URL = explicitApiBaseUrl || DEFAULT_PROD_API_BASE_URL;
