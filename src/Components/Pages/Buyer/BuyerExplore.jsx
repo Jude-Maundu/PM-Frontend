@@ -29,14 +29,19 @@ const BuyerExplore = () => {
   const [showModal, setShowModal] = useState(false);
   const [columns, setColumns] = useState(4);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 992);
-  const [sidebarWidth, setSidebarWidth] = useState(320); // Flexible sidebar width
+  const [sidebarWidth, setSidebarWidth] = useState(320);
+  const [showProtectionWarning, setShowProtectionWarning] = useState(false);
   
-  // Fading banner state for right sidebar
+  // Fading banner state
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [nextBannerIndex, setNextBannerIndex] = useState(1);
   const [isFading, setIsFading] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
   
+  // Ref for modal content to detect keyboard shortcuts
+  const modalRef = useRef(null);
+  const imageRef = useRef(null);
+
   const bannerImages = [
     { 
       id: 1, 
@@ -85,7 +90,7 @@ const BuyerExplore = () => {
     }
   ];
 
-  // Auto-rotate banner images with fade effect
+  // Auto-rotate banner images
   useEffect(() => {
     const interval = setInterval(() => {
       setIsFading(true);
@@ -97,48 +102,96 @@ const BuyerExplore = () => {
     }, 5000);
     
     setNextBannerIndex(1 % bannerImages.length);
-    
     return () => clearInterval(interval);
-  }, [bannerImages.length]);
+  }, []);
 
-  // Responsive column count and sidebar width
+  // Disable right-click globally
   useEffect(() => {
-    const updateLayout = () => {
-      const width = window.innerWidth;
-      
-      // Flexible sidebar width based on screen size
-      if (width >= 1920) {
-        setSidebarWidth(380);
-        setColumns(4);
-      } else if (width >= 1600) {
-        setSidebarWidth(340);
-        setColumns(4);
-      } else if (width >= 1400) {
-        setSidebarWidth(320);
-        setColumns(3);
-      } else if (width >= 1200) {
-        setSidebarWidth(300);
-        setColumns(3);
-      } else if (width >= 992) {
-        setSidebarWidth(280);
-        setColumns(3);
-        setShowSidebar(true);
-      } else {
-        setShowSidebar(false);
-        if (width < 576) setColumns(2);
-        else if (width < 768) setColumns(2);
-        else if (width < 992) setColumns(3);
-        else setColumns(4);
-      }
-      
-      setIsMobile(width < 992);
-      setShowSidebar(width >= 992);
+    const disableRightClick = (e) => {
+      e.preventDefault();
+      setShowProtectionWarning(true);
+      setTimeout(() => setShowProtectionWarning(false), 2000);
+      return false;
     };
     
-    updateLayout();
-    window.addEventListener("resize", updateLayout);
-    return () => window.removeEventListener("resize", updateLayout);
+    document.addEventListener('contextmenu', disableRightClick);
+    
+    return () => {
+      document.removeEventListener('contextmenu', disableRightClick);
+    };
   }, []);
+
+  // Prevent keyboard shortcuts for screenshots
+  useEffect(() => {
+    const preventKeyboardShortcuts = (e) => {
+      // Prevent Print Screen
+      if (e.key === 'PrintScreen') {
+        e.preventDefault();
+        setShowProtectionWarning(true);
+        setTimeout(() => setShowProtectionWarning(false), 2000);
+        return false;
+      }
+      
+      // Prevent Ctrl+S (Save)
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        setShowProtectionWarning(true);
+        setTimeout(() => setShowProtectionWarning(false), 2000);
+        return false;
+      }
+      
+      // Prevent Ctrl+P (Print)
+      if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+        e.preventDefault();
+        setShowProtectionWarning(true);
+        setTimeout(() => setShowProtectionWarning(false), 2000);
+        return false;
+      }
+      
+      // Prevent Ctrl+Shift+I (Dev Tools)
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'I') {
+        e.preventDefault();
+        return false;
+      }
+      
+      // Prevent Ctrl+U (View Source)
+      if ((e.ctrlKey || e.metaKey) && e.key === 'u') {
+        e.preventDefault();
+        return false;
+      }
+      
+      // Prevent F12 (Dev Tools)
+      if (e.key === 'F12') {
+        e.preventDefault();
+        return false;
+      }
+    };
+    
+    window.addEventListener('keydown', preventKeyboardShortcuts);
+    
+    return () => {
+      window.removeEventListener('keydown', preventKeyboardShortcuts);
+    };
+  }, []);
+
+  // Add protection when modal is open
+  useEffect(() => {
+    if (showModal) {
+      // Disable body scroll
+      document.body.style.overflow = 'hidden';
+      
+      // Add class to prevent selection
+      document.body.classList.add('no-select');
+    } else {
+      document.body.style.overflow = '';
+      document.body.classList.remove('no-select');
+    }
+    
+    return () => {
+      document.body.style.overflow = '';
+      document.body.classList.remove('no-select');
+    };
+  }, [showModal]);
 
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
@@ -354,14 +407,62 @@ const BuyerExplore = () => {
     };
   };
 
+  // Responsive column count and sidebar width
+  useEffect(() => {
+    const updateLayout = () => {
+      const width = window.innerWidth;
+      
+      if (width >= 1920) {
+        setSidebarWidth(380);
+        setColumns(4);
+      } else if (width >= 1600) {
+        setSidebarWidth(340);
+        setColumns(4);
+      } else if (width >= 1400) {
+        setSidebarWidth(320);
+        setColumns(3);
+      } else if (width >= 1200) {
+        setSidebarWidth(300);
+        setColumns(3);
+      } else if (width >= 992) {
+        setSidebarWidth(280);
+        setColumns(3);
+        setShowSidebar(true);
+      } else {
+        setShowSidebar(false);
+        if (width < 576) setColumns(2);
+        else if (width < 768) setColumns(2);
+        else if (width < 992) setColumns(3);
+        else setColumns(4);
+      }
+      
+      setIsMobile(width < 992);
+      setShowSidebar(width >= 992);
+    };
+    
+    updateLayout();
+    window.addEventListener("resize", updateLayout);
+    return () => window.removeEventListener("resize", updateLayout);
+  }, []);
+
   return (
     <BuyerLayout>
+      {/* Protection Warning Toast */}
+      {showProtectionWarning && (
+        <div className="position-fixed top-50 start-50 translate-middle z-3" style={{ zIndex: 9999 }}>
+          <div className="alert alert-warning shadow-lg rounded-pill px-4 py-2" style={{ animation: 'fadeInOut 2s ease' }}>
+            <i className="fas fa-shield-alt me-2"></i>
+            Content is protected. Screenshots are disabled.
+          </div>
+        </div>
+      )}
+
       <div className="text-white" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
         
         {/* Main Content with Flexible Sidebar Layout */}
         <div className="d-flex flex-column flex-lg-row gap-4" style={{ gap: "clamp(1rem, 3vw, 2rem)" }}>
           
-          {/* Main Image Grid Area - Flexible Width */}
+          {/* Main Image Grid Area */}
           <div className="flex-grow-1" style={{ minWidth: 0 }}>
             
             {/* Hero Section */}
@@ -543,7 +644,7 @@ const BuyerExplore = () => {
             )}
           </div>
 
-          {/* RIGHT SIDEBAR - FLEXIBLE FADING BANNER AREA */}
+          {/* RIGHT SIDEBAR */}
           {showSidebar && (
             <div style={{ 
               width: `${sidebarWidth}px`, 
@@ -552,7 +653,7 @@ const BuyerExplore = () => {
             }}>
               <div className="position-sticky" style={{ top: "20px" }}>
                 
-                {/* Fading Banner Component - Flexible height */}
+                {/* Fading Banner Component */}
                 <div className="position-relative rounded-3 overflow-hidden mb-4" style={{ 
                   height: `clamp(420px, 45vh, 520px)`,
                   background: "#0a0a0a",
@@ -599,9 +700,6 @@ const BuyerExplore = () => {
                       <div className="badge bg-warning text-dark rounded-pill px-3 py-1">
                         <i className="fas fa-camera me-1"></i> {bannerImages[currentBannerIndex].badge}
                       </div>
-                      <button className="btn btn-sm btn-link text-warning p-0" style={{ textDecoration: "none" }}>
-                        <i className="fas fa-heart"></i>
-                      </button>
                     </div>
                     <h4 className="fw-bold mb-2" style={{ fontSize: "clamp(1rem, 2vw, 1.2rem)" }}>
                       {bannerImages[currentBannerIndex].title}
@@ -648,7 +746,7 @@ const BuyerExplore = () => {
                   </div>
                 </div>
 
-                {/* Additional Promo Cards - Flexible */}
+                {/* Additional Promo Cards */}
                 <div className="bg-dark rounded-3 p-3 text-center mb-3" style={{ 
                   background: "linear-gradient(135deg, #2a1b3d 0%, #1a1a2e 100%)", 
                   borderRadius: "20px" 
@@ -678,19 +776,94 @@ const BuyerExplore = () => {
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Protected Modal with Anti-Screenshot Measures */}
       {showModal && selectedPhoto && (
-        <div className="modal show d-block" style={{ backgroundColor: "rgba(0,0,0,0.95)", zIndex: 1060 }} onClick={() => setShowModal(false)}>
+        <div 
+          className="modal show d-block" 
+          style={{ 
+            backgroundColor: "rgba(0,0,0,0.95)", 
+            zIndex: 1060,
+            backdropFilter: "blur(5px)"
+          }} 
+          onClick={() => setShowModal(false)}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            setShowProtectionWarning(true);
+            setTimeout(() => setShowProtectionWarning(false), 2000);
+            return false;
+          }}
+        >
           <div className="modal-dialog modal-dialog-centered m-0 mx-auto" style={{ maxWidth: "90vw", minHeight: "100vh", display: "flex", alignItems: "center" }}>
             <div className="modal-content bg-transparent border-0" onClick={(e) => e.stopPropagation()}>
-              <button className="btn-close btn-close-white position-absolute top-0 end-0 m-3" onClick={() => setShowModal(false)}></button>
-              <div className="text-center">
+              <button 
+                className="btn-close btn-close-white position-absolute top-0 end-0 m-3" 
+                style={{ zIndex: 1061 }}
+                onClick={() => setShowModal(false)}
+              ></button>
+              <div className="text-center position-relative">
+                {/* Watermark Overlay */}
+                <div 
+                  style={{
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%) rotate(-25deg)",
+                    fontSize: "clamp(24px, 5vw, 48px)",
+                    fontWeight: "bold",
+                    color: "rgba(255,193,7,0.3)",
+                    textShadow: "2px 2px 4px rgba(0,0,0,0.5)",
+                    pointerEvents: "none",
+                    zIndex: 10,
+                    whiteSpace: "nowrap",
+                    width: "100%",
+                    textAlign: "center"
+                  }}
+                >
+                  © PhotoMarket
+                </div>
+                
+                {/* Image with protection */}
                 <img 
+                  ref={imageRef}
                   src={imageUrls[selectedPhoto._id] || resolveImage(selectedPhoto) || placeholderMedium} 
                   alt={selectedPhoto.title} 
-                  className="img-fluid rounded-3"
-                  style={{ maxHeight: "80vh", maxWidth: "100%", objectFit: "contain" }} 
+                  className="img-fluid rounded-3 protected-image"
+                  style={{ 
+                    maxHeight: "80vh", 
+                    maxWidth: "100%", 
+                    objectFit: "contain",
+                    pointerEvents: "none",
+                    userSelect: "none",
+                    WebkitUserSelect: "none",
+                    MozUserSelect: "none",
+                    msUserSelect: "none"
+                  }} 
+                  onDragStart={(e) => {
+                    e.preventDefault();
+                    return false;
+                  }}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    setShowProtectionWarning(true);
+                    setTimeout(() => setShowProtectionWarning(false), 2000);
+                    return false;
+                  }}
                 />
+                
+                {/* Protective overlay to block screenshot tools */}
+                <div 
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: "transparent",
+                    pointerEvents: "none",
+                    zIndex: 5
+                  }}
+                />
+                
                 <div className="mt-3">
                   <h5 className="fw-bold mb-1">{selectedPhoto.title}</h5>
                   <p className="text-white-50 small mb-2">By {selectedPhoto.photographer?.username || "Anonymous"}</p>
@@ -701,6 +874,12 @@ const BuyerExplore = () => {
                     <button className="btn btn-outline-light btn-sm rounded-pill px-3" onClick={() => handleLike(selectedPhoto._id)}>
                       <i className="fas fa-heart me-1"></i>Like ({selectedPhoto.likes || 0})
                     </button>
+                  </div>
+                  <div className="mt-2">
+                    <small className="text-white-50">
+                      <i className="fas fa-shield-alt me-1"></i>
+                      Protected content - Screenshots disabled
+                    </small>
                   </div>
                 </div>
               </div>
@@ -721,9 +900,34 @@ const BuyerExplore = () => {
           }
         }
         
+        @keyframes fadeInOut {
+          0% { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+          10% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+          90% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+          100% { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+        }
+        
         .card {
           animation: fadeInUp 0.4s ease-out;
           transition: all 0.2s ease;
+        }
+        
+        .protected-image {
+          -webkit-touch-callout: none;
+          -webkit-user-select: none;
+          -khtml-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+          user-select: none;
+        }
+        
+        .no-select {
+          -webkit-touch-callout: none;
+          -webkit-user-select: none;
+          -khtml-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+          user-select: none;
         }
         
         .overflow-auto::-webkit-scrollbar {

@@ -3,33 +3,21 @@
  * Central location for all API endpoints
  */
 
-// IMPORTANT: CORS is required for frontend dev (localhost). The deployed backend at
-// https://pm-backend-f3b6.onrender.com already allows CORS, but some other
-// backend instances (e.g., pm-backend-1-0.onrender.com) do not.
-//
-// If you want to point to a different backend, set REACT_APP_API_URL in a .env file.
-// Example: REACT_APP_API_URL=http://localhost:4000/api
+// FORCE USE ONLINE SERVER - Remove localhost fallback
+const ONLINE_API_BASE_URL = "https://pm-backend-f3b6.onrender.com/api";
 
-const DEFAULT_PROD_API_BASE_URL = "https://pm-backend-f3b6.onrender.com/api";
-const DEFAULT_DEV_API_BASE_URL = "http://localhost:4000/api";
-
-const explicitApiBaseUrl = process.env.REACT_APP_API_BASE_URL || process.env.REACT_APP_API_URL;
-const isLocalHost = typeof window !== "undefined" && ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
-
-let API_BASE_URL;
-if (isLocalHost) {
-  const normalizedExplicitApiUrl = explicitApiBaseUrl?.replace(/\/+$/, "");
-  if (normalizedExplicitApiUrl && normalizedExplicitApiUrl.includes("pm-backend-f3b6.onrender.com")) {
-    console.warn("[API] Localhost detected and explicit API URL points to remote backend. Overriding to local backend to avoid CORS issues.");
-    API_BASE_URL = DEFAULT_DEV_API_BASE_URL;
-  } else {
-    API_BASE_URL = normalizedExplicitApiUrl || DEFAULT_DEV_API_BASE_URL;
-  }
-} else {
-  API_BASE_URL = explicitApiBaseUrl || DEFAULT_PROD_API_BASE_URL;
-}
+// Override to always use online server
+const API_BASE_URL = ONLINE_API_BASE_URL;
 
 console.log("[API] Using API_BASE_URL:", API_BASE_URL);
+
+// Optional: Check if server is reachable (for debugging)
+if (typeof window !== "undefined") {
+  fetch(`${API_BASE_URL}/health`)
+    .then(res => res.json())
+    .then(data => console.log("[API] Backend health check:", data))
+    .catch(err => console.warn("[API] Backend not reachable:", err.message));
+}
 
 const API_ENDPOINTS = {
   // ==================== AUTH ====================
@@ -61,12 +49,9 @@ const API_ENDPOINTS = {
     UPDATE: (id) => `${API_BASE_URL}/media/${id}`,
     UPDATE_PRICE: (id) => `${API_BASE_URL}/media/${id}/price`,
     DELETE: (id) => `${API_BASE_URL}/media/${id}`,
-    // Album access (private share links)
     ALBUM_ACCESS_CREATE: (albumId) => `${API_BASE_URL}/media/album/${albumId}/access`,
     ALBUM_ACCESS_VIEW: (albumId, token) => `${API_BASE_URL}/media/album/${albumId}/access/${token}`,
     ALBUM_ACCESS_HISTORY: (albumId) => `${API_BASE_URL}/media/album/${albumId}/access`,
-
-    // Album management (optional; backend may not implement)
     CREATE_ALBUM: `${API_BASE_URL}/media/album`,
     GET_ALBUMS: `${API_BASE_URL}/media/albums`,
     GET_ALBUM: (albumId) => `${API_BASE_URL}/media/album/${albumId}`,
@@ -179,6 +164,5 @@ const API_ENDPOINTS = {
     PROCESS: (id) => `${API_BASE_URL}/withdrawals/${id}/process`,
   },
 };
-
 
 export { API_BASE_URL, API_ENDPOINTS };
