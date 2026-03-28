@@ -21,10 +21,81 @@ const PhotographerUpload = () => {
   const [loading, setLoading] = useState(true);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [authChecked, setAuthChecked] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 992);
+  
+  // Fading banner state
+  const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+  const [nextBannerIndex, setNextBannerIndex] = useState(1);
+  const [isFading, setIsFading] = useState(false);
 
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
   const headers = { Authorization: `Bearer ${token}` };
+
+  const bannerImages = [
+    { 
+      id: 1, 
+      url: "https://images.unsplash.com/photo-1492691527719-9d1e4e485a21?auto=format&fit=crop&w=800&q=80", 
+      title: "Upload Tips", 
+      description: "High-quality images sell better. Use clear titles and relevant tags.",
+      badge: "Pro Tip",
+      icon: "fas fa-lightbulb"
+    },
+    { 
+      id: 2, 
+      url: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=800&q=80", 
+      title: "Pricing Strategy", 
+      description: "Set competitive prices to attract more buyers. Check market rates!",
+      badge: "Pricing Guide",
+      icon: "fas fa-chart-line"
+    },
+    { 
+      id: 3, 
+      url: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=800&q=80", 
+      title: "SEO Optimization", 
+      description: "Use descriptive titles and tags to make your content discoverable.",
+      badge: "SEO Tips",
+      icon: "fas fa-search"
+    },
+    { 
+      id: 4, 
+      url: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=800&q=80", 
+      title: "Quality Matters", 
+      description: "High-resolution images get 3x more sales. Upload in HD!",
+      badge: "Quality Check",
+      icon: "fas fa-crown"
+    },
+    { 
+      id: 5, 
+      url: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=800&q=80", 
+      title: "Earn More", 
+      description: "Consistent uploaders earn up to 50% more revenue monthly.",
+      badge: "Revenue Tips",
+      icon: "fas fa-dollar-sign"
+    }
+  ];
+
+  // Auto-rotate banner images with fade effect
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsFading(true);
+      setTimeout(() => {
+        setCurrentBannerIndex((prev) => (prev + 1) % bannerImages.length);
+        setNextBannerIndex((prev) => (prev + 1) % bannerImages.length);
+        setIsFading(false);
+      }, 500);
+    }, 5000);
+    
+    setNextBannerIndex(1 % bannerImages.length);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 992);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Check authentication and role on mount
   useEffect(() => {
@@ -45,7 +116,7 @@ const PhotographerUpload = () => {
         return false;
       }
 
-      // ✅ FIXED: Allow both photographers AND admins
+      // Allow both photographers AND admins
       if (role !== "photographer" && role !== "admin") {
         setError(`Access denied. Your role is "${role}". Photographers and admins only.`);
         setTimeout(() => navigate("/photographer/dashboard"), 2000);
@@ -216,7 +287,7 @@ const PhotographerUpload = () => {
             </h4>
             <p className="text-white-50 small mb-0">
               <i className="fas fa-info-circle me-2"></i>
-              Using API client: centralized endpoint
+              Share your creativity with the world
             </p>
           </div>
           <div className="d-flex gap-2 mt-3 mt-md-0">
@@ -265,10 +336,11 @@ const PhotographerUpload = () => {
           </div>
         </div>
 
-        {/* Rest of your form remains the same... */}
+        {/* Main Content with Sidebar Layout */}
         <div className="row g-4">
-          {/* Upload Form */}
-          <div className="col-lg-8">
+          
+          {/* Main Form Area */}
+          <div className={`${!isMobile ? 'col-lg-8' : 'col-12'}`}>
             <div 
               className="card border-0 h-100"
               style={{
@@ -496,69 +568,205 @@ const PhotographerUpload = () => {
             </div>
           </div>
 
-          {/* Preview Panel */}
-          <div className="col-lg-4">
-            <div 
-              className="card border-0 sticky-top"
-              style={{
-                ...glassStyle,
-                borderRadius: "24px",
-                top: "100px",
-              }}
-            >
-              <div className="card-header bg-transparent border-warning border-opacity-25 p-4">
-                <h5 className="mb-0">
-                  <i className="fas fa-eye me-2 text-warning"></i>
-                  Preview
-                </h5>
-              </div>
-              <div className="card-body p-4 text-center">
-                {preview ? (
-                  <>
-                    {formData.mediaType === "video" ? (
-                      <video
-                        src={preview}
-                        className="img-fluid rounded-3 mb-3"
-                        style={{ maxHeight: "200px", width: "100%", objectFit: "cover" }}
-                        controls
-                      />
-                    ) : (
-                      <img
-                        src={preview}
-                        alt="Preview"
-                        className="img-fluid rounded-3 mb-3"
-                        style={{ maxHeight: "200px", width: "100%", objectFit: "cover" }}
-                      />
-                    )}
-                    
-                    <div className="mt-3">
-                      {formData.title && (
-                        <h6 className="text-white mb-2">{formData.title}</h6>
-                      )}
-                      
-                      <div className="d-flex justify-content-center gap-2">
-                        {formData.price && (
-                          <span className="badge bg-warning text-dark px-3 py-2 rounded-pill">
-                            KES {formData.price}
-                          </span>
+          {/* RIGHT SIDEBAR - Preview + Fading Banner */}
+          {!isMobile && (
+            <div className="col-lg-4">
+              <div className="position-sticky" style={{ top: "100px" }}>
+                
+                {/* Preview Panel */}
+                <div 
+                  className="card border-0 mb-4"
+                  style={{
+                    ...glassStyle,
+                    borderRadius: "24px",
+                  }}
+                >
+                  <div className="card-header bg-transparent border-warning border-opacity-25 p-4">
+                    <h5 className="mb-0">
+                      <i className="fas fa-eye me-2 text-warning"></i>
+                      Preview
+                    </h5>
+                  </div>
+                  <div className="card-body p-4 text-center">
+                    {preview ? (
+                      <>
+                        {formData.mediaType === "video" ? (
+                          <video
+                            src={preview}
+                            className="img-fluid rounded-3 mb-3"
+                            style={{ maxHeight: "200px", width: "100%", objectFit: "cover" }}
+                            controls
+                          />
+                        ) : (
+                          <img
+                            src={preview}
+                            alt="Preview"
+                            className="img-fluid rounded-3 mb-3"
+                            style={{ maxHeight: "200px", width: "100%", objectFit: "cover" }}
+                          />
                         )}
-                        <span className="badge bg-info bg-opacity-25 text-info px-3 py-2 rounded-pill">
-                          {formData.mediaType}
-                        </span>
+                        
+                        <div className="mt-3">
+                          {formData.title && (
+                            <h6 className="text-white mb-2">{formData.title}</h6>
+                          )}
+                          
+                          <div className="d-flex justify-content-center gap-2">
+                            {formData.price && (
+                              <span className="badge bg-warning text-dark px-3 py-2 rounded-pill">
+                                KES {formData.price}
+                              </span>
+                            )}
+                            <span className="badge bg-info bg-opacity-25 text-info px-3 py-2 rounded-pill">
+                              {formData.mediaType}
+                            </span>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="py-5">
+                        <i className="fas fa-image fa-4x text-white-50 mb-3"></i>
+                        <p className="text-white-50">No file selected</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Fading Banner Component */}
+                <div className="position-relative rounded-4 overflow-hidden mb-4" style={{ 
+                  height: "380px",
+                  background: "#0a0a0a",
+                  boxShadow: "0 20px 40px rgba(0,0,0,0.3)"
+                }}>
+                  {/* Current Banner Image */}
+                  <div
+                    className="position-absolute w-100 h-100"
+                    style={{
+                      backgroundImage: `url(${bannerImages[currentBannerIndex].url})`,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                      transition: "opacity 0.8s ease-in-out",
+                      opacity: isFading ? 0 : 1,
+                      zIndex: 1
+                    }}
+                  >
+                    <div className="position-absolute w-100 h-100" style={{
+                      background: "linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.9) 100%)"
+                    }}></div>
+                  </div>
+                  
+                  {/* Next Banner Image */}
+                  <div
+                    className="position-absolute w-100 h-100"
+                    style={{
+                      backgroundImage: `url(${bannerImages[nextBannerIndex].url})`,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                      transition: "opacity 0.8s ease-in-out",
+                      opacity: isFading ? 1 : 0,
+                      zIndex: 0
+                    }}
+                  >
+                    <div className="position-absolute w-100 h-100" style={{
+                      background: "linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.9) 100%)"
+                    }}></div>
+                  </div>
+                  
+                  {/* Banner Content */}
+                  <div className="position-relative h-100 d-flex flex-column justify-content-end p-4" style={{ zIndex: 2 }}>
+                    <div className="d-flex align-items-center gap-2 mb-3">
+                      <i className={`${bannerImages[currentBannerIndex].icon} text-warning fa-lg`}></i>
+                      <div className="badge bg-warning text-dark rounded-pill px-3 py-1">
+                        {bannerImages[currentBannerIndex].badge}
                       </div>
                     </div>
-                  </>
-                ) : (
-                  <div className="py-5">
-                    <i className="fas fa-image fa-4x text-white-50 mb-3"></i>
-                    <p className="text-white-50">No file selected</p>
+                    <h5 className="fw-bold mb-2">{bannerImages[currentBannerIndex].title}</h5>
+                    <p className="text-white-50 small mb-3">
+                      {bannerImages[currentBannerIndex].description}
+                    </p>
                   </div>
-                )}
+                  
+                  {/* Dots Indicator */}
+                  <div className="position-absolute bottom-0 start-0 end-0 d-flex justify-content-center gap-2 pb-3" style={{ zIndex: 3 }}>
+                    {bannerImages.map((_, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => {
+                          setIsFading(true);
+                          setTimeout(() => {
+                            setCurrentBannerIndex(idx);
+                            setNextBannerIndex((idx + 1) % bannerImages.length);
+                            setIsFading(false);
+                          }, 500);
+                        }}
+                        className="border-0 rounded-pill transition-all"
+                        style={{
+                          width: currentBannerIndex === idx ? "24px" : "6px",
+                          height: "6px",
+                          backgroundColor: currentBannerIndex === idx ? "#ffc107" : "rgba(255,255,255,0.4)",
+                          cursor: "pointer"
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Tips Card */}
+                <div 
+                  className="card border-0"
+                  style={{
+                    ...glassStyle,
+                    borderRadius: "24px",
+                  }}
+                >
+                  <div className="card-body p-4">
+                    <div className="d-flex align-items-center gap-2 mb-3">
+                      <i className="fas fa-chart-line text-warning fa-lg"></i>
+                      <h6 className="fw-bold mb-0">Upload Best Practices</h6>
+                    </div>
+                    <ul className="list-unstyled mb-0">
+                      <li className="d-flex align-items-start gap-2 mb-2">
+                        <i className="fas fa-check-circle text-success mt-1 small"></i>
+                        <small className="text-white-50">Use high-resolution images (minimum 1920x1080)</small>
+                      </li>
+                      <li className="d-flex align-items-start gap-2 mb-2">
+                        <i className="fas fa-check-circle text-success mt-1 small"></i>
+                        <small className="text-white-50">Add descriptive titles and relevant tags</small>
+                      </li>
+                      <li className="d-flex align-items-start gap-2 mb-2">
+                        <i className="fas fa-check-circle text-success mt-1 small"></i>
+                        <small className="text-white-50">Set competitive prices based on quality</small>
+                      </li>
+                      <li className="d-flex align-items-start gap-2">
+                        <i className="fas fa-check-circle text-success mt-1 small"></i>
+                        <small className="text-white-50">Upload consistently to build your portfolio</small>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
+
+      <style jsx="true">{`
+        .cursor-pointer {
+          cursor: pointer;
+        }
+        
+        .transition-all {
+          transition: all 0.3s ease;
+        }
+        
+        .border-dashed {
+          border-style: dashed;
+        }
+        
+        .tracking-wide {
+          letter-spacing: 0.5px;
+        }
+      `}</style>
     </PhotographerLayout>
   );
 };
