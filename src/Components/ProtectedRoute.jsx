@@ -7,6 +7,7 @@ const ProtectedRoute = ({ children, requiredRole }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
   const [userRole, setUserRole] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [authError, setAuthError] = useState(null);
   const location = useLocation();
 
   useEffect(() => {
@@ -14,6 +15,7 @@ const ProtectedRoute = ({ children, requiredRole }) => {
       try {
         const token = localStorage.getItem('token');
         const storedUser = localStorage.getItem('user');
+        const storedRole = localStorage.getItem('role');
 
         // No token or user data
         if (!token || !storedUser) {
@@ -23,7 +25,21 @@ const ProtectedRoute = ({ children, requiredRole }) => {
           return;
         }
 
-        // Try to verify token with backend
+        // Parse stored user
+        let parsedUser;
+        try {
+          parsedUser = JSON.parse(storedUser);
+        } catch (e) {
+          console.error('[ProtectedRoute] Failed to parse stored user');
+          setIsAuthenticated(false);
+          setIsLoading(false);
+          return;
+        }
+
+        // Try to verify with backend (optional - falls back to localStorage on error)
+        let backendVerified = false;
+        let userData = null;
+        
         try {
           const response = await axios.get(
             `${API_BASE_URL}/auth/users/me`,
@@ -32,32 +48,47 @@ const ProtectedRoute = ({ children, requiredRole }) => {
               timeout: 5000
             }
           );
-
-          const user = response.data;
-          const actualRole = user.role || 'user';
-
-          console.log('[ProtectedRoute] Backend verification:', { userId: user.id, role: actualRole });
-
-          // Update localStorage with fresh data from backend
-          localStorage.setItem('user', JSON.stringify(user));
-          localStorage.setItem('role', actualRole);
-
-          setIsAuthenticated(true);
-          setUserRole(actualRole);
-        } catch (backendError) {
-          // Backend verification failed - fall back to localStorage
-          console.warn('[ProtectedRoute] Backend verification failed, using localStorage:', backendError.message);
           
-          try {
-            const storedUserObj = JSON.parse(storedUser);
-            const storedRole = storedUserObj.role || localStorage.getItem('role') || 'user';
-            
-            setIsAuthenticated(true);
-            setUserRole(storedRole);
-          } catch {
-            setIsAuthenticated(false);
+          if (response.data && response.data.id) {
+            userData = response.data;
+            backendVerified = true;
+            console.log('[ProtectedRoute] ✅ Backend verification successful:', { 
+              userId: userData.id, 
+              role: userData.role 
+            });
           }
+        } catch (backendError) {
+          // Handle different backend errors silently - use localStorage fallback
+          if (backendError.response?.status === 500) {
+            console.warn('[ProtectedRoute] ⚠️ Backend 500 error - using localStorage fallback');
+            setAuthError('Backend server issue, using cached authentication');
+          } else if (backendError.code === 'ECONNABORTED') {
+            console.warn('[ProtectedRoute] ⚠️ Backend timeout - using localStorage fallback');
+          } else {
+            console.warn('[ProtectedRoute] ⚠️ Backend verification failed - using localStorage fallback');
+          }
+          
+          // Use localStorage data as fallback
+          userData = parsedUser;
         }
+
+        // Determine role from either backend or localStorage
+        const actualRole = userData?.role || storedRole || 'user';
+        
+        // Normalize role
+        const normalizedRole = String(actualRole).toLowerCase().trim();
+        
+        console.log('[ProtectedRoute] User authenticated, role:', normalizedRole);
+        
+        // Update localStorage with fresh data if backend verification succeeded
+        if (backendVerified && userData) {
+          localStorage.setItem('user', JSON.stringify(userData));
+          localStorage.setItem('role', normalizedRole);
+        }
+        
+        setIsAuthenticated(true);
+        setUserRole(normalizedRole);
+        
       } catch (error) {
         console.error('[ProtectedRoute] Auth check error:', error);
         setIsAuthenticated(false);
@@ -67,7 +98,7 @@ const ProtectedRoute = ({ children, requiredRole }) => {
     };
 
     checkAuth();
-  }, [location.pathname]); // Re-verify when route changes
+  }, [location.pathname]);
 
   // Show loading spinner while checking authentication
   if (isLoading) {
@@ -78,6 +109,9 @@ const ProtectedRoute = ({ children, requiredRole }) => {
             <span className="visually-hidden">Loading...</span>
           </div>
           <h4 className="text-white">Checking authentication...</h4>
+          {authError && (
+            <p className="text-white-50 small mt-2">{authError}</p>
+          )}
         </div>
       </div>
     );
@@ -85,6 +119,7 @@ const ProtectedRoute = ({ children, requiredRole }) => {
 
   // Redirect to login if not authenticated
   if (!isAuthenticated) {
+    console.log('[ProtectedRoute] Not authenticated, redirecting to login');
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
@@ -96,38 +131,45 @@ const ProtectedRoute = ({ children, requiredRole }) => {
     const requiredRoleLower = String(requiredRole).toLowerCase().trim();
 
     // Allow admin access to everything
-    if (roleLower.includes('admin')) {
+    if (roleLower === 'admin' || roleLower.includes('admin')) {
+      console.log('[ProtectedRoute] Admin access granted');
       return children;
     }
 
+    // Photographer role check
     if (requiredRoleLower === 'photographer') {
-      if (roleLower.includes('photographer')) {
+      if (roleLower === 'photographer' || roleLower.includes('photographer')) {
+        console.log('[ProtectedRoute] Photographer access granted');
         return children;
       }
-      if (roleLower.includes('user') || roleLower.includes('buyer')) {
+      if (roleLower === 'buyer' || roleLower === 'user') {
+        console.log('[ProtectedRoute] Buyer trying to access photographer route, redirecting');
         return <Navigate to="/buyer/dashboard" replace />;
       }
+      console.log('[ProtectedRoute] Unknown role, redirecting to login');
       return <Navigate to="/login" replace />;
     }
 
+    // Buyer role check
     if (requiredRoleLower === 'buyer') {
-      if (roleLower.includes('user') || roleLower.includes('buyer')) {
+      if (roleLower === 'buyer' || roleLower === 'user') {
+        console.log('[ProtectedRoute] Buyer access granted');
         return children;
       }
-      if (roleLower.includes('photographer')) {
+      if (roleLower === 'photographer') {
+        console.log('[ProtectedRoute] Photographer trying to access buyer route, redirecting');
         return <Navigate to="/photographer/dashboard" replace />;
       }
+      console.log('[ProtectedRoute] Unknown role, redirecting to login');
       return <Navigate to="/login" replace />;
     }
 
+    // Admin role check
     if (requiredRoleLower === 'admin') {
-      if (roleLower.includes('admin')) {
-        return children;
-      }
-      if (roleLower.includes('photographer')) {
+      if (roleLower === 'photographer') {
         return <Navigate to="/photographer/dashboard" replace />;
       }
-      if (roleLower.includes('user') || roleLower.includes('buyer')) {
+      if (roleLower === 'buyer' || roleLower === 'user') {
         return <Navigate to="/buyer/dashboard" replace />;
       }
       return <Navigate to="/login" replace />;
@@ -135,6 +177,7 @@ const ProtectedRoute = ({ children, requiredRole }) => {
   }
 
   // If no requiredRole is provided, allow any authenticated user
+  console.log('[ProtectedRoute] General access granted for role:', roleLower);
   return children;
 };
 
