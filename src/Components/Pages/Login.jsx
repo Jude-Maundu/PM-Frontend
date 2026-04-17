@@ -7,7 +7,6 @@ import GoogleAuth from "../GoogleAuth";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("user");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -22,7 +21,7 @@ const Login = () => {
     try {
       const response = await axios.post(
         `${API_BASE_URL}/auth/login`,
-        { email, password, role },
+        { email, password },
       );
 
       console.log("Login response:", response.data);
@@ -70,7 +69,18 @@ const Login = () => {
       }, 1500);
     } catch (err) {
       console.error("Login error:", err);
-      setError(err.response?.data?.message || "Login failed, please try again");
+      console.error("Login response payload:", err.response?.data);
+
+      const serverMessage =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        (err.response?.data ? JSON.stringify(err.response.data) : null);
+
+      if (err.response?.status === 400) {
+        setError(serverMessage || "Invalid email or password");
+      } else {
+        setError(serverMessage || "Login failed, please try again");
+      }
     } finally {
       setLoading(false);
     }

@@ -162,7 +162,7 @@ const PhotographerProfile = () => {
         joinedDate: userData?.createdAt || user?.createdAt || new Date().toISOString(),
         profileImage: savedProfileImage || userData?.profileImage || user?.profileImage || "",
         coverImage: savedCoverImage || userData?.coverImage || user?.coverImage || "",
-        watermark: userData?.watermark || user?.watermark || "",
+        watermark: userData?.watermark || user?.watermark || "Relic Snap",
       });
 
     } catch (error) {
@@ -183,7 +183,7 @@ const PhotographerProfile = () => {
     
     try {
       const updatePayload = {
-        name: profile.name,
+        username: profile.name,
         email: profile.email,
         bio: profile.bio,
         location: profile.location,
@@ -191,7 +191,8 @@ const PhotographerProfile = () => {
         social: profile.social,
         skills: profile.skills,
         equipment: profile.equipment,
-        watermark: profile.watermark || "",
+        watermark: profile.watermark || "Relic Snap",
+        profilePicture: profile.profileImage || "",
       };
 
       // Save to localStorage
