@@ -529,16 +529,16 @@ const BuyerDownloads = () => {
         .page-link {
           background-color: #2a2a2e;
           border-color: #3a3a3e;
-          color: #ffc107;
+          color: #6BBDD0;
         }
         .page-link:hover {
           background-color: #3a3a3e;
-          border-color: #ffc107;
-          color: #ffc107;
+          border-color: #6BBDD0;
+          color: #6BBDD0;
         }
         .page-item.active .page-link {
-          background-color: #ffc107;
-          border-color: #ffc107;
+          background-color: #6BBDD0;
+          border-color: #6BBDD0;
           color: #1a1a2e;
         }
         .page-item.disabled .page-link {

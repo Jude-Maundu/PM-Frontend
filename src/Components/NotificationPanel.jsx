@@ -92,7 +92,7 @@ const NotificationPanel = ({ userRole = "buyer" }) => {
             alignItems: "center",
             justifyContent: "center",
             fontSize: "24px",
-            boxShadow: "0 4px 12px rgba(255, 193, 7, 0.3)",
+            boxShadow: "0 4px 12px rgba(107, 189, 208, 0.3)",
           }}
           onClick={() => {
             setShowPanel(!showPanel);
@@ -119,7 +119,7 @@ const NotificationPanel = ({ userRole = "buyer" }) => {
             width: "400px",
             maxWidth: "90vw",
             backgroundColor: "#1a1a1a",
-            borderLeft: "1px solid rgba(255, 193, 7, 0.2)",
+            borderLeft: "1px solid rgba(107, 189, 208, 0.2)",
             boxShadow: "-4px 0 16px rgba(0, 0, 0, 0.5)",
             zIndex: 1040,
             overflowY: "auto",

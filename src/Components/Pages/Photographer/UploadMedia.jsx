@@ -703,7 +703,7 @@ const PhotographerUpload = () => {
                         style={{
                           width: currentBannerIndex === idx ? "24px" : "6px",
                           height: "6px",
-                          backgroundColor: currentBannerIndex === idx ? "#ffc107" : "rgba(255,255,255,0.4)",
+                          backgroundColor: currentBannerIndex === idx ? "#6BBDD0" : "rgba(255,255,255,0.4)",
                           cursor: "pointer"
                         }}
                       />

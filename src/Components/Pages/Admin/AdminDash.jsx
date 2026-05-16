@@ -114,13 +114,13 @@ const AdminDash = () => {
   };
 
   const statsCards = [
-    { title: "Total Revenue", value: formatKES(stats.totalRevenue), icon: "fa-dollar-sign", color: "warning", change: "+12.5%", bg: "rgba(255, 193, 7, 0.1)" },
+    { title: "Total Revenue", value: formatKES(stats.totalRevenue), icon: "fa-dollar-sign", color: "warning", change: "+12.5%", bg: "rgba(107, 189, 208, 0.1)" },
     { title: "Photographers", value: formatKES(stats.photographerEarnings), icon: "fa-camera", color: "info", change: "70% share", bg: "rgba(23, 162, 184, 0.1)" },
     { title: "Platform Fees", value: formatKES(stats.platformFees), icon: "fa-percent", color: "success", change: "30% share", bg: "rgba(40, 167, 69, 0.1)" },
     { title: "Total Media", value: stats.totalMedia, icon: "fa-photo-video", color: "primary", change: `${stats.totalMedia} items`, bg: "rgba(0, 123, 255, 0.1)" },
     { title: "Total Users", value: stats.totalUsers, icon: "fa-users", color: "purple", change: "active users", bg: "rgba(128, 0, 128, 0.1)" },
     { title: "Active Shares", value: shareSummary.activeShares, icon: "fa-link", color: "info", change: `${shareSummary.totalShares} total`, bg: "rgba(23, 162, 184, 0.1)" },
-    { title: "Share Accesses", value: shareSummary.totalAccesses, icon: "fa-eye", color: "warning", change: `${shareSummary.totalDownloads} downloads`, bg: "rgba(255, 193, 7, 0.1)" },
+    { title: "Share Accesses", value: shareSummary.totalAccesses, icon: "fa-eye", color: "warning", change: `${shareSummary.totalDownloads} downloads`, bg: "rgba(107, 189, 208, 0.1)" },
     { title: "Pending Refunds", value: stats.pendingRefunds, icon: "fa-undo", color: "danger", change: "awaiting review", bg: "rgba(220, 53, 69, 0.1)" },
   ];
 
@@ -192,7 +192,7 @@ const AdminDash = () => {
                         className="rounded-circle p-3"
                         style={{
                           background: `rgba(255, 255, 255, 0.1)`,
-                          border: `1px solid rgba(255, 193, 7, 0.2)`,
+                          border: `1px solid rgba(107, 189, 208, 0.2)`,
                         }}
                       >
                         <i className={`fas ${stat.icon} text-${stat.color}`}></i>

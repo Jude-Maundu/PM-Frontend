@@ -406,7 +406,7 @@ const AdminUsers = () => {
         {/* Loading */}
         {loading && (
           <div className="text-center py-5 rounded-4" style={glassStyle}>
-            <div className="spinner-border mb-3" style={{ color: "#ffc107", width: "3rem", height: "3rem" }}></div>
+            <div className="spinner-border mb-3" style={{ color: "#6BBDD0", width: "3rem", height: "3rem" }}></div>
             <p className="text-white-50">Loading users...</p>
           </div>
         )}
@@ -454,7 +454,7 @@ const AdminUsers = () => {
                                 width: "40px",
                                 height: "40px",
                                 background: user.role === "admin" 
-                                  ? "rgba(255, 193, 7, 0.2)"
+                                  ? "rgba(107, 189, 208, 0.2)"
                                   : user.role === "photographer"
                                   ? "rgba(23, 162, 184, 0.2)"
                                   : "rgba(40, 167, 69, 0.2)",
@@ -559,9 +559,9 @@ const AdminUsers = () => {
                             <button
                               className="btn btn-sm rounded-3 px-3"
                               style={{
-                                background: "rgba(255, 193, 7, 0.1)",
-                                border: "1px solid rgba(255, 193, 7, 0.3)",
-                                color: "#ffc107",
+                                background: "rgba(107, 189, 208, 0.1)",
+                                border: "1px solid rgba(107, 189, 208, 0.3)",
+                                color: "#6BBDD0",
                               }}
                               onClick={() => openEditModal(user)}
                               title="Edit User"
@@ -959,7 +959,7 @@ const AdminUsers = () => {
                       className="rounded-circle d-inline-flex align-items-center justify-content-center p-3"
                       style={{
                         background: formData.role === "admin" 
-                          ? "rgba(255, 193, 7, 0.2)"
+                          ? "rgba(107, 189, 208, 0.2)"
                           : formData.role === "photographer"
                           ? "rgba(23, 162, 184, 0.2)"
                           : "rgba(40, 167, 69, 0.2)",
@@ -1182,7 +1182,7 @@ const AdminUsers = () => {
                     className="rounded-circle d-inline-flex align-items-center justify-content-center p-3"
                     style={{
                       background: selectedUser.role === "admin" 
-                        ? "rgba(255, 193, 7, 0.2)"
+                        ? "rgba(107, 189, 208, 0.2)"
                         : selectedUser.role === "photographer"
                         ? "rgba(23, 162, 184, 0.2)"
                         : "rgba(40, 167, 69, 0.2)",

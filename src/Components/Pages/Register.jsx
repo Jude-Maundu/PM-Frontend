@@ -2,64 +2,72 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import { API_BASE_URL } from "../../api/apiConfig";
-import GoogleAuth from "../GoogleAuth";
+
+const BOKEH = [
+  { size: 12, top: "8%",  left: "22%", delay: "0s",   dur: "3.6s" },
+  { size: 7,  top: "25%", left: "68%", delay: "0.9s", dur: "4.4s" },
+  { size: 9,  top: "55%", left: "12%", delay: "1.4s", dur: "3.9s" },
+  { size: 5,  top: "72%", left: "58%", delay: "0.3s", dur: "5.2s" },
+  { size: 13, top: "40%", left: "42%", delay: "2.0s", dur: "3.7s" },
+  { size: 6,  top: "82%", left: "30%", delay: "1.1s", dur: "4.6s" },
+  { size: 10, top: "18%", left: "53%", delay: "2.3s", dur: "3.1s" },
+  { size: 8,  top: "64%", left: "78%", delay: "1.7s", dur: "5.0s" },
+  { size: 4,  top: "32%", left: "26%", delay: "0.6s", dur: "3.3s" },
+  { size: 11, top: "90%", left: "72%", delay: "2.6s", dur: "5.5s" },
+  { size: 7,  top: "12%", left: "38%", delay: "3.1s", dur: "4.1s" },
+  { size: 9,  top: "76%", left: "18%", delay: "0.9s", dur: "4.0s" },
+];
 
 const Register = () => {
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [username, setUsername]               = useState("");
+  const [email, setEmail]                     = useState("");
+  const [password, setPassword]               = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [role, setRole] = useState("user");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [role, setRole]                       = useState("user");
+  const [phoneNumber, setPhoneNumber]         = useState("");
+  const [loading, setLoading]                 = useState(false);
+  const [error, setError]                     = useState(null);
+  const [success, setSuccess]                 = useState(null);
+  const [showPassword, setShowPassword]       = useState(false);
+  const [showConfirmPass, setShowConfirmPass] = useState(false);
+  const [termsAccepted, setTermsAccepted]     = useState(false);
+  const [isDark, setIsDark]                   = useState(true);
 
   const navigate = useNavigate();
+  const m = isDark ? "dark" : "light";
 
-  // Centralized API URL
-  const API_URL = API_BASE_URL;
-
-  // Password strength indicator
-  const getPasswordStrength = () => {
-    if (password.length === 0) return 0;
-    if (password.length < 6) return 1;
-    if (password.length < 8) return 2;
-    if (password.match(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)) return 4;
-    if (password.match(/^(?=.*[a-z])(?=.*[A-Z])/)) return 3;
-    return 2;
+  const col = {
+    heading:    isDark ? "#ffffff"               : "#1a2e3b",
+    subtitle:   isDark ? "rgba(255,255,255,0.5)" : "#4a6a7a",
+    label:      isDark ? "rgba(255,255,255,0.72)": "#2c4a5a",
+    muted:      isDark ? "rgba(255,255,255,0.42)": "#5a7a8a",
+    divider:    isDark ? "rgba(107,189,208,0.22)": "rgba(107,189,208,0.3)",
+    checkLabel: isDark ? "rgba(255,255,255,0.5)" : "#4a7a8a",
   };
 
-  const passwordStrength = getPasswordStrength();
-  const strengthText = ["", "Weak", "Fair", "Good", "Strong"];
-  const strengthColor = ["", "danger", "warning", "info", "success"];
+  // Password strength
+  const getStrength = () => {
+    if (!password.length) return 0;
+    if (password.length < 6) return 1;
+    if (password.length < 8) return 2;
+    if (/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) return 4;
+    if (/^(?=.*[a-z])(?=.*[A-Z])/.test(password)) return 3;
+    return 2;
+  };
+  const strength      = getStrength();
+  const strengthText  = ["", "Weak", "Fair", "Good", "Strong"];
+  const strengthColor = ["", "#e85555", "#f5a623", "#6bbdd0", "#2ecc9a"];
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    
-    // Validation
-    if (password !== confirmPassword) {
-      setError("Passwords do not match!");
-      return;
-    }
 
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters long!");
-      return;
-    }
+    if (password !== confirmPassword) { setError("Passwords do not match!"); return; }
+    if (password.length < 6)          { setError("Password must be at least 6 characters."); return; }
+    if (!termsAccepted)               { setError("You must accept the Terms & Conditions."); return; }
 
-    if (!termsAccepted) {
-      setError("You must accept the Terms & Conditions!");
-      return;
-    }
-
-    // Phone number validation required for M-Pesa (format: 254XXXXXXXXX)
     const phoneRegex = /^254\d{9}$/;
     if (!phoneRegex.test(phoneNumber)) {
-      setError("Phone number must be in the format 254XXXXXXXXX (e.g., 254712345678).");
+      setError("Phone must be in format 254XXXXXXXXX (e.g. 254712345678).");
       return;
     }
 
@@ -68,389 +76,289 @@ const Register = () => {
     setSuccess(null);
 
     try {
-      const response = await axios.post(
-        `${API_URL}/auth/register`,
+      const response = await axios.post(`${API_BASE_URL}/auth/register`,
         { username, email, password, role, phoneNumber }
       );
 
-      console.log("✅ Registration successful:", response.data);
-
-      // Save user data to localStorage
-      if (response.data.token) {
-        localStorage.setItem("token", response.data.token);
-      }
-      
+      if (response.data.token)  localStorage.setItem("token", response.data.token);
       if (response.data.user) {
         localStorage.setItem("user", JSON.stringify(response.data.user));
         localStorage.setItem("role", response.data.user.role || role);
       }
 
-      setSuccess("Account created successfully! Redirecting to your dashboard...");
+      setSuccess("Account created! Redirecting to your dashboard…");
 
-      // Redirect based on role
       setTimeout(() => {
-        if (role === "photographer") {
-          navigate("/photographer/dashboard");
-        } else {
-          navigate("/buyer/dashboard");
-        }
+        navigate(role === "photographer" ? "/photographer/dashboard" : "/buyer/dashboard");
       }, 2000);
-
     } catch (err) {
-      console.error("❌ Registration error:", err);
-      
-      if (err.response) {
-        setError(err.response.data?.message || `Error: ${err.response.status}`);
-      } else if (err.request) {
-        setError("Cannot connect to server. Please check your connection.");
-      } else {
-        setError(err.message || "Registration failed. Try again.");
-      }
+      if (err.response)     setError(err.response.data?.message || `Error: ${err.response.status}`);
+      else if (err.request) setError("Cannot connect to server. Check your connection.");
+      else                  setError(err.message || "Registration failed. Try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Glass card style
-  const glassCardStyle = {
-    background: "rgba(255, 255, 255, 0.08)",
-    backdropFilter: "blur(12px)",
-    WebkitBackdropFilter: "blur(12px)",
-    border: "1px solid rgba(255, 255, 255, 0.15)",
-    boxShadow: "0 8px 32px rgba(0, 0, 0, 0.4)",
-  };
-
   return (
-    <div className="min-vh-100 d-flex align-items-center justify-content-center position-relative overflow-hidden py-3" 
-         style={{
-           backgroundImage: "url('https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=2070&q=80')",
-           backgroundSize: "cover",
-           backgroundPosition: "center",
-           backgroundAttachment: "fixed",
-         }}>
-      
-      <div className="position-absolute top-0 start-0 w-100 h-100"
-           style={{ backgroundColor: "rgba(0, 0, 0, 0.3)" }}>
+    <div className={`auth-page-v2 ${m}`}>
+
+      {/* Mode toggle */}
+      <button className={`auth-mode-toggle ${!isDark ? "is-light" : ""}`} onClick={() => setIsDark(!isDark)}>
+        <i className={`fas ${isDark ? "fa-sun" : "fa-moon"}`}></i>
+        {isDark ? "Light Mode" : "Dark Mode"}
+      </button>
+
+      {/* ── Left: Animated Panel ── */}
+      <div className="auth-anim-panel d-none d-lg-flex">
+
+        {BOKEH.map((b, i) => (
+          <div key={i} className="bokeh-dot" style={{
+            width: b.size, height: b.size,
+            top: b.top, left: b.left,
+            animationDelay: b.delay, animationDuration: b.dur,
+          }} />
+        ))}
+
+        {/* Floating photo cards — different layout from login */}
+        <div className="float-card" style={{ width: 190, height: 132, top: "6%", left: "14%", animation: "float2 7.2s ease-in-out infinite" }}>
+          <img src="https://images.unsplash.com/photo-1492691527719-9d1e4e485a21?w=300&h=200&fit=crop" alt="" />
+          <div className="fc-badge">Premium Collection</div>
+        </div>
+
+        <div className="float-card" style={{ width: 165, height: 118, top: "22%", right: "5%", animation: "float1 6.6s ease-in-out infinite 0.9s" }}>
+          <img src="https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=300&h=200&fit=crop" alt="" />
+        </div>
+
+        <div className="float-card" style={{ width: 220, height: 155, top: "42%", left: "6%", animation: "float4 8.5s ease-in-out infinite 1.5s" }}>
+          <img src="https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=300&h=200&fit=crop" alt="" />
+          <div className="fc-badge">City Lights</div>
+        </div>
+
+        <div className="float-card" style={{ width: 145, height: 105, top: "65%", right: "12%", animation: "float3 7.5s ease-in-out infinite 2.4s" }}>
+          <img src="https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=300&h=200&fit=crop" alt="" />
+        </div>
+
+        <div className="float-card" style={{ width: 125, height: 88, top: "84%", left: "28%", animation: "float1 6.2s ease-in-out infinite 0.3s" }}>
+          <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300&h=200&fit=crop" alt="" />
+        </div>
+
+        {/* Brand overlay */}
+        <div className="auth-panel-brand">
+          <div className="auth-panel-logo-icon">
+            <i className="fas fa-user-plus"></i>
+          </div>
+          <h2 className="auth-panel-heading">Join PhotoMarket</h2>
+          <p className="auth-panel-sub">Sell or discover premium photography</p>
+          <div className="auth-panel-stats">
+            <div className="auth-stat"><strong>Free</strong><span>To Join</span></div>
+            <div className="auth-stat"><strong>100%</strong><span>Secure</span></div>
+            <div className="auth-stat"><strong>24/7</strong><span>Support</span></div>
+          </div>
+        </div>
       </div>
 
-      {/* Register Card */}
-      <div className="container position-relative" style={{ maxWidth: "400px", zIndex: 2 }}>
-        <div className="card border-0"
-             style={{
-               ...glassCardStyle,
-               borderRadius: "20px",
-               overflow: "hidden",
-             }}>
-          
-          {/* Card Header */}
-          <div className="card-header bg-transparent border-0 text-center pt-4 pb-2">
-            <div className="mb-2">
-              <div className="d-inline-flex align-items-center justify-content-center"
-                   style={{
-                     width: "60px",
-                     height: "60px",
-                     background: "rgba(255, 255, 255, 0.1)",
-                     borderRadius: "50%",
-                     border: "1px solid rgba(255, 255, 255, 0.2)",
-                   }}>
-                <i className="fas fa-user-plus text-white fa-2x"></i>
-              </div>
+      {/* ── Right: Form Panel ── */}
+      <div className="auth-form-panel" style={{ paddingTop: "1.5rem", paddingBottom: "1.5rem" }}>
+        <div className="auth-form-inner">
+
+          {/* Mobile brand */}
+          <div className="d-flex d-lg-none align-items-center gap-2 mb-3">
+            <div className="auth-panel-logo-icon" style={{ width: 40, height: 40, fontSize: "1rem", borderRadius: 10 }}>
+              <i className="fas fa-camera"></i>
             </div>
-            <h4 className="text-white fw-bold mb-1">Create Account</h4>
-            <p className="text-white-50 small mb-0">Join our community</p>
+            <span style={{ fontFamily: "var(--font-serif)", fontWeight: 700, fontSize: "1.3rem", color: col.heading }}>
+              PhotoMarket
+            </span>
           </div>
 
-          {/* Card Body */}
-          <div className="card-body px-4 py-2">
-            {/* Error Alert */}
+          <div className={`auth-card-v2 ${m}`}>
+
+            {/* Header */}
+            <div className="text-center mb-3">
+              <div className="auth-icon-circle" style={{ margin: "0 auto" }}>
+                <i className="fas fa-user-plus"></i>
+              </div>
+              <h4 style={{ color: col.heading, fontFamily: "var(--font-serif)", fontWeight: 700, marginTop: "0.85rem", marginBottom: "0.2rem" }}>
+                Create Account
+              </h4>
+              <p style={{ color: col.subtitle, fontSize: "0.86rem", margin: 0 }}>Join our community today</p>
+            </div>
+
+            {/* Alerts */}
             {error && (
-              <div className="alert d-flex align-items-center mb-2 py-2" 
-                   style={{
-                     background: "rgba(220, 53, 69, 0.2)",
-                     backdropFilter: "blur(4px)",
-                     border: "1px solid rgba(220, 53, 69, 0.3)",
-                     borderRadius: "8px",
-                     color: "#fff",
-                     fontSize: "0.8rem",
-                   }}>
-                <i className="fas fa-exclamation-circle me-2" style={{ color: "#dc3545", fontSize: "0.8rem" }}></i>
-                <span>{error}</span>
+              <div className="d-flex align-items-center mb-3 py-2 px-3"
+                   style={{ background: "rgba(232,85,85,0.1)", border: "1px solid rgba(232,85,85,0.3)", color: "#ff8080", borderRadius: 12, fontSize: "0.85rem" }}>
+                <i className="fas fa-exclamation-circle me-2 flex-shrink-0"></i>
+                <span className="flex-grow-1">{error}</span>
+                <button type="button" onClick={() => setError(null)}
+                        style={{ background: "none", border: "none", color: "#ff8080", cursor: "pointer", padding: 0 }}>
+                  <i className="fas fa-times"></i>
+                </button>
               </div>
             )}
 
-            {/* Success Alert */}
             {success && (
-              <div className="alert d-flex align-items-center mb-2 py-2"
-                   style={{
-                     background: "rgba(25, 135, 84, 0.2)",
-                     backdropFilter: "blur(4px)",
-                     border: "1px solid rgba(25, 135, 84, 0.3)",
-                     borderRadius: "8px",
-                     color: "#fff",
-                     fontSize: "0.8rem",
-                   }}>
-                <i className="fas fa-check-circle me-2" style={{ color: "#198754", fontSize: "0.8rem" }}></i>
+              <div className="d-flex align-items-center mb-3 py-2 px-3"
+                   style={{ background: "rgba(46,204,154,0.1)", border: "1px solid rgba(46,204,154,0.3)", color: "#6ee7b7", borderRadius: 12, fontSize: "0.85rem" }}>
+                <i className="fas fa-check-circle me-2"></i>
                 <span>{success}</span>
               </div>
             )}
 
             <form onSubmit={handleRegister}>
-              {/* Username Field */}
-              <div className="mb-2">
-                <label htmlFor="username" className="form-label text-white small fw-semibold mb-1">
-                  <i className="fas fa-user me-1" style={{ fontSize: "0.7rem" }}></i>
-                  Username
+
+              {/* Username */}
+              <div className="mb-3">
+                <label className="form-label small fw-semibold mb-1 d-block" style={{ color: col.label }}>
+                  <i className="fas fa-user me-1" style={{ color: "var(--pm-teal)" }}></i> Username
                 </label>
-                <input
-                  type="text"
-                  id="username"
-                  className="form-control form-control-sm bg-transparent text-white border-0 py-1"
+                <input type="text"
+                  className={`form-control form-control-sm auth-input-v2 ${m}`}
                   placeholder="johndoe"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
-                  style={{
-                    background: "rgba(255, 255, 255, 0.05)",
-                    backdropFilter: "blur(4px)",
-                    fontSize: "0.85rem",
-                    height: "35px",
-                  }}
                 />
               </div>
 
-              {/* Email Field */}
-              <div className="mb-2">
-                <label htmlFor="email" className="form-label text-white small fw-semibold mb-1">
-                  <i className="fas fa-envelope me-1" style={{ fontSize: "0.7rem" }}></i>
-                  Email
+              {/* Email */}
+              <div className="mb-3">
+                <label className="form-label small fw-semibold mb-1 d-block" style={{ color: col.label }}>
+                  <i className="fas fa-envelope me-1" style={{ color: "var(--pm-teal)" }}></i> Email
                 </label>
-                <input
-                  type="email"
-                  id="email"
-                  className="form-control form-control-sm bg-transparent text-white border-0 py-1"
+                <input type="email"
+                  className={`form-control form-control-sm auth-input-v2 ${m}`}
                   placeholder="john@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  style={{
-                    background: "rgba(255, 255, 255, 0.05)",
-                    backdropFilter: "blur(4px)",
-                    fontSize: "0.85rem",
-                    height: "35px",
-                  }}
                 />
               </div>
 
-              {/* Phone Number Field */}
-              <div className="mb-2">
-                <label htmlFor="phoneNumber" className="form-label text-white small fw-semibold mb-1">
-                  <i className="fas fa-phone me-1" style={{ fontSize: "0.7rem" }}></i>
-                  Phone (254XXXXXXXXX)
+              {/* Phone */}
+              <div className="mb-3">
+                <label className="form-label small fw-semibold mb-1 d-block" style={{ color: col.label }}>
+                  <i className="fas fa-phone me-1" style={{ color: "var(--pm-teal)" }}></i> Phone (254XXXXXXXXX)
                 </label>
-                <input
-                  type="tel"
-                  id="phoneNumber"
-                  className="form-control form-control-sm bg-transparent text-white border-0 py-1"
+                <input type="tel"
+                  className={`form-control form-control-sm auth-input-v2 ${m}`}
                   placeholder="254712345678"
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
                   required
-                  style={{
-                    background: "rgba(255, 255, 255, 0.05)",
-                    backdropFilter: "blur(4px)",
-                    fontSize: "0.85rem",
-                    height: "35px",
-                  }}
                 />
               </div>
 
-              {/* Password Field */}
-              <div className="mb-2">
-                <label htmlFor="password" className="form-label text-white small fw-semibold mb-1">
-                  <i className="fas fa-lock me-1" style={{ fontSize: "0.7rem" }}></i>
-                  Password
+              {/* Password */}
+              <div className="mb-3">
+                <label className="form-label small fw-semibold mb-1 d-block" style={{ color: col.label }}>
+                  <i className="fas fa-lock me-1" style={{ color: "var(--pm-teal)" }}></i> Password
                 </label>
                 <div className="input-group input-group-sm">
                   <input
                     type={showPassword ? "text" : "password"}
-                    id="password"
-                    className="form-control bg-transparent text-white border-0 py-1"
+                    className={`form-control auth-input-v2 ${m}`}
+                    style={{ borderRight: "none", borderRadius: "12px 0 0 12px" }}
                     placeholder="Create password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    style={{
-                      background: "rgba(255, 255, 255, 0.05)",
-                      backdropFilter: "blur(4px)",
-                      fontSize: "0.85rem",
-                      height: "35px",
-                    }}
                   />
-                  <button
-                    type="button"
-                    className="btn btn-sm bg-transparent border-0 text-white"
-                    style={{
-                      background: "rgba(255, 255, 255, 0.05)",
-                      height: "35px",
-                    }}
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    <i className={`fas ${showPassword ? "fa-eye-slash" : "fa-eye"}`} style={{ fontSize: "0.7rem" }}></i>
+                  <button type="button" className={`btn auth-eye-btn ${m}`}
+                          onClick={() => setShowPassword(!showPassword)}>
+                    <i className={`fas ${showPassword ? "fa-eye-slash" : "fa-eye"}`}></i>
                   </button>
                 </div>
-                
-                {/* Password Strength Indicator */}
+
                 {password.length > 0 && (
-                  <div className="mt-1">
-                    <div className="d-flex align-items-center gap-2">
-                      <div className="flex-grow-1">
-                        <div className="progress" style={{ height: "3px", background: "rgba(255,255,255,0.1)" }}>
-                          <div 
-                            className={`progress-bar bg-${strengthColor[passwordStrength]}`} 
-                            style={{ width: `${(passwordStrength / 4) * 100}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                      <small className={`text-${strengthColor[passwordStrength]}`} style={{ fontSize: "0.6rem" }}>
-                        {strengthText[passwordStrength]}
-                      </small>
+                  <div className="mt-2 d-flex align-items-center gap-2">
+                    <div className={`auth-progress-track flex-grow-1 ${m}`} style={{ borderRadius: 2 }}>
+                      <div style={{
+                        height: 4,
+                        width: `${(strength / 4) * 100}%`,
+                        background: strengthColor[strength],
+                        borderRadius: 2,
+                        transition: "width 0.3s ease, background 0.3s ease"
+                      }} />
                     </div>
+                    <small style={{ color: strengthColor[strength], fontWeight: 600, fontSize: "0.75rem", whiteSpace: "nowrap" }}>
+                      {strengthText[strength]}
+                    </small>
                   </div>
                 )}
               </div>
 
-              {/* Confirm Password Field */}
-              <div className="mb-2">
-                <label htmlFor="confirmPassword" className="form-label text-white small fw-semibold mb-1">
-                  <i className="fas fa-check-circle me-1" style={{ fontSize: "0.7rem" }}></i>
-                  Confirm Password
+              {/* Confirm Password */}
+              <div className="mb-3">
+                <label className="form-label small fw-semibold mb-1 d-block" style={{ color: col.label }}>
+                  <i className="fas fa-check-circle me-1" style={{ color: "var(--pm-teal)" }}></i> Confirm Password
                 </label>
                 <div className="input-group input-group-sm">
                   <input
-                    type={showConfirmPassword ? "text" : "password"}
-                    id="confirmPassword"
-                    className="form-control bg-transparent text-white border-0 py-1"
+                    type={showConfirmPass ? "text" : "password"}
+                    className={`form-control auth-input-v2 ${m}`}
+                    style={{ borderRight: "none", borderRadius: "12px 0 0 12px" }}
                     placeholder="Confirm password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
-                    style={{
-                      background: "rgba(255, 255, 255, 0.05)",
-                      backdropFilter: "blur(4px)",
-                      fontSize: "0.85rem",
-                      height: "35px",
-                    }}
                   />
-                  <button
-                    type="button"
-                    className="btn btn-sm bg-transparent border-0 text-white"
-                    style={{
-                      background: "rgba(255, 255, 255, 0.05)",
-                      height: "35px",
-                    }}
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  >
-                    <i className={`fas ${showConfirmPassword ? "fa-eye-slash" : "fa-eye"}`} style={{ fontSize: "0.7rem" }}></i>
+                  <button type="button" className={`btn auth-eye-btn ${m}`}
+                          onClick={() => setShowConfirmPass(!showConfirmPass)}>
+                    <i className={`fas ${showConfirmPass ? "fa-eye-slash" : "fa-eye"}`}></i>
                   </button>
                 </div>
               </div>
 
-              {/* Role Selection */}
-              <div className="mb-2">
-                <label className="form-label text-white small fw-semibold mb-1">
-                  <i className="fas fa-user-tag me-1" style={{ fontSize: "0.7rem" }}></i>
+              {/* Role selector */}
+              <div className="mb-3">
+                <label className="form-label small fw-semibold mb-2 d-block" style={{ color: col.label }}>
                   Register as
                 </label>
                 <div className="d-flex gap-2">
                   {[
-                    { value: "user", icon: "fa-user", label: "User", desc: "Buy photos" },
-                    { value: "photographer", icon: "fa-camera", label: "Photographer", desc: "Sell photos" }
+                    { value: "user",         icon: "fa-user",   label: "Buyer",        desc: "Buy photos" },
+                    { value: "photographer", icon: "fa-camera", label: "Photographer", desc: "Sell photos" },
                   ].map((r) => (
-                    <div 
-                      className="flex-fill text-center p-2 cursor-pointer"
+                    <div
                       key={r.value}
+                      className={`auth-role-pill ${m} ${role === r.value ? "active" : ""}`}
                       onClick={() => setRole(r.value)}
-                      style={{
-                        background: role === r.value ? "rgba(255, 255, 255, 0.2)" : "rgba(255, 255, 255, 0.05)",
-                        backdropFilter: "blur(4px)",
-                        border: role === r.value ? "1px solid rgba(255, 255, 255, 0.3)" : "1px solid rgba(255, 255, 255, 0.1)",
-                        borderRadius: "8px",
-                        transition: "all 0.3s ease",
-                        cursor: "pointer",
-                      }}
                     >
-                      <i className={`fas ${r.icon} ${role === r.value ? 'text-white' : 'text-white-50'} mb-1`} style={{ fontSize: "0.8rem" }}></i>
-                      <small className={`d-block fw-semibold ${role === r.value ? 'text-white' : 'text-white-50'}`} style={{ fontSize: "0.65rem" }}>
+                      <i className={`fas ${r.icon} mb-1`} style={{ color: role === r.value ? "var(--pm-teal)" : col.muted, display: "block" }}></i>
+                      <small className="d-block fw-semibold" style={{ color: role === r.value ? col.heading : col.muted, fontSize: "0.82rem" }}>
                         {r.label}
                       </small>
-                      <small className="text-white-50" style={{ fontSize: "0.55rem", opacity: 0.6 }}>
-                        {r.desc}
-                      </small>
+                      <small className="d-block" style={{ color: col.muted, fontSize: "0.72rem" }}>{r.desc}</small>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Terms & Conditions */}
-              <div className="mb-2">
-                <div className="form-check">
-                  <input 
-                    className="form-check-input bg-transparent" 
-                    type="checkbox" 
-                    id="terms"
-                    checked={termsAccepted}
-                    onChange={(e) => setTermsAccepted(e.target.checked)}
-                    style={{
-                      border: "1px solid rgba(255,255,255,0.3)",
-                      backgroundColor: "rgba(255,255,255,0.05)",
-                      width: "12px",
-                      height: "12px",
-                      marginTop: "2px",
-                    }}
-                  />
-                  <label className="form-check-label text-white-50" htmlFor="terms" style={{ fontSize: "0.65rem" }}>
-                    I agree to the{" "}
-                    <Link to="/terms" className="text-white text-decoration-none">
-                      Terms
-                    </Link>
-                  </label>
-                </div>
+              {/* Terms */}
+              <div className="mb-3 form-check">
+                <input className="form-check-input" type="checkbox" id="terms"
+                       checked={termsAccepted}
+                       onChange={(e) => setTermsAccepted(e.target.checked)}
+                       style={{ background: isDark ? "rgba(255,255,255,0.1)" : "#f0f8fc", borderColor: "rgba(107,189,208,0.4)" }} />
+                <label className="form-check-label small" htmlFor="terms" style={{ color: col.checkLabel }}>
+                  I agree to the{" "}
+                  <Link to="/terms" className="text-decoration-none fw-semibold" style={{ color: "var(--pm-teal)" }}>Terms & Conditions</Link>
+                </label>
               </div>
 
-              {/* Submit Button */}
-              <button 
-                type="submit" 
-                className="btn w-100 py-2 fw-semibold mb-2"
-                disabled={loading}
-                style={{
-                  background: "rgba(255, 255, 255, 0.15)",
-                  backdropFilter: "blur(4px)",
-                  border: "1px solid rgba(255, 255, 255, 0.2)",
-                  borderRadius: "8px",
-                  color: "white",
-                  fontSize: "0.85rem",
-                  height: "38px",
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.25)"}
-                onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.15)"}
-              >
-                {loading ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm me-2" style={{ width: "12px", height: "12px" }}></span>
-                    Creating...
-                  </>
-                ) : (
-                  <>
-                    <i className="fas fa-user-plus me-2" style={{ fontSize: "0.75rem" }}></i>
-                    Sign Up
-                  </>
-                )}
+              {/* Submit */}
+              <button type="submit" className="btn auth-button w-100 fw-semibold mb-2" disabled={loading}>
+                {loading
+                  ? <><span className="spinner-border spinner-border-sm me-2"></span>Creating account…</>
+                  : <><i className="fas fa-user-plus me-2"></i>Sign Up</>
+                }
               </button>
 
-              {/* Login Link */}
-              <p className="text-center text-white-50 small mb-0" style={{ fontSize: "0.7rem" }}>
+              <p className="text-center small mb-0" style={{ color: col.muted }}>
                 Already have an account?{" "}
-                <Link to="/login" className="text-white text-decoration-none fw-semibold">
+                <Link to="/login" className="text-decoration-none fw-semibold" style={{ color: "var(--pm-teal)" }}>
                   Sign in
                 </Link>
               </p>
@@ -458,13 +366,21 @@ const Register = () => {
 
             {/* Divider */}
             <div className="d-flex align-items-center my-3">
-              <hr className="flex-grow-1 border-white-50" />
-              <span className="mx-3 text-white-50 small">or</span>
-              <hr className="flex-grow-1 border-white-50" />
+              <hr className="flex-grow-1 m-0" style={{ borderColor: col.divider }} />
+              <span className="mx-3 small" style={{ color: col.muted }}>or</span>
+              <hr className="flex-grow-1 m-0" style={{ borderColor: col.divider }} />
             </div>
 
-            {/* Google Sign Up */}
-            {/* <GoogleAuth text="Continue with Google" /> */}
+            <p className="text-center small mb-0" style={{ color: col.muted }}>
+              <i className="fas fa-shield-alt me-1" style={{ color: "var(--pm-teal)" }}></i>
+              Your data is always protected
+            </p>
+          </div>
+
+          <div className="text-center mt-3">
+            <Link to="/" className="text-decoration-none small" style={{ color: col.muted }}>
+              <i className="fas fa-arrow-left me-1"></i> Back to home
+            </Link>
           </div>
         </div>
       </div>

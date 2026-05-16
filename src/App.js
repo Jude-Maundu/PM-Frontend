@@ -1,8 +1,12 @@
 import './App.css';
+import './styles/mobileStyles.css';
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { ThemeProvider } from './context/ThemeContext';
 import '@fortawesome/fontawesome-free/css/all.min.css'
+import ToastContainer from './Components/ToastContainer';
+import ConfirmDialog from './Components/ConfirmDialog';
 
 // Public Pages
 import Login from './Components/Pages/Login';
@@ -64,6 +68,9 @@ function RouteWithBodyClass({ children }) {
 
 function App() {
   return (
+    <ThemeProvider>
+    <ToastContainer />
+    <ConfirmDialog />
     <BrowserRouter>
       <RouteWithBodyClass>
         <Routes>
@@ -119,6 +126,7 @@ function App() {
         </Routes>
       </RouteWithBodyClass>
     </BrowserRouter>
+    </ThemeProvider>
   );
 }
 

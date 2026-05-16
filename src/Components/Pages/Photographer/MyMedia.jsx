@@ -1439,7 +1439,7 @@ const PhotographerMedia = () => {
         }
         
         .overflow-x-auto::-webkit-scrollbar-thumb {
-          background: rgba(255,193,7,0.5);
+          background: rgba(107,189,208,0.5);
           border-radius: 10px;
         }
         

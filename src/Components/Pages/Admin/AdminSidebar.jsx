@@ -4,12 +4,11 @@ import { NavLink, useLocation } from "react-router-dom";
 const AdminSidebar = ({ isOpen, onToggle, onNav }) => {
   const location = useLocation();
 
-  // More transparent glass style
   const glassStyle = {
-    background: "rgba(0, 0, 0, 0.4)", // Reduced from 0.7 to 0.4
-    backdropFilter: "blur(12px)",
-    WebkitBackdropFilter: "blur(12px)",
-    borderRight: "1px solid rgba(255, 255, 255, 0.15)",
+    background: "linear-gradient(180deg, rgba(15,30,40,0.96) 0%, rgba(10,20,28,0.98) 100%)",
+    backdropFilter: "blur(20px)",
+    WebkitBackdropFilter: "blur(20px)",
+    borderRight: "1px solid rgba(107,189,208,0.15)",
   };
 
   const menuItems = [
@@ -73,15 +72,12 @@ const AdminSidebar = ({ isOpen, onToggle, onNav }) => {
     <>
       {/* Mobile Toggle Button */}
       <button
-        className="btn btn-warning position-fixed d-md-none"
+        className="btn position-fixed d-md-none"
         style={{
-          bottom: "20px",
-          right: "20px",
-          zIndex: 1050,
-          borderRadius: "50%",
-          width: "50px",
-          height: "50px",
-          boxShadow: "0 4px 15px rgba(255, 193, 7, 0.3)",
+          bottom: "20px", right: "20px", zIndex: 1050,
+          borderRadius: "50%", width: "50px", height: "50px",
+          background: "var(--pm-teal)", color: "#fff", border: "none",
+          boxShadow: "0 4px 20px rgba(107,189,208,0.4)",
         }}
         onClick={onToggle}
       >
@@ -106,28 +102,18 @@ const AdminSidebar = ({ isOpen, onToggle, onNav }) => {
         }}
       >
         {/* Header with Logo */}
-        <div className="p-4 border-bottom border-white border-opacity-10">
+        <div className="p-4" style={{ borderBottom: "1px solid rgba(107,189,208,0.15)" }}>
           <div className="d-flex align-items-center gap-3 mb-3">
-            <div
-              className="d-flex align-items-center justify-content-center"
-              style={{
-                background: "rgba(255, 193, 7, 0.2)",
-                borderRadius: "12px",
-                padding: "10px",
-                border: "1px solid rgba(255, 193, 7, 0.3)",
-              }}
-            >
-              <i className="fas fa-camera text-warning fa-lg"></i>
+            <div className="d-flex align-items-center justify-content-center"
+              style={{ background: "rgba(107,189,208,0.15)", borderRadius: "12px", padding: "10px", border: "1px solid rgba(107,189,208,0.3)" }}>
+              <i className="fas fa-camera fa-lg" style={{ color: "var(--pm-teal)" }}></i>
             </div>
             <div>
-              <span className="fw-bold fs-5 text-white">Photo</span>
-              <span className="fw-bold fs-5 text-warning">Market</span>
+              <span className="fw-bold fs-5 text-white" style={{ fontFamily: "var(--font-serif)" }}>Photo</span>
+              <span className="fw-bold fs-5" style={{ color: "var(--pm-teal)", fontFamily: "var(--font-serif)" }}>Market</span>
+              <div style={{ fontSize: "0.65rem", color: "rgba(107,189,208,0.6)", letterSpacing: "0.1em", textTransform: "uppercase", marginTop: "2px" }}>Admin Panel</div>
             </div>
           </div>
-          {/* <h6 className="text-white-50 small fw-semibold mt-4 mb-0">
-            <i className="fas fa-bars me-2" style={{ fontSize: "0.8rem" }}></i>
-            MAIN NAVIGATION
-          </h6> */}
         </div>
 
         {/* Menu Items */}
@@ -136,58 +122,17 @@ const AdminSidebar = ({ isOpen, onToggle, onNav }) => {
             <li className="nav-item mb-2" key={item.path}>
               <NavLink
                 to={item.path}
-                className={({ isActive }) =>
-                  `nav-link d-flex align-items-center justify-content-between rounded-3 py-2 px-3 ${
-                    isActive ? "active" : ""
-                  }`
-                }
-                style={({ isActive }) => ({
-                  background: isActive
-                    ? "rgba(255, 193, 7, 0.2)"
-                    : "transparent",
-                  border: isActive
-                    ? "1px solid rgba(255, 193, 7, 0.4)"
-                    : "1px solid transparent",
-                  color: isActive ? "#ffc107" : "rgba(255, 255, 255, 0.8)",
-                  transition: "all 0.3s ease",
-                  padding: "12px 16px", // Larger padding
-                })}
-                onMouseEnter={(e) => {
-                  if (!e.currentTarget.classList.contains("active")) {
-                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)";
-                    e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.15)";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!e.currentTarget.classList.contains("active")) {
-                    e.currentTarget.style.background = "transparent";
-                    e.currentTarget.style.borderColor = "transparent";
-                  }
-                }}
-                onClick={() => {
-                  if (onNav) onNav();
-                }}
+                className={({ isActive }) => `sidebar-link d-flex align-items-center justify-content-between ${isActive ? "active" : ""}`}
+                onClick={() => { if (onNav) onNav(); }}
               >
-                <span>
-                  <i
-                    className={`fas ${item.icon} me-3`}
-                    style={{
-                      color: location.pathname === item.path ? "#ffc107" : "inherit",
-                      width: "24px", // Fixed width for icons
-                      fontSize: "1.1rem",
-                    }}
+                <span className="d-flex align-items-center">
+                  <i className={`fas ${item.icon} me-3 nav-icon`}
+                    style={{ color: location.pathname === item.path ? "var(--pm-teal)" : "inherit" }}
                   ></i>
-                  <span className="fs-6">{item.label}</span>
+                  <span style={{ fontSize: "0.9rem" }}>{item.label}</span>
                 </span>
                 {item.badge && (
-                  <span
-                    className="badge rounded-pill px-2 py-1"
-                    style={{
-                      background: "rgba(255, 193, 7, 0.2)",
-                      color: "#ffc107",
-                      fontSize: "0.7rem",
-                    }}
-                  >
+                  <span className="badge-teal" style={{ fontSize: "0.68rem", padding: "0.15rem 0.5rem" }}>
                     {item.badge}
                   </span>
                 )}
@@ -197,66 +142,41 @@ const AdminSidebar = ({ isOpen, onToggle, onNav }) => {
         </ul>
 
         {/* Storage Info */}
-        <div className="px-4 mt-5">
-          <div
-            className="p-4 rounded-3 text-center"
-            style={{
-              background: "rgba(255, 255, 255, 0.05)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-            }}
-          >
-            <i className="fas fa-cloud-upload-alt fa-xl text-warning mb-3"></i>
-            <h6 className="small fw-bold text-white mb-2">Storage Usage</h6>
-            <div className="progress" style={{ height: "6px", background: "rgba(255,255,255,0.1)" }}>
-              <div
-                className="progress-bar bg-warning"
-                style={{ width: "65%" }}
-              ></div>
+        <div className="px-3 mt-4">
+          <div className="glass-stat p-3 rounded-3 text-center">
+            <i className="fas fa-cloud-upload-alt fa-lg mb-2" style={{ color: "var(--pm-teal)" }}></i>
+            <div style={{ fontSize: "0.78rem", fontWeight: 600, color: "#fff", marginBottom: "0.5rem" }}>Storage Usage</div>
+            <div className="progress" style={{ height: "5px", background: "rgba(255,255,255,0.08)", borderRadius: "3px" }}>
+              <div className="progress-bar" style={{ width: "65%", background: "linear-gradient(90deg,var(--pm-teal),var(--pm-teal-light))", borderRadius: "3px" }}></div>
             </div>
             <div className="d-flex justify-content-between mt-2">
-              <small className="text-white-50" style={{ fontSize: "0.65rem" }}>
-                45.2 GB used
-              </small>
-              <small className="text-white-50" style={{ fontSize: "0.65rem" }}>
-                78.3 GB total
-              </small>
+              <small style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.65rem" }}>45.2 GB used</small>
+              <small style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.65rem" }}>78.3 GB total</small>
             </div>
           </div>
         </div>
 
-        {/* System Info */}
-        <div className="px-4 mt-3 mb-4">
-          <div
-            className="p-3 rounded-3"
-            style={{
-              background: "rgba(0, 0, 0, 0.2)",
-              border: "1px solid rgba(255, 255, 255, 0.05)",
-            }}
-          >
-            <div className="d-flex justify-content-between align-items-center mb-2">
-              <small className="text-white-50" style={{ fontSize: "0.65rem" }}>
-                <i className="fas fa-circle text-success me-2" style={{ fontSize: "0.5rem" }}></i>
+        {/* System status */}
+        <div className="px-3 mt-3 mb-4">
+          <div className="p-3 rounded-3" style={{ background: "rgba(107,189,208,0.05)", border: "1px solid rgba(107,189,208,0.12)" }}>
+            <div className="d-flex justify-content-between align-items-center mb-1">
+              <small style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.65rem" }}>
+                <i className="fas fa-circle me-1" style={{ color: "var(--pm-success)", fontSize: "0.45rem" }}></i>
                 System Status
               </small>
-              <span className="badge bg-success bg-opacity-25 text-success px-2 py-1">
-                Online
-              </span>
+              <span style={{ background: "rgba(46,204,154,0.15)", color: "var(--pm-success)", fontSize: "0.65rem", padding: "0.1rem 0.45rem", borderRadius: "999px", border: "1px solid rgba(46,204,154,0.3)" }}>Online</span>
             </div>
             <div className="d-flex justify-content-between align-items-center">
-              <small className="text-white-50" style={{ fontSize: "0.65rem" }}>
-                Version
-              </small>
-              <small className="text-white" style={{ fontSize: "0.65rem" }}>
-                2.1.4
-              </small>
+              <small style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.65rem" }}>Version</small>
+              <small style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.65rem" }}>2.1.4</small>
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="px-4 py-4 border-top border-white border-opacity-10 mt-auto">
-          <small className="text-white-50 d-block text-center" style={{ fontSize: "0.6rem" }}>
-            © 2024 PhotoMarket Admin
+        <div className="px-4 py-3 mt-auto" style={{ borderTop: "1px solid rgba(107,189,208,0.12)" }}>
+          <small style={{ color: "rgba(255,255,255,0.3)", display: "block", textAlign: "center", fontSize: "0.6rem" }}>
+            © {new Date().getFullYear()} PhotoMarket Admin
           </small>
         </div>
       </div>
@@ -264,15 +184,9 @@ const AdminSidebar = ({ isOpen, onToggle, onNav }) => {
       {/* Backdrop for mobile */}
       {isOpen && (
         <div
-          className="position-fixed top-0 start-0 w-100 h-100 d-md-none"
-          style={{
-            background: "rgba(0, 0, 0, 0.3)",
-            backdropFilter: "blur(5px)",
-            zIndex: 1035,
-          }}
-          onClick={() => {
-            if (onToggle) onToggle();
-          }}
+          className="position-fixed top-0 start-0 w-100 h-100 d-md-none mobile-backdrop"
+          style={{ zIndex: 1035 }}
+          onClick={() => { if (onToggle) onToggle(); }}
         ></div>
       )}
     </>

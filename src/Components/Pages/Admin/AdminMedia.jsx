@@ -231,8 +231,8 @@ const AdminMedia = () => {
                 }`}
                 onClick={() => setFilter(f)}
                 style={{
-                  background: filter === f ? "#ffc107" : "rgba(255, 193, 7, 0.1)",
-                  borderColor: "rgba(255, 193, 7, 0.3)",
+                  background: filter === f ? "#6BBDD0" : "rgba(107, 189, 208, 0.1)",
+                  borderColor: "rgba(107, 189, 208, 0.3)",
                 }}
               >
                 {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -249,7 +249,7 @@ const AdminMedia = () => {
         {/* Loading State */}
         {loading && (
           <div className="text-center py-5 rounded-4" style={glassStyle}>
-            <div className="spinner-border mb-3" style={{ color: "#ffc107", width: "3rem", height: "3rem" }}></div>
+            <div className="spinner-border mb-3" style={{ color: "#6BBDD0", width: "3rem", height: "3rem" }}></div>
             <p className="text-white-50">Loading media library...</p>
           </div>
         )}
@@ -353,7 +353,7 @@ const AdminMedia = () => {
                         </td>
                         <td>
                           <span className="badge bg-warning bg-opacity-25 text-warning px-3 py-2 rounded-pill">
-                            ${item.price || 0}
+                            KES {item.price || 0}
                           </span>
                         </td>
                         <td>
@@ -362,12 +362,12 @@ const AdminMedia = () => {
                             style={{
                               background: item.mediaType === "video" 
                                 ? "rgba(23, 162, 184, 0.2)" 
-                                : "rgba(255, 193, 7, 0.2)",
-                              color: item.mediaType === "video" ? "#17a2b8" : "#ffc107",
+                                : "rgba(107, 189, 208, 0.2)",
+                              color: item.mediaType === "video" ? "#17a2b8" : "#6BBDD0",
                               border: `1px solid ${
                                 item.mediaType === "video" 
                                   ? "rgba(23, 162, 184, 0.3)" 
-                                  : "rgba(255, 193, 7, 0.3)"
+                                  : "rgba(107, 189, 208, 0.3)"
                               }`,
                             }}
                           >
@@ -390,9 +390,9 @@ const AdminMedia = () => {
                             <button
                               className="btn btn-sm rounded-3 px-3"
                               style={{
-                                background: "rgba(255, 193, 7, 0.1)",
-                                border: "1px solid rgba(255, 193, 7, 0.3)",
-                                color: "#ffc107",
+                                background: "rgba(107, 189, 208, 0.1)",
+                                border: "1px solid rgba(107, 189, 208, 0.3)",
+                                color: "#6BBDD0",
                               }}
                               onClick={() => alert("Edit functionality coming soon")}
                             >
@@ -577,7 +577,7 @@ const AdminMedia = () => {
                 <div className="d-flex justify-content-center gap-3 flex-wrap">
                   <span className="badge bg-warning text-dark px-3 py-2">
                     <i className="fas fa-tag me-2"></i>
-                    ${selectedMedia.price || 0}
+                    KES {selectedMedia.price || 0}
                   </span>
                   <span className="badge bg-danger bg-opacity-25 text-danger px-3 py-2">
                     <i className="fas fa-heart me-2"></i>

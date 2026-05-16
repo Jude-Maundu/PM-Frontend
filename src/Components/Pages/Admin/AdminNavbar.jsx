@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import NotificationDropdown from "../../NotificationDropdown";
+import ThemeToggle from "../../ThemeToggle";
 
 const AdminNavbar = ({ toggleSidebar }) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -11,35 +12,24 @@ const AdminNavbar = ({ toggleSidebar }) => {
     navigate("/login");
   };
 
-  // Transparent style like homepage
-  const transparentStyle = {
-    background: "transparent",
-    borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
-  };
-
   return (
     <nav
-      className="navbar navbar-dark px-4 py-3 position-sticky top-0 w-100"
-      style={{
-        ...transparentStyle,
-        zIndex: 1030,
-      }}
+      className="navbar navbar-dark px-4 py-3 position-sticky top-0 w-100 glass-navbar"
+      style={{ zIndex: 1030 }}
     >
       <div className="container-fluid px-0">
         {/* Brand with enhanced styling */}
         <Link to="/admin/dashboard" className="text-decoration-none">
           <span className="navbar-brand fw-bold fs-4 d-flex align-items-center">
-            <div
-              className="d-flex align-items-center justify-content-center me-2"
-              style={{
-                background: "rgba(255, 193, 7, 0.15)",
-                borderRadius: "10px",
-                padding: "8px",
-                border: "1px solid rgba(255, 193, 7, 0.3)",
-              }}
-            >
-              <i className="fas fa-camera text-warning"></i>
+            <div className="d-flex align-items-center justify-content-center me-2"
+              style={{ background: "rgba(107,189,208,0.15)", borderRadius: "10px", padding: "8px", border: "1px solid rgba(107,189,208,0.3)" }}>
+              <i className="fas fa-camera" style={{ color: "var(--pm-teal)" }}></i>
             </div>
+            <span style={{ fontFamily: "var(--font-serif)", fontWeight: 700, fontSize: "1.15rem" }}>
+              <span className="text-white">Photo</span>
+              <span style={{ color: "var(--pm-teal)" }}>Market</span>
+              <span className="ms-2 d-none d-md-inline" style={{ fontSize: "0.65rem", color: "rgba(107,189,208,0.55)", letterSpacing: "0.1em", textTransform: "uppercase", verticalAlign: "middle" }}>Admin</span>
+            </span>
             {/* <div>
               <span className="text-white">Photo</span>
               <span className="text-warning">Market</span>
@@ -55,6 +45,8 @@ const AdminNavbar = ({ toggleSidebar }) => {
 
         {/* Right side items */}
         <div className="d-flex align-items-center gap-3">
+          <ThemeToggle />
+
           <div className="d-none d-md-block">
             <NotificationDropdown userRole="admin" />
           </div>
@@ -64,17 +56,11 @@ const AdminNavbar = ({ toggleSidebar }) => {
             <button
               className="btn d-flex align-items-center gap-2 rounded-3"
               onClick={() => setShowProfileMenu(!showProfileMenu)}
-              style={{
-                background: "rgba(255, 255, 255, 0.1)",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                padding: "5px 10px",
-              }}
+              style={{ background: "rgba(107,189,208,0.1)", border: "1px solid rgba(107,189,208,0.2)", padding: "5px 10px" }}
             >
-              <div
-                className="rounded-circle bg-warning bg-opacity-25 d-flex align-items-center justify-content-center"
-                style={{ width: "32px", height: "32px" }}
-              >
-                <i className="fas fa-user-shield text-warning"></i>
+              <div className="rounded-circle d-flex align-items-center justify-content-center"
+                style={{ width: "32px", height: "32px", background: "rgba(107,189,208,0.18)" }}>
+                <i className="fas fa-user-shield" style={{ color: "var(--pm-teal)" }}></i>
               </div>
               <div className="d-none d-md-block text-start">
                 <div className="small fw-bold text-white">Admin User</div>
@@ -99,10 +85,11 @@ const AdminNavbar = ({ toggleSidebar }) => {
                 className="position-absolute end-0 mt-2 rounded-3 overflow-hidden"
                 style={{
                   minWidth: "200px",
-                  background: "rgba(0, 0, 0, 0.9)",
-                  backdropFilter: "blur(10px)",
-                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  background: "rgba(15,30,40,0.96)",
+                  backdropFilter: "blur(20px)",
+                  border: "1px solid rgba(107,189,208,0.2)",
                   zIndex: 1040,
+                  borderRadius: "var(--radius-lg)",
                 }}
               >
                 <div className="p-2">
@@ -113,13 +100,13 @@ const AdminNavbar = ({ toggleSidebar }) => {
                       transition: "all 0.2s ease",
                     }}
                     onMouseEnter={(e) =>
-                      (e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)")
+                      (e.currentTarget.style.background = "rgba(107,189,208,0.1)")
                     }
                     onMouseLeave={(e) =>
                       (e.currentTarget.style.background = "transparent")
                     }
                   >
-                    <i className="fas fa-user-circle text-warning" style={{ width: "20px" }}></i>
+                    <i className="fas fa-user-circle" style={{ width: "20px", color: "var(--pm-teal)" }}></i>
                     <span>Profile</span>
                   </button>
 
@@ -130,17 +117,17 @@ const AdminNavbar = ({ toggleSidebar }) => {
                       transition: "all 0.2s ease",
                     }}
                     onMouseEnter={(e) =>
-                      (e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)")
+                      (e.currentTarget.style.background = "rgba(107,189,208,0.1)")
                     }
                     onMouseLeave={(e) =>
                       (e.currentTarget.style.background = "transparent")
                     }
                   >
-                    <i className="fas fa-cog text-warning" style={{ width: "20px" }}></i>
+                    <i className="fas fa-cog" style={{ width: "20px", color: "var(--pm-teal)" }}></i>
                     <span>Settings</span>
                   </button>
 
-                  <div className="dropdown-divider bg-secondary bg-opacity-25 my-2"></div>
+                  <div className="my-2" style={{ borderTop: "1px solid rgba(107,189,208,0.15)" }}></div>
 
                   <button
                     className="d-flex align-items-center gap-2 px-3 py-2 w-100 border-0 bg-transparent text-danger rounded-2"
@@ -167,10 +154,7 @@ const AdminNavbar = ({ toggleSidebar }) => {
           <button
             className="btn d-md-none p-2 rounded-3"
             onClick={toggleSidebar}
-            style={{
-              background: "rgba(255, 255, 255, 0.1)",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
-            }}
+            style={{ background: "rgba(107,189,208,0.1)", border: "1px solid rgba(107,189,208,0.2)" }}
           >
             <i className="fas fa-bars text-white"></i>
           </button>

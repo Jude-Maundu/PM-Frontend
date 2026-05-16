@@ -306,7 +306,7 @@ const FollowPage = ({ Layout, roleLabel }) => {
                           style={{
                             width: currentBannerIndex === idx ? "24px" : "6px",
                             height: "6px",
-                            backgroundColor: currentBannerIndex === idx ? "#ffc107" : "rgba(255,255,255,0.5)",
+                            backgroundColor: currentBannerIndex === idx ? "#6BBDD0" : "rgba(255,255,255,0.5)",
                             transition: "all 0.3s ease",
                             cursor: "pointer"
                           }}

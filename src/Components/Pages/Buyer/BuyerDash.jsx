@@ -383,7 +383,7 @@ const BuyerDashboard = () => {
           <div className="card bg-dark border-secondary">
             <div className="card-body">
               <div className="d-flex align-items-center gap-3">
-                <div className="rounded-circle p-3" style={{ background: "rgba(255,193,7,0.1)" }}>
+                <div className="rounded-circle p-3" style={{ background: "rgba(107,189,208,0.1)" }}>
                   <i className="fas fa-shopping-cart text-warning"></i>
                 </div>
                 <div>
@@ -428,7 +428,7 @@ const BuyerDashboard = () => {
           <div className="card bg-dark border-secondary">
             <div className="card-body">
               <div className="d-flex align-items-center gap-3">
-                <div className="rounded-circle p-3" style={{ background: "rgba(255,193,7,0.1)" }}>
+                <div className="rounded-circle p-3" style={{ background: "rgba(107,189,208,0.1)" }}>
                   <i className="fas fa-wallet text-warning"></i>
                 </div>
                 <div>

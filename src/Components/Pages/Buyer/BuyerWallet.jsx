@@ -362,10 +362,10 @@ const BuyerWallet = () => {
               <div 
                 className="card border-0 h-100"
                 style={{
-                  background: 'linear-gradient(135deg, rgba(255,193,7,0.15) 0%, rgba(255,193,7,0.05) 100%)',
+                  background: 'linear-gradient(135deg, rgba(107,189,208,0.15) 0%, rgba(107,189,208,0.05) 100%)',
                   backdropFilter: 'blur(10px)',
                   borderRadius: '20px',
-                  border: '1px solid rgba(255,193,7,0.3)',
+                  border: '1px solid rgba(107,189,208,0.3)',
                   boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
                 }}
               >
@@ -615,8 +615,8 @@ const BuyerWallet = () => {
               <div 
                 className="p-3 rounded-3"
                 style={{
-                  background: 'rgba(255,193,7,0.05)',
-                  border: '1px solid rgba(255,193,7,0.2)',
+                  background: 'rgba(107,189,208,0.05)',
+                  border: '1px solid rgba(107,189,208,0.2)',
                   borderRadius: '12px'
                 }}
               >

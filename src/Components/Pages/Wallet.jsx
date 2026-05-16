@@ -373,7 +373,7 @@ const Wallet = () => {
                   <small className="text-white-50">Format: 254XXXXXXXXX (no spaces)</small>
                 </div>
 
-                <div className="bg-dark p-3 rounded mb-3" style={{ background: "rgba(255,193,7,0.1)" }}>
+                <div className="bg-dark p-3 rounded mb-3" style={{ background: "rgba(107,189,208,0.1)" }}>
                   <p className="text-warning small mb-0">
                     <i className="fas fa-info-circle me-2"></i>
                     You will receive an M-Pesa STK push to complete the payment.

@@ -132,7 +132,7 @@ const NotificationDropdown = ({ userRole = "user" }) => {
             <span
               className="position-absolute top-0 start-100 translate-middle badge rounded-pill"
               style={{
-                background: "#ffc107",
+                background: "#6BBDD0",
                 color: "#000",
                 fontSize: "0.6rem",
                 padding: "2px 5px",
@@ -177,7 +177,7 @@ const NotificationDropdown = ({ userRole = "user" }) => {
                   className="btn btn-sm"
                   onClick={handleMarkAllRead}
                   style={{ color: "#9ca3af", fontSize: "0.7rem" }}
-                  onMouseEnter={(e) => e.currentTarget.style.color = "#ffc107"}
+                  onMouseEnter={(e) => e.currentTarget.style.color = "#6BBDD0"}
                   onMouseLeave={(e) => e.currentTarget.style.color = "#9ca3af"}
                 >
                   Mark all read
@@ -250,7 +250,7 @@ const NotificationDropdown = ({ userRole = "user" }) => {
                               handleMarkAsRead(n._id);
                             }}
                             style={{ color: "#9ca3af", fontSize: "0.65rem" }}
-                            onMouseEnter={(e) => e.currentTarget.style.color = "#ffc107"}
+                            onMouseEnter={(e) => e.currentTarget.style.color = "#6BBDD0"}
                             onMouseLeave={(e) => e.currentTarget.style.color = "#9ca3af"}
                           >
                             Mark read
@@ -286,7 +286,7 @@ const NotificationDropdown = ({ userRole = "user" }) => {
                   setOpen(false);
                 }}
                 style={{ color: "#9ca3af", fontSize: "0.7rem" }}
-                onMouseEnter={(e) => e.currentTarget.style.color = "#ffc107"}
+                onMouseEnter={(e) => e.currentTarget.style.color = "#6BBDD0"}
                 onMouseLeave={(e) => e.currentTarget.style.color = "#9ca3af"}
               >
                 View all

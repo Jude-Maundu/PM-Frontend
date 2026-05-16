@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { NavLink, Link, useNavigate, useLocation } from "react-router-dom";
 import NotificationDropdown from "../../NotificationDropdown";
+import ThemeToggle from "../../ThemeToggle";
 
 const PhotographerLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -69,29 +70,12 @@ const PhotographerLayout = ({ children }) => {
   }
 
   return (
-    <div className="min-vh-100 bg-dark text-white">
-      {/* Background Image */}
-      <div
-        className="position-fixed top-0 start-0 w-100 h-100"
-        style={{
-          backgroundImage: "url('https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=2070&q=80')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          opacity: "0.1",
-          zIndex: 0,
-        }}
-      ></div>
-
+    <div className="dash-shell">
       {/* Content */}
-      <div className="position-relative" style={{ zIndex: 1 }}>
+      <div className="position-relative app-content-wrapper">
         {/* Navbar */}
-        <nav className="navbar navbar-dark px-3 px-md-4 py-2 py-md-3 sticky-top w-100"
-             style={{
-               background: "rgba(0, 0, 0, 0.95)",
-               backdropFilter: "blur(10px)",
-               borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
-               zIndex: 1030,
-             }}>
+        <nav className="navbar navbar-dark px-3 px-md-4 py-2 py-md-3 sticky-top w-100 glass-navbar"
+             style={{ zIndex: 1030 }}>
           <div className="container-fluid px-0">
             <div className="d-flex align-items-center gap-2 gap-md-3">
               {/* Hamburger menu - only visible on mobile */}
@@ -111,7 +95,7 @@ const PhotographerLayout = ({ children }) => {
                     height: "36px",
                     objectFit: "cover",
                     borderRadius: "8px",
-                    border: "1px solid rgba(255, 193, 7, 0.8)",
+                    border: "1px solid rgba(107, 189, 208, 0.8)",
                     marginRight: "0.5rem",
                   }}
                 />
@@ -127,6 +111,8 @@ const PhotographerLayout = ({ children }) => {
             </div>
 
             <div className="d-flex align-items-center gap-2 gap-md-3">
+              <ThemeToggle />
+
               {/* Notifications - NOW VISIBLE ON ALL SCREENS */}
               <div className="notification-wrapper">
                 <NotificationDropdown userRole="photographer" />
@@ -154,10 +140,10 @@ const PhotographerLayout = ({ children }) => {
                     {user?.name?.split(' ')[0] || "Photographer"}
                   </span>
                 </button>
-                <ul className="dropdown-menu dropdown-menu-end bg-dark border-secondary">
-                  <li><Link className="dropdown-item text-white" to="/photographer/profile"><i className="fas fa-user me-2 text-warning"></i>Profile</Link></li>
-                  <li><Link className="dropdown-item text-white" to="/photographer/settings"><i className="fas fa-cog me-2 text-warning"></i>Settings</Link></li>
-                  <li><hr className="dropdown-divider bg-secondary" /></li>
+                <ul className="dropdown-menu dropdown-menu-end" style={{ background: "rgba(15,30,40,0.96)", backdropFilter: "blur(20px)", border: "1px solid rgba(107,189,208,0.2)", borderRadius: "var(--radius-lg)" }}>
+                  <li><Link className="dropdown-item text-white" to="/photographer/profile"><i className="fas fa-user me-2" style={{color:"var(--pm-teal)"}}></i>Profile</Link></li>
+                  <li><Link className="dropdown-item text-white" to="/photographer/settings"><i className="fas fa-cog me-2" style={{color:"var(--pm-teal)"}}></i>Settings</Link></li>
+                  <li><hr className="dropdown-divider" style={{borderColor:"rgba(107,189,208,0.2)"}} /></li>
                   <li><button className="dropdown-item text-danger" onClick={handleLogout}><i className="fas fa-sign-out-alt me-2"></i>Logout</button></li>
                 </ul>
               </div>
@@ -167,12 +153,9 @@ const PhotographerLayout = ({ children }) => {
 
         {/* Mobile Earnings Banner */}
         {isMobile && (
-          <div className="d-md-none px-3 py-2 sticky-top" style={{ 
-            background: "rgba(0, 0, 0, 0.9)",
-            backdropFilter: "blur(10px)",
-            borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
-            marginTop: "-1px",
-            zIndex: 1020
+          <div className="d-md-none px-3 py-2 sticky-top mobile-balance-strip" style={{
+            background: "rgba(10,20,28,0.9)", backdropFilter: "blur(12px)",
+            borderBottom: "1px solid rgba(107,189,208,0.12)", marginTop: "-1px", zIndex: 1020
           }}>
             <div className="d-flex justify-content-between align-items-center">
               <span className="text-white-50 small">
@@ -195,9 +178,9 @@ const PhotographerLayout = ({ children }) => {
             `}
             style={{
               width: "280px",
-              background: "rgba(0, 0, 0, 0.95)",
-              backdropFilter: "blur(12px)",
-              borderRight: "1px solid rgba(255, 255, 255, 0.1)",
+              background: "linear-gradient(180deg, rgba(15,30,40,0.96) 0%, rgba(10,20,28,0.98) 100%)",
+              backdropFilter: "blur(20px)",
+              borderRight: "1px solid rgba(107,189,208,0.15)",
               overflowY: "auto",
               zIndex: 1050,
               transition: "transform 0.3s ease-in-out",
@@ -227,43 +210,21 @@ const PhotographerLayout = ({ children }) => {
             )}
 
             <div className="p-3 p-md-4 border-bottom border-secondary border-opacity-25">
-              <h6 className="text-white-50 small mb-0">
-                <i className="fas fa-camera me-2"></i>
-                PHOTOGRAPHER MENU
+              <h6 style={{ color: "rgba(107,189,208,0.7)", fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 0 }}>
+                <i className="fas fa-camera me-2"></i>Photographer Menu
               </h6>
             </div>
 
             <ul className="nav flex-column p-2 p-md-3">
               {navItems.map((item, idx) => (
-                <li className="nav-item mb-1 mb-md-2" key={idx}>
+                <li className="nav-item mb-1" key={idx}>
                   <NavLink
                     to={item.path}
-                    className={({ isActive }) => 
-                      `nav-link d-flex align-items-center justify-content-between rounded-3 py-2 py-md-3 px-3 ${
-                        isActive ? 'active' : ''
-                      }`
-                    }
-                    style={({ isActive }) => ({
-                      background: isActive ? "rgba(255, 193, 7, 0.15)" : "transparent",
-                      border: isActive ? "1px solid rgba(255, 193, 7, 0.3)" : "none",
-                      color: isActive ? "#ffc107" : "rgba(255,255,255,0.7)",
-                      transition: "all 0.3s ease",
-                      fontSize: "clamp(0.875rem, 3vw, 1rem)",
-                    })}
-                    onMouseEnter={(e) => {
-                      if (!e.currentTarget.classList.contains("active")) {
-                        e.currentTarget.style.background = "rgba(255,255,255,0.05)";
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!e.currentTarget.classList.contains("active")) {
-                        e.currentTarget.style.background = "transparent";
-                      }
-                    }}
+                    className={({ isActive }) => `sidebar-link d-flex align-items-center justify-content-between ${isActive ? "active" : ""}`}
                     onClick={() => isMobile && setSidebarOpen(false)}
                   >
                     <span className="d-flex align-items-center">
-                      <i className={`fas ${item.icon} me-2 me-md-3`} style={{ width: "20px", fontSize: "clamp(0.875rem, 3vw, 1rem)" }}></i>
+                      <i className={`fas ${item.icon} me-2 me-md-3 nav-icon`}></i>
                       <span className="d-none d-md-inline">{item.label}</span>
                       <span className="d-inline d-md-none">{item.mobileLabel}</span>
                     </span>
@@ -274,11 +235,10 @@ const PhotographerLayout = ({ children }) => {
 
             {/* Earnings Info in Sidebar for mobile */}
             {isMobile && sidebarOpen && (
-              <div className="p-3 mt-auto border-top border-secondary">
-                <div className="p-3 rounded-3" style={{ background: "rgba(255,255,255,0.03)" }}>
-                  <small className="text-white-50 d-block text-center">
-                    Total Earnings: <span className="text-warning fw-bold">KES {parseInt(earnings).toLocaleString()}</span>
-                  </small>
+              <div className="p-3 mt-auto" style={{ borderTop: "1px solid rgba(107,189,208,0.15)" }}>
+                <div className="glass-stat p-3 text-center">
+                  <small style={{ color: "rgba(255,255,255,0.45)" }}>Total Earnings</small>
+                  <div style={{ color: "var(--pm-teal)", fontWeight: 700 }}>KES {parseInt(earnings).toLocaleString()}</div>
                 </div>
               </div>
             )}
@@ -301,12 +261,8 @@ const PhotographerLayout = ({ children }) => {
         {/* Mobile Backdrop */}
         {isMobile && sidebarOpen && (
           <div
-            className="position-fixed top-0 start-0 w-100 h-100"
-            style={{
-              background: "rgba(0, 0, 0, 0.5)",
-              zIndex: 1040,
-              backdropFilter: "blur(4px)",
-            }}
+            className="position-fixed top-0 start-0 w-100 h-100 mobile-backdrop"
+            style={{ zIndex: 1040 }}
             onClick={() => setSidebarOpen(false)}
           ></div>
         )}
@@ -314,14 +270,7 @@ const PhotographerLayout = ({ children }) => {
 
       {/* Mobile Bottom Navigation Bar */}
       {isMobile && !sidebarOpen && (
-        <div className="d-md-none position-fixed bottom-0 start-0 w-100"
-             style={{
-               background: "rgba(0, 0, 0, 0.95)",
-               backdropFilter: "blur(10px)",
-               borderTop: "1px solid rgba(255, 255, 255, 0.1)",
-               zIndex: 1030,
-               paddingBottom: "env(safe-area-inset-bottom)",
-             }}>
+        <div className="d-md-none position-fixed bottom-0 start-0 w-100 floating-bottom-nav">
           <div className="d-flex justify-content-around align-items-center py-2">
             {navItems.slice(0, 5).map((item, idx) => (
               <NavLink
@@ -333,7 +282,7 @@ const PhotographerLayout = ({ children }) => {
                   }`
                 }
                 style={({ isActive }) => ({
-                  color: isActive ? "#ffc107" : "rgba(255,255,255,0.7)",
+                  color: isActive ? "#6BBDD0" : "rgba(255,255,255,0.7)",
                   fontSize: "0.7rem",
                   transition: "all 0.2s ease",
                 })}
@@ -350,7 +299,7 @@ const PhotographerLayout = ({ children }) => {
                 }`
               }
               style={({ isActive }) => ({
-                color: isActive ? "#ffc107" : "rgba(255,255,255,0.7)",
+                color: isActive ? "#6BBDD0" : "rgba(255,255,255,0.7)",
                 fontSize: "0.7rem",
               })}
             >

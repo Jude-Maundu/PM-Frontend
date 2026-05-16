@@ -267,11 +267,11 @@ const PhotographerDashboard = () => {
       {/* Header */}
       <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
         <div>
-          <h4 className="fw-bold mb-1">
-            <i className="fas fa-camera me-2 text-warning"></i>
+          <h4 className="fw-bold mb-1" style={{ fontFamily: "var(--font-serif)", color: "#fff" }}>
+            <i className="fas fa-camera me-2" style={{ color: "var(--pm-teal)" }}></i>
             Photographer Dashboard
           </h4>
-          <p className="text-white-50 small mb-0">
+          <p className="small mb-0" style={{ color: "rgba(255,255,255,0.5)" }}>
             Welcome back, {displayName}!
           </p>
         </div>
@@ -281,8 +281,14 @@ const PhotographerDashboard = () => {
           {["week", "month", "year"].map((range) => (
             <button
               key={range}
-              className={`btn btn-sm ${timeRange === range ? "btn-warning" : "btn-outline-warning"}`}
+              className="btn btn-sm"
               onClick={() => setTimeRange(range)}
+              style={{
+                background: timeRange === range ? "var(--pm-teal)" : "rgba(107,189,208,0.1)",
+                color: timeRange === range ? "#fff" : "var(--pm-teal)",
+                border: "1px solid rgba(107,189,208,0.3)",
+                transition: "var(--ease)",
+              }}
             >
               {range.charAt(0).toUpperCase() + range.slice(1)}
             </button>
@@ -293,8 +299,8 @@ const PhotographerDashboard = () => {
       {/* Loading */}
       {loading && (
         <div className="text-center py-5">
-          <div className="spinner-border text-warning mb-3"></div>
-          <p>Loading dashboard...</p>
+          <div className="spinner-border mb-3" style={{ color: "var(--pm-teal)" }}></div>
+          <p style={{ color: "rgba(255,255,255,0.5)" }}>Loading dashboard...</p>
         </div>
       )}
 
@@ -314,17 +320,15 @@ const PhotographerDashboard = () => {
             {statsCards.map((stat, idx) => (
               <div className="col-xl-2 col-lg-4 col-md-6" key={idx}>
                 <Link to={stat.link} className="text-decoration-none">
-                  <div className="card bg-dark border-secondary h-100">
-                    <div className="card-body">
-                      <div className="d-flex justify-content-between align-items-start">
-                        <div>
-                          <p className="text-white-50 small mb-1">{stat.title}</p>
-                          <h5 className="fw-bold mb-0 text-white">{stat.value}</h5>
-                        </div>
-                        <div className="rounded-circle p-3"
-                             style={{ background: `rgba(255, 193, 7, 0.1)` }}>
-                          <i className={`fas ${stat.icon} text-${stat.color}`}></i>
-                        </div>
+                  <div className="glass-stat h-100 p-3" style={{ borderRadius: "var(--radius-lg)", cursor: "pointer" }}>
+                    <div className="d-flex justify-content-between align-items-start">
+                      <div>
+                        <p className="small mb-1" style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.06em" }}>{stat.title}</p>
+                        <h5 className="fw-bold mb-0 text-white" style={{ fontFamily: "var(--font-serif)" }}>{stat.value}</h5>
+                      </div>
+                      <div className="rounded-circle d-flex align-items-center justify-content-center"
+                           style={{ width: 40, height: 40, background: "rgba(107,189,208,0.15)", border: "1px solid rgba(107,189,208,0.25)", flexShrink: 0 }}>
+                        <i className={`fas ${stat.icon}`} style={{ color: "var(--pm-teal)", fontSize: "1rem" }}></i>
                       </div>
                     </div>
                   </div>
@@ -337,32 +341,37 @@ const PhotographerDashboard = () => {
           <div className="row g-3 mb-4">
             {/* Earnings Chart */}
             <div className="col-lg-8">
-              <div className="card bg-dark border-secondary">
-                <div className="card-header bg-transparent border-secondary">
-                  <h6 className="mb-0 text-warning">
+              <div className="glass-card p-0 overflow-hidden">
+                <div className="px-4 py-3" style={{ borderBottom: "1px solid rgba(107,189,208,0.15)" }}>
+                  <h6 className="mb-0" style={{ color: "var(--pm-teal)", fontFamily: "var(--font-sans)", fontSize: "0.88rem", fontWeight: 600 }}>
                     <i className="fas fa-chart-line me-2"></i>
-                    Earnings Overview ({timeRange})
+                    Earnings Overview — {timeRange}
                   </h6>
                 </div>
-                <div className="card-body">
+                <div className="p-4">
                   <div className="d-flex justify-content-between align-items-end" style={{ height: "200px" }}>
                     {chartPoints.map((value, idx) => {
-                      const barHeight = chartMaxValue > 0 ? Math.max(10, (value / chartMaxValue) * 100) : 10;
+                      const barHeight = chartMaxValue > 0 ? Math.max(8, (value / chartMaxValue) * 160) : 8;
                       return (
-                        <div key={idx} className="text-center" style={{ width: "12%" }}>
+                        <div key={idx} className="text-center d-flex flex-column align-items-center justify-content-end" style={{ width: "12%", height: "100%" }}>
                           <div
-                            className="bg-warning rounded-3 mb-2"
                             style={{
                               height: `${barHeight}px`,
                               width: "100%",
-                              opacity: 0.7,
+                              background: value > 0
+                                ? "linear-gradient(180deg, var(--pm-teal) 0%, rgba(107,189,208,0.4) 100%)"
+                                : "rgba(255,255,255,0.06)",
+                              borderRadius: "6px 6px 0 0",
+                              marginBottom: "6px",
+                              transition: "height 0.4s ease",
+                              boxShadow: value > 0 ? "0 0 12px rgba(107,189,208,0.3)" : "none",
                             }}
                           ></div>
-                          <small className="text-white-50" style={{ fontSize: "0.6rem" }}>
+                          <small style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.58rem", display: "block" }}>
                             {chartLabelsToShow[idx]}
                           </small>
-                          <small className="d-block text-white-50" style={{ fontSize: "0.6rem" }}>
-                            {value > 0 ? `KES ${value.toLocaleString()}` : "-"}
+                          <small style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.55rem", display: "block" }}>
+                            {value > 0 ? `${value.toLocaleString()}` : "—"}
                           </small>
                         </div>
                       );
@@ -374,16 +383,19 @@ const PhotographerDashboard = () => {
 
             {/* Popular Media */}
             <div className="col-lg-4">
-              <div className="card bg-dark border-secondary h-100">
-                <div className="card-header bg-transparent border-secondary">
-                  <h6 className="mb-0 text-warning">
+              <div className="glass-card h-100 p-0 overflow-hidden">
+                <div className="px-4 py-3" style={{ borderBottom: "1px solid rgba(107,189,208,0.15)" }}>
+                  <h6 className="mb-0" style={{ color: "var(--pm-teal)", fontFamily: "var(--font-sans)", fontSize: "0.88rem", fontWeight: 600 }}>
                     <i className="fas fa-fire me-2"></i>
                     Popular Media
                   </h6>
                 </div>
-                <div className="card-body">
+                <div className="p-3">
+                  {popularMedia.length === 0 && (
+                    <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.82rem", textAlign: "center", padding: "1.5rem 0" }}>No media yet</p>
+                  )}
                   {popularMedia.map((item, idx) => (
-                    <div key={idx} className="d-flex align-items-center gap-2 mb-3">
+                    <div key={idx} className="d-flex align-items-center gap-3 mb-3">
                       <img
                         src={
                           imageUrls[item._id] ||
@@ -393,27 +405,24 @@ const PhotographerDashboard = () => {
                           placeholderSmall
                         }
                         alt=""
-                        width="40"
-                        height="40"
-                        className="rounded"
-                        style={{ objectFit: "cover" }}
+                        width="44"
+                        height="44"
+                        style={{ objectFit: "cover", borderRadius: "var(--radius-sm)", border: "1px solid rgba(107,189,208,0.2)", flexShrink: 0 }}
                         onError={async (e) => {
                           e.target.onerror = null;
                           const mediaId = item._id || item.mediaId;
                           const protectedUrl = await fetchProtectedUrl(mediaId);
-                          if (protectedUrl) {
-                            e.target.src = protectedUrl;
-                          }
+                          if (protectedUrl) e.target.src = protectedUrl;
                         }}
                       />
-                      <div className="flex-grow-1">
-                        <small className="fw-bold d-block text-truncate">{item.title}</small>
-                        <small className="text-white-50">
-                          <i className="fas fa-heart text-danger me-1"></i>
+                      <div className="flex-grow-1 min-w-0">
+                        <small className="fw-semibold d-block text-truncate text-white" style={{ fontSize: "0.82rem" }}>{item.title}</small>
+                        <small style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.72rem" }}>
+                          <i className="fas fa-heart me-1" style={{ color: "#E85555" }}></i>
                           {item.likes || 0} likes
                         </small>
                       </div>
-                      <small className="text-warning">KES {item.price}</small>
+                      <small style={{ color: "var(--pm-teal)", fontWeight: 600, flexShrink: 0, fontSize: "0.8rem" }}>KES {item.price}</small>
                     </div>
                   ))}
                 </div>
@@ -422,57 +431,62 @@ const PhotographerDashboard = () => {
           </div>
 
           {/* Recent Sales */}
-          <div className="card bg-dark border-secondary">
-            <div className="card-header bg-transparent border-secondary d-flex justify-content-between align-items-center">
-              <h6 className="mb-0 text-warning">
+          <div className="glass-card p-0 overflow-hidden">
+            <div className="px-4 py-3 d-flex justify-content-between align-items-center" style={{ borderBottom: "1px solid rgba(107,189,208,0.15)" }}>
+              <h6 className="mb-0" style={{ color: "var(--pm-teal)", fontFamily: "var(--font-sans)", fontSize: "0.88rem", fontWeight: 600 }}>
                 <i className="fas fa-shopping-cart me-2"></i>
                 Recent Sales
               </h6>
-              <Link to="/photographer/sales" className="btn btn-sm btn-outline-warning">
-                View All
+              <Link to="/photographer/sales">
+                <button className="btn btn-sm" style={{ background: "rgba(107,189,208,0.12)", color: "var(--pm-teal)", border: "1px solid rgba(107,189,208,0.25)", borderRadius: "var(--radius-pill)", fontSize: "0.78rem", padding: "0.25rem 0.85rem" }}>
+                  View All
+                </button>
               </Link>
             </div>
-            <div className="card-body p-0">
-              <div className="table-responsive">
-                <table className="table table-dark table-hover mb-0">
-                  <thead>
-                    <tr>
-                      <th className="ps-3">Buyer</th>
-                      <th>Item</th>
-                      <th>Amount</th>
-                      <th>Date</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recentSales.map((sale, idx) => (
-                      <tr key={idx}>
-                        <td className="ps-3">
-                          <i className="fas fa-user-circle text-warning me-2"></i>
-                          {sale.buyer?.email || sale.description || "Anonymous"}
-                        </td>
-                        <td>{sale.mediaTitle || sale.description || "Media"}</td>
-                        <td>
-                          <span className="badge bg-success">KES {Number(sale.amount || 0).toLocaleString()}</span>
-                        </td>
-                        <td>
-                          <small>{new Date(sale.date || sale.createdAt || sale.transactionDate).toLocaleDateString()}</small>
-                        </td>
-                        <td>
-                          <span className="badge bg-success">Completed</span>
-                        </td>
-                      </tr>
+            <div className="table-responsive">
+              <table className="table mb-0" style={{ color: "rgba(255,255,255,0.8)" }}>
+                <thead>
+                  <tr style={{ borderColor: "rgba(107,189,208,0.12)" }}>
+                    {["Buyer","Item","Amount","Date","Status"].map(h => (
+                      <th key={h} style={{ color: "rgba(107,189,208,0.7)", fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", padding: "0.75rem 1rem", borderColor: "rgba(107,189,208,0.12)", background: "transparent" }}>{h}</th>
                     ))}
-                    {recentSales.length === 0 && (
-                      <tr>
-                        <td colSpan="5" className="text-center text-white-50 py-4">
-                          No sales yet
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentSales.map((sale, idx) => (
+                    <tr key={idx} style={{ borderColor: "rgba(107,189,208,0.08)" }}
+                      onMouseEnter={e => e.currentTarget.style.background = "rgba(107,189,208,0.05)"}
+                      onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                    >
+                      <td style={{ padding: "0.75rem 1rem", fontSize: "0.84rem", borderColor: "rgba(107,189,208,0.08)" }}>
+                        <i className="fas fa-user-circle me-2" style={{ color: "var(--pm-teal)" }}></i>
+                        {sale.buyer?.email || sale.description || "Anonymous"}
+                      </td>
+                      <td style={{ padding: "0.75rem 1rem", fontSize: "0.84rem", borderColor: "rgba(107,189,208,0.08)" }}>{sale.mediaTitle || sale.description || "Media"}</td>
+                      <td style={{ padding: "0.75rem 1rem", borderColor: "rgba(107,189,208,0.08)" }}>
+                        <span style={{ background: "rgba(46,204,154,0.15)", color: "var(--pm-success)", border: "1px solid rgba(46,204,154,0.25)", borderRadius: "var(--radius-pill)", fontSize: "0.75rem", padding: "0.2rem 0.6rem" }}>
+                          KES {Number(sale.amount || 0).toLocaleString()}
+                        </span>
+                      </td>
+                      <td style={{ padding: "0.75rem 1rem", fontSize: "0.78rem", color: "rgba(255,255,255,0.45)", borderColor: "rgba(107,189,208,0.08)" }}>
+                        {new Date(sale.date || sale.createdAt || sale.transactionDate).toLocaleDateString()}
+                      </td>
+                      <td style={{ padding: "0.75rem 1rem", borderColor: "rgba(107,189,208,0.08)" }}>
+                        <span style={{ background: "rgba(46,204,154,0.15)", color: "var(--pm-success)", border: "1px solid rgba(46,204,154,0.25)", borderRadius: "var(--radius-pill)", fontSize: "0.72rem", padding: "0.18rem 0.55rem" }}>
+                          Completed
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                  {recentSales.length === 0 && (
+                    <tr>
+                      <td colSpan="5" style={{ textAlign: "center", color: "rgba(255,255,255,0.3)", padding: "2rem", fontSize: "0.88rem", borderColor: "transparent" }}>
+                        No sales yet
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         </>

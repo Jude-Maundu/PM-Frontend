@@ -15,55 +15,54 @@ const Explore = () => {
   const [viewMode, setViewMode] = useState('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobile, setIsMobile] = useState(window.innerWidth < 992);
-  
-  // Fading banner state
+
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [nextBannerIndex, setNextBannerIndex] = useState(1);
   const [isFading, setIsFading] = useState(false);
-  
+
   const navigate = useNavigate();
 
   const bannerImages = [
-    { 
-      id: 1, 
-      url: "https://images.unsplash.com/photo-1492691527719-9d1e4e485a21?auto=format&fit=crop&w=800&q=80", 
-      title: "Premium Photography", 
+    {
+      id: 1,
+      url: "https://images.unsplash.com/photo-1492691527719-9d1e4e485a21?auto=format&fit=crop&w=800&q=80",
+      title: "Premium Photography",
       description: "Discover breathtaking images from top photographers worldwide",
       badge: "Featured Collection",
       buttonText: "Start Exploring",
-      price: "From $19"
+      price: "From KES 2,500"
     },
-    { 
-      id: 2, 
-      url: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=800&q=80", 
-      title: "Limited Time Offer", 
+    {
+      id: 2,
+      url: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=800&q=80",
+      title: "Limited Time Offer",
       description: "Get 30% off on all nature photography - this week only!",
       badge: "Summer Sale",
       buttonText: "Shop Now",
       price: "Save 30%"
     },
-    { 
-      id: 3, 
-      url: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=800&q=80", 
-      title: "New Arrivals", 
+    {
+      id: 3,
+      url: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=800&q=80",
+      title: "New Arrivals",
       description: "Fresh content added daily from emerging creators",
       badge: "Just Added",
       buttonText: "View New",
       price: "New"
     },
-    { 
-      id: 4, 
-      url: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=800&q=80", 
-      title: "Editor's Choice", 
+    {
+      id: 4,
+      url: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=800&q=80",
+      title: "Editor's Choice",
       description: "Curated collection of award-winning photography",
       badge: "Premium Selection",
       buttonText: "Explore Collection",
       price: "Curated"
     },
-    { 
-      id: 5, 
-      url: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=800&q=80", 
-      title: "Free Downloads", 
+    {
+      id: 5,
+      url: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=800&q=80",
+      title: "Free Downloads",
       description: "Limited time: select photos available for free download",
       badge: "Free Offer",
       buttonText: "Get Free Photos",
@@ -71,7 +70,6 @@ const Explore = () => {
     }
   ];
 
-  // Auto-rotate banner images
   useEffect(() => {
     const interval = setInterval(() => {
       setIsFading(true);
@@ -81,29 +79,27 @@ const Explore = () => {
         setIsFading(false);
       }, 500);
     }, 5000);
-    
+
     setNextBannerIndex(1 % bannerImages.length);
     return () => clearInterval(interval);
   }, []);
 
-  // Handle window resize
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 992);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Mock data
   const mockCategories = [
-    { id: 'all', name: 'All', icon: 'fas fa-th-large', count: 1250, color: '#ffc107' },
-    { id: 'nature', name: 'Nature', icon: 'fas fa-leaf', count: 342, color: '#4caf50' },
-    { id: 'travel', name: 'Travel', icon: 'fas fa-plane', count: 289, color: '#2196f3' },
-    { id: 'lifestyle', name: 'Lifestyle', icon: 'fas fa-camera-retro', count: 415, color: '#9c27b0' },
-    { id: 'food', name: 'Food', icon: 'fas fa-utensils', count: 178, color: '#ff9800' },
-    { id: 'architecture', name: 'Architecture', icon: 'fas fa-building', count: 234, color: '#607d8b' },
-    { id: 'technology', name: 'Technology', icon: 'fas fa-microchip', count: 156, color: '#00bcd4' },
-    { id: 'portrait', name: 'Portrait', icon: 'fas fa-user', count: 198, color: '#e91e63' },
-    { id: 'sports', name: 'Sports', icon: 'fas fa-futbol', count: 124, color: '#f44336' },
+    { id: 'all', name: 'All', icon: 'fas fa-th-large', count: 1250 },
+    { id: 'nature', name: 'Nature', icon: 'fas fa-leaf', count: 342 },
+    { id: 'travel', name: 'Travel', icon: 'fas fa-plane', count: 289 },
+    { id: 'lifestyle', name: 'Lifestyle', icon: 'fas fa-camera-retro', count: 415 },
+    { id: 'food', name: 'Food', icon: 'fas fa-utensils', count: 178 },
+    { id: 'architecture', name: 'Architecture', icon: 'fas fa-building', count: 234 },
+    { id: 'technology', name: 'Technology', icon: 'fas fa-microchip', count: 156 },
+    { id: 'portrait', name: 'Portrait', icon: 'fas fa-user', count: 198 },
+    { id: 'sports', name: 'Sports', icon: 'fas fa-futbol', count: 124 },
   ];
 
   const mockPhotos = [
@@ -264,59 +260,53 @@ const Explore = () => {
   });
 
   return (
-    <div className="bg-dark text-white min-vh-100" style={{ 
-      background: "linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%)",
-      fontFamily: "'Inter', system-ui, -apple-system, sans-serif"
-    }}>
-      {/* Modern Navigation */}
-      <nav className="navbar navbar-expand-lg fixed-top w-100 py-3" style={{
-        background: "rgba(0, 0, 0, 0.95)",
-        backdropFilter: "blur(20px)",
-        borderBottom: "1px solid rgba(255, 193, 7, 0.2)",
-        zIndex: 1000
-      }}>
+    <div className="dash-shell">
+      {/* Navigation */}
+      <nav className="glass-navbar navbar navbar-expand-lg fixed-top w-100 py-3" style={{ zIndex: 1000 }}>
         <div className="container px-3 px-lg-4">
           <Link to="/" className="navbar-brand fw-bold text-decoration-none d-flex align-items-center gap-2">
-            <div className="bg-warning rounded-circle d-flex align-items-center justify-content-center" style={{ width: "40px", height: "40px" }}>
-              <i className="fas fa-camera text-dark fs-5"></i>
+            <div className="d-flex align-items-center justify-content-center rounded-circle"
+                 style={{ width: 40, height: 40, background: "rgba(107,189,208,0.15)", border: "1px solid rgba(107,189,208,0.3)" }}>
+              <i className="fas fa-camera" style={{ color: "var(--pm-teal)" }}></i>
             </div>
-            <span className="fs-4 fw-bold">
-              <span className="text-white">Photo</span>
-              <span className="text-warning">Market</span>
+            <span className="fs-5 fw-bold" style={{ fontFamily: "var(--font-serif)", color: "#fff" }}>
+              Photo<span style={{ color: "var(--pm-teal)" }}>Market</span>
             </span>
           </Link>
-          
-          <button className="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <i className="fas fa-bars text-warning fs-3"></i>
+
+          <button className="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#exploreNav">
+            <i className="fas fa-bars fs-4" style={{ color: "var(--pm-teal)" }}></i>
           </button>
-          
-          <div className="collapse navbar-collapse" id="navbarNav">
+
+          <div className="collapse navbar-collapse" id="exploreNav">
             <ul className="navbar-nav ms-auto align-items-center gap-2 gap-lg-3">
               <li className="nav-item">
-                <Link className="nav-link text-white px-3 py-2 rounded-pill hover-bg-warning transition" to="/explore">
+                <Link className="nav-link px-3 py-2 rounded-pill" style={{ color: "rgba(255,255,255,0.8)" }} to="/explore">
                   <i className="fas fa-compass me-1"></i> Explore
                 </Link>
               </li>
               <li className="nav-item">
-                <Link className="nav-link text-white px-3 py-2 rounded-pill hover-bg-warning transition" to="/pricing">
+                <Link className="nav-link px-3 py-2 rounded-pill" style={{ color: "rgba(255,255,255,0.8)" }} to="/pricing">
                   <i className="fas fa-tag me-1"></i> Pricing
                 </Link>
               </li>
               <li className="nav-item">
-                <Link className="nav-link text-white px-3 py-2 rounded-pill hover-bg-warning transition" to="/become-seller">
+                <Link className="nav-link px-3 py-2 rounded-pill" style={{ color: "rgba(255,255,255,0.8)" }} to="/become-seller">
                   <i className="fas fa-crown me-1"></i> Sell
                 </Link>
               </li>
               <li className="nav-item">
                 <Link to="/login">
-                  <button className="btn btn-outline-warning rounded-pill px-4 py-2 hover-glow">
+                  <button className="btn rounded-pill px-4 py-2"
+                    style={{ border: "1px solid rgba(107,189,208,0.5)", color: "var(--pm-teal)", background: "transparent" }}>
                     <i className="fas fa-sign-in-alt me-2"></i> Sign In
                   </button>
                 </Link>
               </li>
               <li className="nav-item">
                 <Link to="/register">
-                  <button className="btn btn-warning rounded-pill px-4 py-2 text-dark fw-semibold hover-scale">
+                  <button className="btn rounded-pill px-4 py-2 fw-semibold"
+                    style={{ background: "var(--pm-teal)", color: "#fff" }}>
                     <i className="fas fa-user-plus me-2"></i> Join Free
                   </button>
                 </Link>
@@ -326,103 +316,140 @@ const Explore = () => {
         </div>
       </nav>
 
-      {/* Main Content with Sidebar */}
+      {/* Main Content */}
       <div className="container px-3 px-lg-4" style={{ paddingTop: "100px" }}>
         <div className="row g-4">
-          
+
           {/* Main Content Area */}
           <div className={`${!isMobile ? 'col-lg-9' : 'col-12'}`}>
-            
+
             {/* Hero Section */}
             <div className="text-center mb-5">
-              <div className="d-inline-flex align-items-center gap-2 bg-warning bg-opacity-10 rounded-pill px-4 py-2 mb-4">
-                <i className="fas fa-fire text-warning"></i>
-                <span className="text-warning small fw-semibold">50,000+ Premium Photos</span>
+              <div className="d-inline-flex align-items-center gap-2 rounded-pill px-4 py-2 mb-4"
+                   style={{ background: "rgba(107,189,208,0.12)", border: "1px solid rgba(107,189,208,0.25)" }}>
+                <i className="fas fa-images" style={{ color: "var(--pm-teal)" }}></i>
+                <span className="small fw-semibold" style={{ color: "var(--pm-teal)" }}>50,000+ Premium Photos</span>
               </div>
-              <h1 className="display-3 fw-bold mb-3" style={{ 
-                background: "linear-gradient(135deg, #fff 0%, #ffc107 100%)",
+              <h1 className="display-3 fw-bold mb-3" style={{
+                fontFamily: "var(--font-serif)",
+                background: "linear-gradient(135deg, #fff 0%, var(--pm-teal) 100%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 backgroundClip: "text"
               }}>
                 Discover Stunning <br className="d-none d-sm-block" />Visual Stories
               </h1>
-              <p className="lead text-white-50 mb-4" style={{ maxWidth: "600px", margin: "0 auto" }}>
+              <p className="lead mb-4" style={{ color: "rgba(255,255,255,0.5)", maxWidth: "600px", margin: "0 auto" }}>
                 Browse millions of high-quality photos from talented creators around the world
               </p>
-              
-              {/* Enhanced Search Bar */}
+
+              {/* Search Bar */}
               <div className="position-relative mx-auto" style={{ maxWidth: "500px" }}>
                 <div className="input-group">
-                  <span className="input-group-text bg-dark border-warning text-warning rounded-start-pill ps-4">
+                  <span className="input-group-text rounded-start-pill ps-4"
+                        style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(107,189,208,0.3)", borderRight: "none", color: "var(--pm-teal)" }}>
                     <i className="fas fa-search"></i>
                   </span>
                   <input
                     type="text"
-                    className="form-control form-control-lg bg-dark border-warning text-white"
+                    className="form-control form-control-lg"
                     placeholder="Search photos, categories, or creators..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    style={{ borderLeft: "none", borderRight: "none" }}
+                    style={{
+                      background: "rgba(255,255,255,0.06)",
+                      border: "1px solid rgba(107,189,208,0.3)",
+                      borderLeft: "none",
+                      borderRight: "none",
+                      color: "#fff"
+                    }}
                   />
-                  <button className="btn btn-warning rounded-end-pill px-4" onClick={() => setSearchQuery(searchQuery)}>
+                  <button className="btn rounded-end-pill px-4"
+                          style={{ background: "var(--pm-teal)", color: "#fff", border: "none" }}
+                          onClick={() => setSearchQuery(searchQuery)}>
                     <i className="fas fa-arrow-right"></i>
                   </button>
                 </div>
               </div>
             </div>
 
-            {/* Modern Category Pills */}
+            {/* Category Pills */}
             <div className="mb-5">
               <div className="d-flex align-items-center justify-content-between mb-3">
-                <h5 className="fw-bold mb-0">
-                  <i className="fas fa-th-large text-warning me-2"></i>
+                <h5 className="fw-bold mb-0" style={{ color: "#fff" }}>
+                  <i className="fas fa-th-large me-2" style={{ color: "var(--pm-teal)" }}></i>
                   Categories
                 </h5>
-                <span className="text-white-50 small">{filteredPhotos.length} results</span>
+                <span className="small" style={{ color: "rgba(255,255,255,0.4)" }}>{filteredPhotos.length} results</span>
               </div>
               <div className="d-flex flex-wrap gap-2">
                 {categories.map(category => (
                   <button
                     key={category.id}
                     onClick={() => setSelectedCategory(category.id)}
-                    className={`btn rounded-pill px-4 py-2 transition-all ${selectedCategory === category.id ? 'btn-warning text-dark' : 'btn-outline-warning'}`}
-                    style={{ fontSize: "0.9rem" }}
+                    className="btn rounded-pill px-4 py-2 explore-cat-pill"
+                    style={{
+                      fontSize: "0.88rem",
+                      background: selectedCategory === category.id
+                        ? "var(--pm-teal)"
+                        : "rgba(107,189,208,0.08)",
+                      border: selectedCategory === category.id
+                        ? "1px solid var(--pm-teal)"
+                        : "1px solid rgba(107,189,208,0.25)",
+                      color: selectedCategory === category.id
+                        ? "#fff"
+                        : "rgba(255,255,255,0.65)"
+                    }}
                   >
                     <i className={`${category.icon} me-2`}></i>
                     {category.name}
-                    <span className="ms-2 opacity-75">({category.count})</span>
+                    <span className="ms-2" style={{ opacity: 0.65 }}>({category.count})</span>
                   </button>
                 ))}
               </div>
             </div>
 
             {/* Filters Bar */}
-            <div className="bg-dark bg-opacity-50 rounded-3 p-3 mb-4" style={{ backdropFilter: "blur(10px)" }}>
+            <div className="glass-card p-3 mb-4">
               <div className="row g-3 align-items-center">
                 <div className="col-md-4">
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
-                    className="form-select bg-dark border-warning text-white rounded-pill"
+                    className="form-select rounded-pill"
+                    style={{
+                      background: "rgba(255,255,255,0.06)",
+                      border: "1px solid rgba(107,189,208,0.3)",
+                      color: "#fff"
+                    }}
                   >
-                    <option value="newest">✨ Newest First</option>
-                    <option value="popular">🔥 Most Popular</option>
-                    <option value="price-low">💰 Price: Low to High</option>
-                    <option value="price-high">💎 Price: High to Low</option>
+                    <option value="newest" style={{ background: "#1a2e3b" }}>Newest First</option>
+                    <option value="popular" style={{ background: "#1a2e3b" }}>Most Popular</option>
+                    <option value="price-low" style={{ background: "#1a2e3b" }}>Price: Low to High</option>
+                    <option value="price-high" style={{ background: "#1a2e3b" }}>Price: High to Low</option>
                   </select>
                 </div>
                 <div className="col-md-4">
                   <div className="btn-group w-100">
                     <button
                       onClick={() => setViewMode('grid')}
-                      className={`btn ${viewMode === 'grid' ? 'btn-warning' : 'btn-outline-warning'} rounded-start-pill`}
+                      className="btn rounded-start-pill"
+                      style={{
+                        background: viewMode === 'grid' ? "var(--pm-teal)" : "rgba(107,189,208,0.08)",
+                        border: "1px solid rgba(107,189,208,0.3)",
+                        color: viewMode === 'grid' ? "#fff" : "rgba(255,255,255,0.6)"
+                      }}
                     >
                       <i className="fas fa-th-large me-2"></i> Grid
                     </button>
                     <button
                       onClick={() => setViewMode('list')}
-                      className={`btn ${viewMode === 'list' ? 'btn-warning' : 'btn-outline-warning'} rounded-end-pill`}
+                      className="btn rounded-end-pill"
+                      style={{
+                        background: viewMode === 'list' ? "var(--pm-teal)" : "rgba(107,189,208,0.08)",
+                        border: "1px solid rgba(107,189,208,0.3)",
+                        color: viewMode === 'list' ? "#fff" : "rgba(255,255,255,0.6)"
+                      }}
                     >
                       <i className="fas fa-list me-2"></i> List
                     </button>
@@ -430,7 +457,7 @@ const Explore = () => {
                 </div>
                 <div className="col-md-4">
                   <div className="d-flex align-items-center gap-3">
-                    <span className="text-white-50 small">Max Price:</span>
+                    <span className="small" style={{ color: "rgba(255,255,255,0.5)", whiteSpace: "nowrap" }}>Max Price:</span>
                     <input
                       type="range"
                       className="form-range flex-grow-1"
@@ -439,45 +466,44 @@ const Explore = () => {
                       value={priceRange[1]}
                       onChange={(e) => setPriceRange([0, parseInt(e.target.value)])}
                     />
-                    <span className="text-warning fw-bold">${priceRange[1]}</span>
+                    <span className="fw-bold" style={{ color: "var(--pm-teal)", whiteSpace: "nowrap" }}>KES {priceRange[1]}</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Photo Grid/Layout */}
+            {/* Photo Grid */}
             {loading ? (
               <div className="text-center py-5">
-                <div className="spinner-border text-warning mb-3" style={{ width: "3rem", height: "3rem" }}></div>
-                <p className="text-white-50">Loading amazing photos...</p>
+                <div className="spinner-border mb-3" style={{ width: "3rem", height: "3rem", color: "var(--pm-teal)" }}></div>
+                <p style={{ color: "rgba(255,255,255,0.4)" }}>Loading amazing photos...</p>
               </div>
             ) : sortedPhotos.length > 0 ? (
               <div className={viewMode === 'grid' ? 'row g-4' : 'd-flex flex-column gap-4'}>
                 {sortedPhotos.map(photo => (
                   <div key={photo.id} className={viewMode === 'grid' ? 'col-md-6 col-lg-4' : 'col-12'}>
-                    <div className="card bg-dark border-0 overflow-hidden rounded-4 hover-lift transition-all" style={{ 
-                      background: "linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)",
-                      backdropFilter: "blur(10px)",
-                      cursor: "pointer"
-                    }}
-                    onClick={() => navigate(`/login?redirect=/photos/${photo.id}`)}>
+                    <div
+                      className="glass-card overflow-hidden explore-photo-card"
+                      style={{ cursor: "pointer" }}
+                      onClick={() => navigate(`/login?redirect=/photos/${photo.id}`)}
+                    >
                       <div className="position-relative overflow-hidden" style={{ height: viewMode === 'list' ? "200px" : "240px" }}>
                         <img
                           src={photo.thumbnail}
                           alt={photo.title}
-                          className="w-100 h-100 object-fit-cover transition-transform"
+                          className="w-100 h-100 explore-photo-img"
                           style={{ objectFit: "cover", transition: "transform 0.5s ease" }}
-                          onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.05)"}
-                          onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
                         />
                         <div className="position-absolute top-0 end-0 m-3">
-                          <span className="badge bg-warning text-dark rounded-pill px-3 py-2 fw-bold">
-                            ${photo.price}
+                          <span className="badge rounded-pill px-3 py-2 fw-bold"
+                                style={{ background: "rgba(15,30,40,0.85)", color: "var(--pm-teal)", border: "1px solid rgba(107,189,208,0.4)" }}>
+                            KES {photo.price}
                           </span>
                         </div>
                         {photo.rating >= 4.8 && (
                           <div className="position-absolute top-0 start-0 m-3">
-                            <span className="badge bg-danger rounded-pill px-3 py-2">
+                            <span className="badge rounded-pill px-3 py-2"
+                                  style={{ background: "rgba(107,189,208,0.2)", color: "var(--pm-teal)", border: "1px solid rgba(107,189,208,0.35)" }}>
                               <i className="fas fa-crown me-1"></i> Editor's Pick
                             </span>
                           </div>
@@ -487,35 +513,36 @@ const Explore = () => {
                         <div className="d-flex justify-content-between align-items-start mb-2">
                           <div>
                             <h6 className="fw-bold mb-1 text-white">{photo.title}</h6>
-                            <p className="text-white-50 small mb-0">
+                            <p className="small mb-0" style={{ color: "rgba(255,255,255,0.45)" }}>
                               <i className="fas fa-user-circle me-1"></i> {photo.photographer}
                             </p>
                           </div>
-                          <div className="d-flex gap-2">
-                            <button className="btn btn-sm btn-link text-danger p-0">
-                              <i className="far fa-heart"></i>
-                            </button>
-                          </div>
+                          <button className="btn btn-sm btn-link p-0" style={{ color: "rgba(255,255,255,0.4)" }}>
+                            <i className="far fa-heart"></i>
+                          </button>
                         </div>
                         <div className="d-flex gap-2 mb-3">
                           {photo.tags.slice(0, 2).map((tag, idx) => (
-                            <span key={idx} className="badge bg-secondary bg-opacity-25 text-white-50 px-2 py-1 rounded-pill small">
+                            <span key={idx} className="badge rounded-pill px-2 py-1 small"
+                                  style={{ background: "rgba(107,189,208,0.1)", color: "rgba(107,189,208,0.8)", border: "1px solid rgba(107,189,208,0.2)" }}>
                               #{tag}
                             </span>
                           ))}
                           {photo.tags.length > 2 && (
-                            <span className="badge bg-secondary bg-opacity-25 text-white-50 px-2 py-1 rounded-pill small">
+                            <span className="badge rounded-pill px-2 py-1 small"
+                                  style={{ background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.4)" }}>
                               +{photo.tags.length - 2}
                             </span>
                           )}
                         </div>
                         <div className="d-flex justify-content-between align-items-center">
-                          <div className="d-flex gap-3 text-white-50 small">
-                            <span><i className="fas fa-heart text-danger me-1"></i> {photo.likes}</span>
-                            <span><i className="fas fa-download me-1"></i> {photo.downloads}</span>
-                            <span><i className="fas fa-star text-warning me-1"></i> {photo.rating}</span>
+                          <div className="d-flex gap-3 small" style={{ color: "rgba(255,255,255,0.45)" }}>
+                            <span><i className="fas fa-heart me-1" style={{ color: "#e57373" }}></i>{photo.likes}</span>
+                            <span><i className="fas fa-download me-1"></i>{photo.downloads}</span>
+                            <span><i className="fas fa-star me-1" style={{ color: "var(--pm-teal)" }}></i>{photo.rating}</span>
                           </div>
-                          <button className="btn btn-sm btn-warning rounded-pill px-3">
+                          <button className="btn btn-sm rounded-pill px-3"
+                                  style={{ background: "var(--pm-teal)", color: "#fff", fontSize: "0.8rem" }}>
                             <i className="fas fa-shopping-cart me-1"></i> Buy
                           </button>
                         </div>
@@ -526,16 +553,17 @@ const Explore = () => {
               </div>
             ) : (
               <div className="text-center py-5">
-                <i className="fas fa-search fa-3x text-secondary mb-3"></i>
-                <h4 className="text-white-50">No photos found</h4>
-                <p className="text-white-50">Try adjusting your filters or search query</p>
-                <button 
+                <i className="fas fa-search fa-3x mb-3" style={{ color: "rgba(107,189,208,0.4)" }}></i>
+                <h4 style={{ color: "rgba(255,255,255,0.5)" }}>No photos found</h4>
+                <p style={{ color: "rgba(255,255,255,0.35)" }}>Try adjusting your filters or search query</p>
+                <button
                   onClick={() => {
                     setSelectedCategory('all');
                     setSearchQuery('');
                     setPriceRange([0, 100]);
                   }}
-                  className="btn btn-warning rounded-pill px-4 mt-3"
+                  className="btn rounded-pill px-4 mt-3"
+                  style={{ background: "var(--pm-teal)", color: "#fff" }}
                 >
                   Clear All Filters
                 </button>
@@ -545,7 +573,7 @@ const Explore = () => {
             {/* Load More */}
             {sortedPhotos.length > 0 && (
               <div className="text-center mt-5">
-                <button className="btn btn-outline-warning rounded-pill px-5 py-3 hover-glow">
+                <button className="btn rounded-pill px-5 py-3 explore-load-more">
                   <i className="fas fa-sync-alt me-2"></i>
                   Load More Photos
                 </button>
@@ -553,17 +581,14 @@ const Explore = () => {
             )}
           </div>
 
-          {/* RIGHT SIDEBAR - Fading Banner */}
+          {/* Right Sidebar */}
           {!isMobile && (
             <div className="col-lg-3">
               <div className="position-sticky" style={{ top: "100px" }}>
-                
+
                 {/* Fading Banner */}
-                <div className="position-relative rounded-4 overflow-hidden mb-4" style={{ 
-                  height: "500px",
-                  background: "#0a0a0a",
-                  boxShadow: "0 20px 40px rgba(0,0,0,0.3)"
-                }}>
+                <div className="position-relative rounded-4 overflow-hidden mb-4"
+                     style={{ height: "500px", background: "#0a1520", boxShadow: "0 20px 40px rgba(0,0,0,0.4)" }}>
                   <div
                     className="position-absolute w-100 h-100"
                     style={{
@@ -575,11 +600,10 @@ const Explore = () => {
                       zIndex: 1
                     }}
                   >
-                    <div className="position-absolute w-100 h-100" style={{
-                      background: "linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.9) 100%)"
-                    }}></div>
+                    <div className="position-absolute w-100 h-100"
+                         style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(10,21,32,0.95) 100%)" }}></div>
                   </div>
-                  
+
                   <div
                     className="position-absolute w-100 h-100"
                     style={{
@@ -591,28 +615,35 @@ const Explore = () => {
                       zIndex: 0
                     }}
                   >
-                    <div className="position-absolute w-100 h-100" style={{
-                      background: "linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.9) 100%)"
-                    }}></div>
+                    <div className="position-absolute w-100 h-100"
+                         style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(10,21,32,0.95) 100%)" }}></div>
                   </div>
-                  
+
                   <div className="position-relative h-100 d-flex flex-column justify-content-end p-4" style={{ zIndex: 2 }}>
-                    <div className="badge bg-warning text-dark rounded-pill mb-3 align-self-start px-3 py-2">
-                      <i className="fas fa-fire me-1"></i> {bannerImages[currentBannerIndex].badge}
+                    <div className="badge rounded-pill mb-3 align-self-start px-3 py-2"
+                         style={{ background: "rgba(107,189,208,0.2)", color: "var(--pm-teal)", border: "1px solid rgba(107,189,208,0.4)" }}>
+                      <i className="fas fa-star me-1"></i> {bannerImages[currentBannerIndex].badge}
                     </div>
-                    <h3 className="fw-bold mb-2">{bannerImages[currentBannerIndex].title}</h3>
-                    <p className="text-white-50 small mb-3">{bannerImages[currentBannerIndex].description}</p>
+                    <h3 className="fw-bold mb-2 text-white" style={{ fontFamily: "var(--font-serif)" }}>
+                      {bannerImages[currentBannerIndex].title}
+                    </h3>
+                    <p className="small mb-3" style={{ color: "rgba(255,255,255,0.55)" }}>
+                      {bannerImages[currentBannerIndex].description}
+                    </p>
                     <div className="d-flex justify-content-between align-items-center mb-3">
-                      <span className="text-warning fw-bold">{bannerImages[currentBannerIndex].price}</span>
-                      <button 
-                        className="btn btn-sm btn-warning rounded-pill px-3"
+                      <span className="fw-bold" style={{ color: "var(--pm-teal)" }}>
+                        {bannerImages[currentBannerIndex].price}
+                      </span>
+                      <button
+                        className="btn btn-sm rounded-pill px-3"
+                        style={{ background: "var(--pm-teal)", color: "#fff" }}
                         onClick={() => navigate('/register')}
                       >
                         {bannerImages[currentBannerIndex].buttonText}
                       </button>
                     </div>
                   </div>
-                  
+
                   <div className="position-absolute bottom-0 start-0 end-0 d-flex justify-content-center gap-2 pb-3" style={{ zIndex: 3 }}>
                     {bannerImages.map((_, idx) => (
                       <button
@@ -625,46 +656,56 @@ const Explore = () => {
                             setIsFading(false);
                           }, 500);
                         }}
-                        className="border-0 rounded-pill transition-all"
+                        className="border-0 rounded-pill"
                         style={{
                           width: currentBannerIndex === idx ? "28px" : "6px",
                           height: "6px",
-                          backgroundColor: currentBannerIndex === idx ? "#ffc107" : "rgba(255,255,255,0.4)",
-                          cursor: "pointer"
+                          background: currentBannerIndex === idx ? "var(--pm-teal)" : "rgba(255,255,255,0.3)",
+                          cursor: "pointer",
+                          transition: "all 0.3s ease"
                         }}
                       />
                     ))}
                   </div>
                 </div>
 
-                {/* Stats Card */}
-                <div className="bg-gradient rounded-4 p-4 mb-4 text-center" style={{
-                  background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)"
-                }}>
-                  <i className="fas fa-chart-line fs-1 text-warning mb-2"></i>
-                  <h4 className="fw-bold mb-2">Join Our Community</h4>
-                  <p className="text-white-50 small mb-3">50,000+ active creators</p>
-                  <button className="btn btn-warning rounded-pill w-100" onClick={() => navigate('/register')}>
+                {/* Community Card */}
+                <div className="glass-stat rounded-4 p-4 mb-4 text-center">
+                  <div className="d-flex align-items-center justify-content-center rounded-circle mx-auto mb-3"
+                       style={{ width: 56, height: 56, background: "rgba(107,189,208,0.15)", border: "1px solid rgba(107,189,208,0.25)" }}>
+                    <i className="fas fa-chart-line fs-4" style={{ color: "var(--pm-teal)" }}></i>
+                  </div>
+                  <h5 className="fw-bold mb-1 text-white" style={{ fontFamily: "var(--font-serif)" }}>
+                    Join Our Community
+                  </h5>
+                  <p className="small mb-3" style={{ color: "rgba(255,255,255,0.45)" }}>50,000+ active creators</p>
+                  <button className="btn rounded-pill w-100 fw-semibold"
+                          style={{ background: "var(--pm-teal)", color: "#fff" }}
+                          onClick={() => navigate('/register')}>
                     <i className="fas fa-user-plus me-2"></i> Sign Up Free
                   </button>
                 </div>
 
                 {/* Trending Tags */}
-                <div className="bg-gradient rounded-4 p-4" style={{
-                  background: "linear-gradient(135deg, #2a1b3d 0%, #1a1a2e 100%)"
-                }}>
+                <div className="glass-card p-4">
                   <div className="d-flex align-items-center gap-2 mb-3">
-                    <i className="fas fa-fire text-warning"></i>
-                    <h6 className="fw-bold mb-0">Trending Tags</h6>
+                    <i className="fas fa-fire" style={{ color: "var(--pm-teal)" }}></i>
+                    <h6 className="fw-bold mb-0 text-white">Trending Tags</h6>
                   </div>
                   <div className="d-flex flex-wrap gap-2">
                     {["nature", "sunset", "cityscape", "portrait", "wildlife", "abstract", "vintage", "minimal"].map((tag, idx) => (
                       <button
                         key={idx}
-                        className="btn btn-sm btn-outline-warning rounded-pill px-3 py-1"
+                        className="btn btn-sm rounded-pill px-3 py-1"
+                        style={{
+                          background: "rgba(107,189,208,0.08)",
+                          border: "1px solid rgba(107,189,208,0.25)",
+                          color: "rgba(107,189,208,0.85)",
+                          fontSize: "0.78rem"
+                        }}
                         onClick={() => setSearchQuery(tag)}
                       >
-                        <i className="fas fa-hashtag me-1"></i> {tag}
+                        <i className="fas fa-hashtag me-1"></i>{tag}
                       </button>
                     ))}
                   </div>
@@ -676,37 +717,35 @@ const Explore = () => {
       </div>
 
       <style>{`
-        .transition-all {
-          transition: all 0.3s ease;
+        .explore-photo-card {
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+          border-radius: var(--radius-lg) !important;
         }
-        
-        .hover-lift:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 20px 40px rgba(0,0,0,0.3) !important;
+        .explore-photo-card:hover {
+          transform: translateY(-6px);
+          box-shadow: 0 24px 48px rgba(0,0,0,0.35) !important;
         }
-        
-        .hover-glow:hover {
-          box-shadow: 0 0 20px rgba(255,193,7,0.5);
-        }
-        
-        .hover-scale:hover {
+        .explore-photo-img:hover {
           transform: scale(1.05);
         }
-        
-        .hover-bg-warning:hover {
-          background-color: rgba(255,193,7,0.1);
-          color: #ffc107 !important;
+        .explore-load-more {
+          border: 1px solid rgba(107,189,208,0.4);
+          color: var(--pm-teal);
+          background: rgba(107,189,208,0.06);
+          transition: all 0.3s ease;
         }
-        
-        .object-fit-cover {
-          object-fit: cover;
+        .explore-load-more:hover {
+          background: rgba(107,189,208,0.15);
+          box-shadow: 0 0 20px rgba(107,189,208,0.2);
+          color: var(--pm-teal);
         }
-        
-        .bg-gradient {
-          background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
-          backdrop-filter: blur(10px);
+        .explore-cat-pill {
+          transition: all 0.2s ease;
         }
-        
+        .explore-cat-pill:hover {
+          background: rgba(107,189,208,0.18) !important;
+          color: #fff !important;
+        }
         @media (max-width: 768px) {
           .display-3 {
             font-size: 2rem;

@@ -737,7 +737,7 @@ const BuyerExplore = () => {
                         style={{
                           width: currentBannerIndex === idx ? "clamp(16px, 3vw, 24px)" : "clamp(4px, 1vw, 6px)",
                           height: "clamp(4px, 1vw, 6px)",
-                          backgroundColor: currentBannerIndex === idx ? "#ffc107" : "rgba(255,255,255,0.5)",
+                          backgroundColor: currentBannerIndex === idx ? "#6BBDD0" : "rgba(255,255,255,0.5)",
                           transition: "all 0.3s ease",
                           cursor: "pointer"
                         }}
@@ -810,7 +810,7 @@ const BuyerExplore = () => {
                     transform: "translate(-50%, -50%) rotate(-25deg)",
                     fontSize: "clamp(24px, 5vw, 48px)",
                     fontWeight: "bold",
-                    color: "rgba(255,193,7,0.3)",
+                    color: "rgba(107,189,208,0.3)",
                     textShadow: "2px 2px 4px rgba(0,0,0,0.5)",
                     pointerEvents: "none",
                     zIndex: 10,
@@ -940,7 +940,7 @@ const BuyerExplore = () => {
         }
         
         .overflow-auto::-webkit-scrollbar-thumb {
-          background: rgba(255,193,7,0.5);
+          background: rgba(107,189,208,0.5);
           border-radius: 10px;
         }
         
