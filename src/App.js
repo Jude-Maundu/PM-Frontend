@@ -28,6 +28,7 @@ import AdminShares from './Components/Pages/Admin/AdminShares';
 import AdminWithdrawals from './Components/Pages/Admin/AdminWithdrawals';
 import AdminAlbums from './Components/Pages/Admin/AdminAlbums';
 import AdminWallets from './Components/Pages/Admin/AdminWallets';
+import AdminPortfolios from './Components/Pages/Admin/AdminPortfolios';
 import AdminProfile from './Components/Pages/Admin/AdminProfile';
 import ShareAccess from './Components/Pages/Buyer/ShareAccess';
 
@@ -106,6 +107,7 @@ function App() {
           <Route path="/admin/withdrawals" element={<ProtectedRoute requiredRole="admin"><AdminWithdrawals /></ProtectedRoute>} />
           <Route path="/admin/albums" element={<ProtectedRoute requiredRole="admin"><AdminAlbums /></ProtectedRoute>} />
           <Route path="/admin/wallets" element={<ProtectedRoute requiredRole="admin"><AdminWallets /></ProtectedRoute>} />
+          <Route path="/admin/portfolios" element={<ProtectedRoute requiredRole="admin"><AdminPortfolios /></ProtectedRoute>} />
           
           {/* Photographer Routes */}
           <Route path='/photographer/dashboard' element={<ProtectedRoute requiredRole="photographer"><PhotographerDash /></ProtectedRoute>} />

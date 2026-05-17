@@ -55,6 +55,12 @@ const AdminSidebar = ({ isOpen, onToggle, onNav }) => {
       badge: null,
     },
     {
+      path: "/admin/portfolios",
+      icon: "fa-globe",
+      label: "Portfolios",
+      badge: null,
+    },
+    {
       path: "/admin/wallets",
       icon: "fa-wallet",
       label: "Wallets",

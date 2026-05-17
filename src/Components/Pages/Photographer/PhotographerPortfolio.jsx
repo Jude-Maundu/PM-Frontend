@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import PhotographerLayout from './PhotographerLayout';
-import { API_ENDPOINTS } from '../../../api/apiConfig';
+import { API_ENDPOINTS, SITE_URL } from '../../../api/apiConfig';
 import { toast } from '../../../utils/toast';
 import { getAuthHeaders, getStoredUser } from '../../../utils/auth';
 
@@ -209,7 +209,7 @@ const PhotographerPortfolio = () => {
   };
 
   const copyUrl = () => {
-    const url = `${window.location.origin}/portfolio/${username}`;
+    const url = `${SITE_URL}/portfolio/${username}`;
     navigator.clipboard.writeText(url).then(() => toast.success('URL copied!')).catch(() => toast.error('Failed to copy'));
   };
 
@@ -627,7 +627,7 @@ const PhotographerPortfolio = () => {
                     <input
                       readOnly
                       style={{ ...inputStyle, marginBottom: 0, color: '#6BBDD0' }}
-                      value={`${window.location.origin}/portfolio/${username}`}
+                      value={`${SITE_URL}/portfolio/${username}`}
                     />
                     <button
                       className="btn btn-outline-info btn-sm"

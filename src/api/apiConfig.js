@@ -6,6 +6,12 @@
 // FORCE USE ONLINE SERVER - Remove localhost fallback
 const ONLINE_API_BASE_URL = "https://pm-backend-f3b6.onrender.com/api";
 
+// Public site URL — used for shareable portfolio links.
+// Resolves to the current origin automatically (works on localhost AND production frontend).
+export const SITE_URL =
+  process.env.REACT_APP_SITE_URL ||
+  (typeof window !== "undefined" ? window.location.origin : "");
+
 // Override to always use online server
 const API_BASE_URL = ONLINE_API_BASE_URL;
 
@@ -184,6 +190,10 @@ const API_ENDPOINTS = {
     GET_MY: `${API_BASE_URL}/portfolio/me`,
     SAVE: `${API_BASE_URL}/portfolio`,
     GET_PUBLIC: (username) => `${API_BASE_URL}/portfolio/${username}`,
+    ADMIN_GET_ALL: `${API_BASE_URL}/portfolio/admin/all`,
+    ADMIN_TOGGLE_PUBLISH: (id) => `${API_BASE_URL}/portfolio/admin/${id}/toggle-publish`,
+    ADMIN_PREVIEW: (id) => `${API_BASE_URL}/portfolio/admin/${id}/preview`,
+    ADMIN_DELETE: (id) => `${API_BASE_URL}/portfolio/admin/${id}`,
   },
 
   // ==================== WITHDRAWALS ====================
