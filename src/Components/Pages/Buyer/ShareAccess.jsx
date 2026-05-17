@@ -29,11 +29,19 @@ const ShareAccess = () => {
     const fetchShare = async () => {
       if (!token) { setError("Invalid share link."); setLoading(false); return; }
       try {
-        const res = await axios.get(API_ENDPOINTS.SHARE.ACCESS(token));
+        const res = await axios.get(API_ENDPOINTS.SHARE.ACCESS(token), { timeout: 12000 });
         const data = res.data?.data || res.data;
-        setShareData(data);
+        if (!data || data.success === false) {
+          setError(data?.message || "Share link not found or has expired.");
+        } else {
+          setShareData(data);
+        }
       } catch (err) {
-        setError(err.response?.data?.message || "Unable to load this shared content. The link may have expired.");
+        if (err.code === "ECONNABORTED") {
+          setError("The server took too long to respond. Please try again in a moment.");
+        } else {
+          setError(err.response?.data?.message || "Unable to load this shared content. The link may have expired.");
+        }
       } finally {
         setLoading(false);
       }
