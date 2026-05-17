@@ -1,3 +1,4 @@
+import { toast } from "../../../utils/toast";
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import PhotographerLayout from "./PhotographerLayout";
@@ -40,7 +41,7 @@ const PhotographerWithdrawals = () => {
     } finally {
       setLoading(false);
     }
-  }, [photographerId, headers, API]);
+  }, [photographerId, headers]);
 
   useEffect(() => {
     fetchWithdrawals();
@@ -50,12 +51,12 @@ const PhotographerWithdrawals = () => {
     e.preventDefault();
     
     if (!requestData.amount || Number(requestData.amount) < 1000) {
-      alert("Minimum withdrawal amount is KES 1,000");
+      toast.warning("Minimum withdrawal amount is KES 1,000");
       return;
     }
 
     if (Number(requestData.amount) > availableBalance) {
-      alert("Insufficient available balance");
+      toast.error("Insufficient available balance");
       return;
     }
 
@@ -72,7 +73,7 @@ const PhotographerWithdrawals = () => {
 
       await axios.post(`${API}/withdrawals/request`, payload, { headers });
       
-      alert("Withdrawal request submitted successfully!");
+      toast.success("Withdrawal request submitted successfully!");
       setShowRequestForm(false);
       setRequestData({
         amount: "",
@@ -87,7 +88,7 @@ const PhotographerWithdrawals = () => {
       
     } catch (error) {
       console.error("Error submitting withdrawal request:", error);
-      alert(error.response?.data?.message || "Failed to submit withdrawal request");
+      toast.error(error.response?.data?.message || "Failed to submit withdrawal request");
     } finally {
       setSubmitting(false);
     }

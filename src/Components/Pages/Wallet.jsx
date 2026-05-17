@@ -1,3 +1,4 @@
+import { toast } from "../../utils/toast";
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
@@ -63,12 +64,12 @@ const Wallet = () => {
   // Handle wallet topup
   const handleTopup = async () => {
     if (!topupAmount || parseFloat(topupAmount) <= 0) {
-      alert("Please enter a valid amount");
+      toast.warning("Please enter a valid amount");
       return;
     }
 
     if (!phoneNumber || !/^254\d{9}$/.test(phoneNumber)) {
-      alert("Please enter a valid phone number (format: 254XXXXXXXXX)");
+      toast.warning("Please enter a valid phone number (format: 254XXXXXXXXX)");
       return;
     }
 
@@ -87,17 +88,17 @@ const Wallet = () => {
       );
 
       if (response.data?.success) {
-        alert(`STK Push sent to ${phoneNumber}. Please check your phone to complete payment.`);
+        toast.success(`STK Push sent to ${phoneNumber}. Please check your phone to complete payment.`);
         setShowTopupModal(false);
         setTopupAmount("");
         setPhoneNumber("");
         setTimeout(() => fetchWallet(), 5000);
       } else {
-        alert(response.data?.message || "Failed to initiate payment");
+        toast.error(response.data?.message || "Failed to initiate payment");
       }
     } catch (err) {
       console.error("Topup error:", err);
-      alert(err.response?.data?.message || "Failed to process topup");
+      toast.error(err.response?.data?.message || "Failed to process topup");
     } finally {
       setProcessing(false);
     }

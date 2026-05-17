@@ -126,6 +126,8 @@ const API_ENDPOINTS = {
     LIST: `${API_BASE_URL}/share/list`,
     STATS: (token) => `${API_BASE_URL}/share/${token}/stats`,
     REVOKE: (token) => `${API_BASE_URL}/share/${token}/revoke`,
+    PURCHASE: (token) => `${API_BASE_URL}/share/${token}/purchase`,
+    PAYMENT_STATUS: (token, requestId) => `${API_BASE_URL}/share/${token}/payment/${requestId}`,
   },
 
   // ==================== NOTIFICATIONS ====================
@@ -145,15 +147,15 @@ const API_ENDPOINTS = {
   MESSAGING: {
     GET_CONVERSATIONS: `${API_BASE_URL}/messages/conversations`,
     GET_CONVERSATION: (otherUserId) => `${API_BASE_URL}/messages/conversations/${otherUserId}`,
-    GET_MESSAGES: (conversationId) => `${API_BASE_URL}/messages/${conversationId}`,
-    SEND_MESSAGE: `${API_BASE_URL}/messages/send`,
+    GET_MESSAGES: (conversationId) => `${API_BASE_URL}/messages/conversations/${conversationId}/messages`,
+    SEND_MESSAGE: `${API_BASE_URL}/messages/`,
     EDIT_MESSAGE: (messageId) => `${API_BASE_URL}/messages/${messageId}`,
     DELETE_MESSAGE: (messageId) => `${API_BASE_URL}/messages/${messageId}`,
     MARK_READ: (conversationId) => `${API_BASE_URL}/messages/conversations/${conversationId}/read`,
     ARCHIVE: (conversationId) => `${API_BASE_URL}/messages/conversations/${conversationId}/archive`,
     UNARCHIVE: (conversationId) => `${API_BASE_URL}/messages/conversations/${conversationId}/unarchive`,
-    ADD_REACTION: (messageId) => `${API_BASE_URL}/messages/${messageId}/reaction`,
-    REMOVE_REACTION: (messageId) => `${API_BASE_URL}/messages/${messageId}/reaction`,
+    ADD_REACTION: (messageId) => `${API_BASE_URL}/messages/${messageId}/reactions`,
+    REMOVE_REACTION: (messageId) => `${API_BASE_URL}/messages/${messageId}/reactions`,
   },
 
   // ==================== WITHDRAWALS ====================

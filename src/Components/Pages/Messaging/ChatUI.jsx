@@ -4,6 +4,8 @@ import { getMessages, deleteMessage, editMessage, addReaction } from "../../../a
 import MessageInput from "./MessageInput";
 import ReactionPicker from "./ReactionPicker";
 import "./ChatUI.css";
+import { toast } from "../../../utils/toast";
+import { showConfirm } from "../../../utils/confirm";
 
 const ChatUI = ({ conversation, onMessageSent, currentUserId }) => {
   const [messages, setMessages] = useState([]);
@@ -47,18 +49,18 @@ const ChatUI = ({ conversation, onMessageSent, currentUserId }) => {
 
   // Handle delete message
   const handleDeleteMessage = async (messageId) => {
-    if (!window.confirm("Delete this message?")) return;
+    const ok = await showConfirm("Delete this message?", { title: "Delete Message", confirmText: "Delete", danger: true });
+    if (!ok) return;
 
     try {
-      await deleteMessage(messageId, false); // Soft delete
+      await deleteMessage(messageId, false);
       setMessages((prev) => prev.filter((msg) => msg._id !== messageId));
     } catch (err) {
       console.error("Failed to delete message:", err);
-      alert(err.response?.data?.message || "Failed to delete message");
+      toast.error(err.response?.data?.message || "Failed to delete message");
     }
   };
 
-  // Handle edit message
   const handleEditMessage = async (messageId, newText) => {
     try {
       await editMessage(messageId, newText);
@@ -72,20 +74,23 @@ const ChatUI = ({ conversation, onMessageSent, currentUserId }) => {
       setEditingMessageId(null);
     } catch (err) {
       console.error("Failed to edit message:", err);
-      alert(err.response?.data?.message || "Failed to edit message");
+      toast.error(err.response?.data?.message || "Failed to edit message");
     }
   };
 
   // Handle add emoji reaction
+  // NOTE: Mongoose Maps are serialized to plain objects over JSON, so reactions is {} not Map
   const handleAddReaction = async (messageId, emoji) => {
     try {
       await addReaction(messageId, emoji);
       setMessages((prev) =>
         prev.map((msg) => {
           if (msg._id === messageId) {
-            const reactions = new Map(msg.reactions || []);
-            const currentReaction = reactions.get(emoji) || [];
-            reactions.set(emoji, [...currentReaction, currentUserId]);
+            const reactions = { ...(msg.reactions || {}) };
+            const currentUsers = Array.isArray(reactions[emoji]) ? reactions[emoji] : [];
+            if (!currentUsers.includes(currentUserId)) {
+              reactions[emoji] = [...currentUsers, currentUserId];
+            }
             return { ...msg, reactions };
           }
           return msg;
@@ -222,12 +227,12 @@ const ChatUI = ({ conversation, onMessageSent, currentUserId }) => {
                       <i className="far fa-smile"></i>
                     </button>
 
-                    {/* Reactions display */}
-                    {message.reactions && message.reactions.size > 0 && (
+                    {/* Reactions display — reactions is a plain object {emoji: [userId,...]} */}
+                    {message.reactions && Object.keys(message.reactions).length > 0 && (
                       <div className="message-reactions">
-                        {Array.from(message.reactions.entries()).map(([emoji, users]) => (
-                          <span key={emoji} className="reaction-chip" title={users.join(", ")}>
-                            {emoji} {users.length}
+                        {Object.entries(message.reactions).map(([emoji, users]) => (
+                          <span key={emoji} className="reaction-chip" title={Array.isArray(users) ? users.join(", ") : ""}>
+                            {emoji} {Array.isArray(users) ? users.length : 0}
                           </span>
                         ))}
                       </div>

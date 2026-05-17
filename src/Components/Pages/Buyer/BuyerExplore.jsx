@@ -3,10 +3,11 @@ import { useNavigate } from "react-router-dom";
 import BuyerLayout from "./BuyerLayout";
 import axios from "axios";
 import { API_BASE_URL } from "../../../api/apiConfig";
+import { toast } from "../../../utils/toast";
 import { placeholderMedium } from "../../../utils/placeholders";
 import { getImageUrl, fetchProtectedUrl } from "../../../utils/imageUrl";
 import { addToLocalCart, disableApi, isApiAvailable } from "../../../utils/localStore";
-import { getUserFollowing, getLikedMedia, addFavorite, removeFavorite, likeMedia, unlikeMedia, followUser, unfollowUser, getConversationWithUser } from "../../../api/API";
+import { getUserFollowing, getLikedMedia, addFavorite, removeFavorite, likeMedia, unlikeMedia, getConversationWithUser } from "../../../api/API";
 
 const API = API_BASE_URL;
 
@@ -19,12 +20,10 @@ const BuyerExplore = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("newest");
-  const [addingToCart, setAddingToCart] = useState(null);
+  const [, setAddingToCart] = useState(null);
   const [likedItems, setLikedItems] = useState(new Set());
-  const [likingItem, setLikingItem] = useState(null);
-  const [followingUsers, setFollowingUsers] = useState(new Set());
-  const [followingUser, setFollowingUser] = useState(null);
-  const [messagingUser, setMessagingUser] = useState(null);
+  const [, setFollowingUsers] = useState(new Set());
+  const [, setMessagingUser] = useState(null);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [columns, setColumns] = useState(4);
@@ -39,7 +38,7 @@ const BuyerExplore = () => {
   const [showSidebar, setShowSidebar] = useState(true);
   
   // Ref for modal content to detect keyboard shortcuts
-  const modalRef = useRef(null);
+  const modalRef = useRef(null); // eslint-disable-line no-unused-vars
   const imageRef = useRef(null);
 
   const bannerImages = [
@@ -103,6 +102,7 @@ const BuyerExplore = () => {
     
     setNextBannerIndex(1 % bannerImages.length);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Disable right-click globally
@@ -301,27 +301,27 @@ const BuyerExplore = () => {
   }, [token, headers, loadFollowingStatus, loadLikedItems]);
 
   const addToCart = async (mediaId, item) => {
-    if (!token) { alert("Please login to add items to cart"); return; }
+    if (!token) { toast.warning("Please login to add items to cart"); return; }
     const feature = "cart";
     const apiAvailable = isApiAvailable(feature);
     if (!apiAvailable) {
       addToLocalCart(mediaId, { title: item?.title, price: item?.price });
-      alert("Added to cart (local fallback)");
+      toast.success("Added to cart!");
       return;
     }
     try {
       setAddingToCart(mediaId);
       await axios.post(`${API}/payments/cart/add`, { userId, mediaId }, { headers });
-      alert("Added to cart!");
+      toast.success("Added to cart!");
     } catch (err) {
       const status = err.response?.status;
       const errMsg = err.response?.data?.message || err.message || "Unknown error";
       if (status === 404 || status === 400 || status === 500) {
         disableApi(feature);
         addToLocalCart(mediaId, { title: item?.title, price: item?.price });
-        alert(`Added to cart (local fallback). Server error: ${errMsg || 'Server unavailable'}`);
+        toast.info(`Added to cart. (Server unavailable)`);
       } else {
-        alert(`Failed to add to cart: ${errMsg}`);
+        toast.error(`Failed to add to cart: ${errMsg}`);
       }
     } finally {
       setAddingToCart(null);
@@ -329,10 +329,9 @@ const BuyerExplore = () => {
   };
 
   const handleLike = async (mediaId) => {
-    if (!token) { alert("Please login to like photos"); return; }
+    if (!token) { toast.warning("Please login to like photos"); return; }
     const isLiked = likedItems.has(mediaId);
     try {
-      setLikingItem(mediaId);
       if (isLiked) {
         await unlikeMedia(mediaId);
         if (userId) try { await removeFavorite(userId, mediaId); } catch (favErr) {}
@@ -345,24 +344,22 @@ const BuyerExplore = () => {
       setMedia(prev => prev.map(item => item._id === mediaId ? { ...item, likes: (item.likes || 0) + (isLiked ? -1 : 1) } : item));
     } catch (err) {
       console.error("Error toggling like:", err);
-      alert("Failed to update like. Please try again.");
-    } finally {
-      setLikingItem(null);
+      toast.error("Failed to update like. Please try again.");
     }
   };
 
   const handleMessage = async (photographerId) => {
-    if (!token) { alert("Please login to message users"); return; }
+    if (!token) { toast.warning("Please login to message users"); return; }
     if (!photographerId) return;
     try {
       setMessagingUser(photographerId);
       const response = await getConversationWithUser(photographerId);
       const conversationId = response?.data?._id;
-      if (!conversationId) { alert("Unable to start conversation. Please try again."); return; }
+      if (!conversationId) { toast.error("Unable to start conversation. Please try again."); return; }
       navigate(`/messages?conversation=${conversationId}`);
     } catch (err) {
       console.error("Error starting conversation:", err);
-      alert("Failed to start conversation. Please try again.");
+      toast.error("Failed to start conversation. Please try again.");
     } finally {
       setMessagingUser(null);
     }

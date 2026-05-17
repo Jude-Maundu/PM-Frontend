@@ -5,6 +5,8 @@ import { useNavigate } from "react-router-dom";
 import { fetchProtectedUrl, getImageUrl } from "../../../utils/imageUrl";
 import { placeholderMedium } from "../../../utils/placeholders";
 import { getAuthToken, getCurrentUserId } from "../../../utils/auth";
+import { toast } from "../../../utils/toast";
+import { showConfirm } from "../../../utils/confirm";
 import {
   getMyMedia,
   deleteMedia,
@@ -15,6 +17,8 @@ import {
   updateAlbum,
   deleteAlbum,
   generateShareLink,
+  listActiveShares,
+  revokeShareLink,
   addMediaToAlbum,
   removeMediaFromAlbum,
   addCart,
@@ -83,6 +87,11 @@ const PhotographerMedia = () => {
   const [albumForCover, setAlbumForCover] = useState(null);
   const [settingCover, setSettingCover] = useState(false);
 
+  // Shares tab
+  const [activeShares, setActiveShares] = useState([]);
+  const [loadingShares, setLoadingShares] = useState(false);
+  const [copiedToken, setCopiedToken] = useState(null);
+
   const navigate = useNavigate();
   const token = getAuthToken();
 
@@ -122,7 +131,7 @@ const PhotographerMedia = () => {
     }
     
     setMediaUrls(urlMap);
-  }, [userId]);
+  }, [userId, token]);
 
   // Fetch media
   const fetchMedia = useCallback(async () => {
@@ -156,6 +165,40 @@ const PhotographerMedia = () => {
       setLoading(false);
     }
   }, [userId, fetchProtectedUrls]);
+
+  // Load active shares
+  const loadShares = async () => {
+    setLoadingShares(true);
+    try {
+      const res = await listActiveShares();
+      setActiveShares(res.data?.data || res.data || []);
+    } catch (err) {
+      console.warn("Failed to load shares:", err.message);
+    } finally {
+      setLoadingShares(false);
+    }
+  };
+
+  const handleRevokeShare = async (token, title) => {
+    const ok = await showConfirm(`Revoke the share link for "${title || 'this item'}"? Recipients will no longer be able to access it.`, {
+      title: "Revoke Share Link", confirmText: "Revoke", danger: true
+    });
+    if (!ok) return;
+    try {
+      await revokeShareLink(token);
+      setActiveShares(prev => prev.filter(s => s.token !== token));
+      toast.success("Share link revoked.");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to revoke share link");
+    }
+  };
+
+  const handleCopyLink = (url, token) => {
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedToken(token);
+      setTimeout(() => setCopiedToken(null), 2000);
+    });
+  };
 
   // Load albums
   const loadAlbums = async () => {
@@ -197,20 +240,20 @@ const PhotographerMedia = () => {
   // Add entire album to cart
   const handleAddAlbumToCart = async (album) => {
     if (!album || !album._id) {
-      alert("No album selected");
+      toast.error("No album selected");
       return;
     }
-    
+
     setAddingAlbumToCart(true);
     try {
       const res = await getAlbumMedia(album._id);
       const mediaList = res.data?.media || [];
-      
+
       if (mediaList.length === 0) {
-        alert("This album has no media to add to cart.");
+        toast.warning("This album has no media to add to cart.");
         return;
       }
-      
+
       let addedCount = 0;
       for (const mediaItem of mediaList) {
         try {
@@ -220,16 +263,16 @@ const PhotographerMedia = () => {
           console.error(`Failed to add ${mediaItem.title}:`, err);
         }
       }
-      
+
       if (addedCount > 0) {
-        alert(`Added ${addedCount} items from "${album.name}" to cart!`);
+        toast.success(`Added ${addedCount} items from "${album.name}" to cart!`);
         window.dispatchEvent(new CustomEvent("pm:cart-updated"));
       } else {
-        alert("Failed to add any items to cart. Please try again.");
+        toast.error("Failed to add any items to cart. Please try again.");
       }
     } catch (err) {
       console.error("Error adding album to cart:", err);
-      alert(err.response?.data?.message || "Failed to add album to cart");
+      toast.error(err.response?.data?.message || "Failed to add album to cart");
     } finally {
       setAddingAlbumToCart(false);
     }
@@ -287,12 +330,12 @@ const PhotographerMedia = () => {
         setSelectedAlbum(prev => ({ ...prev, coverImage: coverUrl }));
       }
       
-      alert("Album cover updated successfully!");
+      toast.success("Album cover updated successfully!");
       setShowSetCoverModal(false);
       setAlbumForCover(null);
     } catch (err) {
       console.error("Failed to set album cover:", err);
-      alert(err.response?.data?.message || "Failed to set album cover");
+      toast.error(err.response?.data?.message || "Failed to set album cover");
     } finally {
       setSettingCover(false);
     }
@@ -301,27 +344,27 @@ const PhotographerMedia = () => {
   // Add media to album
   const handleAddToAlbum = async () => {
     if (!selectedMediaForAlbum || !selectedAlbumId) {
-      alert("Please select a media item and an album");
+      toast.warning("Please select a media item and an album");
       return;
     }
 
     setAddingToAlbum(true);
     try {
       await addMediaToAlbum(selectedAlbumId, selectedMediaForAlbum._id);
-      alert("Media added to album successfully!");
-      
+      toast.success("Media added to album successfully!");
+
       if (selectedAlbum && selectedAlbum._id === selectedAlbumId) {
         await refreshAlbumMedia(selectedAlbumId);
       }
-      
+
       await loadAlbums();
-      
+
       setShowAddToAlbumModal(false);
       setSelectedMediaForAlbum(null);
       setSelectedAlbumId("");
     } catch (err) {
       console.error("Error adding to album:", err);
-      alert(err.response?.data?.message || "Failed to add media to album");
+      toast.error(err.response?.data?.message || "Failed to add media to album");
     } finally {
       setAddingToAlbum(false);
     }
@@ -329,15 +372,16 @@ const PhotographerMedia = () => {
 
   // Remove media from album
   const handleRemoveFromAlbum = async (mediaId, albumId) => {
-    if (!window.confirm("Remove this media from the album?")) return;
-    
+    const ok = await showConfirm("Remove this media from the album?", { title: "Remove from Album", confirmText: "Remove" });
+    if (!ok) return;
+
     try {
       await removeMediaFromAlbum(albumId, mediaId);
       await refreshAlbumMedia(albumId);
       await loadAlbums();
     } catch (err) {
       console.error("Error removing from album:", err);
-      alert(err.response?.data?.message || "Failed to remove media from album");
+      toast.error(err.response?.data?.message || "Failed to remove media from album");
     }
   };
 
@@ -436,7 +480,7 @@ const PhotographerMedia = () => {
       setShowAlbumMediaModal(true);
     } catch (err) {
       console.error("Failed to load album media:", err);
-      alert(err.response?.data?.message || "Failed to load album");
+      toast.error(err.response?.data?.message || "Failed to load album");
     } finally {
       setLoadingAlbumMedia(false);
     }
@@ -447,7 +491,7 @@ const PhotographerMedia = () => {
     e.preventDefault();
     if (!editingAlbum?._id) return;
     if (!editingAlbum.name?.trim()) {
-      alert("Album name is required");
+      toast.warning("Album name is required");
       return;
     }
 
@@ -461,14 +505,14 @@ const PhotographerMedia = () => {
       const res = await updateAlbum(editingAlbum._id, payload);
       const updatedAlbum = res.data?.album || res.data;
 
-      setAlbums(prev => prev.map(album => 
+      setAlbums(prev => prev.map(album =>
         album._id === editingAlbum._id ? { ...album, ...updatedAlbum } : album
       ));
-      
+
       setShowEditAlbumModal(false);
       setEditingAlbum(null);
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to update album");
+      toast.error(err.response?.data?.message || "Failed to update album");
     } finally {
       setUpdatingAlbum(false);
     }
@@ -476,8 +520,9 @@ const PhotographerMedia = () => {
 
   // Delete album
   const handleDeleteAlbum = async (albumId) => {
-    if (!window.confirm("Delete this album? The media will remain in your library.")) return;
-    
+    const ok = await showConfirm("Delete this album? The media will remain in your library.", { title: "Delete Album", confirmText: "Delete", danger: true });
+    if (!ok) return;
+
     try {
       await deleteAlbum(albumId);
       setAlbums(prev => prev.filter(album => album._id !== albumId));
@@ -486,7 +531,7 @@ const PhotographerMedia = () => {
         setSelectedAlbum(null);
       }
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to delete album");
+      toast.error(err.response?.data?.message || "Failed to delete album");
     }
   };
 
@@ -507,8 +552,9 @@ const PhotographerMedia = () => {
 
   // Handle delete
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this media permanently?")) return;
-    
+    const ok = await showConfirm("Delete this media permanently?", { title: "Delete Media", confirmText: "Delete", danger: true });
+    if (!ok) return;
+
     try {
       await deleteMedia(id);
       setMedia(media.filter(item => item._id !== id));
@@ -518,25 +564,25 @@ const PhotographerMedia = () => {
         return newMap;
       });
     } catch (error) {
-      alert(error.response?.data?.message || "Delete failed");
+      toast.error(error.response?.data?.message || "Delete failed");
     }
   };
 
   // Handle price update
   const handlePriceUpdate = async (id, newPrice) => {
     if (!newPrice || newPrice <= 0) {
-      alert("Please enter a valid price");
+      toast.warning("Please enter a valid price");
       return;
     }
 
     try {
       await updateMediaPrice(id, newPrice);
-      setMedia(media.map(item => 
+      setMedia(media.map(item =>
         item._id === id ? { ...item, price: newPrice } : item
       ));
       setEditingItem(null);
     } catch (error) {
-      alert(error.response?.data?.message || "Price update failed");
+      toast.error(error.response?.data?.message || "Price update failed");
     }
   };
 
@@ -665,6 +711,18 @@ const PhotographerMedia = () => {
             <i className="fas fa-chart-line me-2"></i>
             Stats
           </button>
+          <button
+            className={`btn btn-sm ${activeTab === "shares" ? "btn-warning" : "btn-outline-secondary"} rounded-pill px-3 px-sm-4 flex-shrink-0`}
+            onClick={() => { setActiveTab("shares"); loadShares(); }}
+          >
+            <i className="fas fa-qrcode me-2"></i>
+            Share Links
+            {activeShares.length > 0 && (
+              <span className="badge rounded-pill ms-2" style={{ background: "rgba(255,255,255,0.25)", fontSize: "0.65rem" }}>
+                {activeShares.length}
+              </span>
+            )}
+          </button>
         </div>
 
         {/* Error Alert */}
@@ -704,6 +762,117 @@ const PhotographerMedia = () => {
                 <small className="text-white-50 fs-7">Total Value</small>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Shares Tab */}
+        {activeTab === "shares" && (
+          <div className="mb-4">
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <p className="text-white-50 small mb-0">
+                <i className="fas fa-info-circle me-1"></i>
+                Share links let anyone (including non-users) view and purchase your content via QR code or direct link.
+              </p>
+              <button className="btn btn-sm btn-outline-warning rounded-pill" onClick={loadShares} disabled={loadingShares}>
+                <i className={`fas fa-sync-alt me-1 ${loadingShares ? "fa-spin" : ""}`}></i>
+                Refresh
+              </button>
+            </div>
+
+            {loadingShares ? (
+              <div className="text-center py-5">
+                <div className="spinner-border" style={{ color: "#6BBDD0" }}></div>
+                <p className="text-white-50 mt-2 small">Loading share links...</p>
+              </div>
+            ) : activeShares.length === 0 ? (
+              <div className="text-center py-5" style={glassStyle}>
+                <i className="fas fa-qrcode fa-4x text-white-50 mb-3"></i>
+                <p className="text-white-50 mb-3">No active share links yet.</p>
+                <p className="text-white-50 small">
+                  Go to <strong>Gallery</strong> or <strong>Albums</strong>, click the share icon on any item to generate a QR code link.
+                </p>
+              </div>
+            ) : (
+              <div className="row g-3">
+                {activeShares.map((share) => {
+                  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(share.shareUrl)}`;
+                  const isCopied = copiedToken === share.token;
+                  const expiresAt = share.expiresAt ? new Date(share.expiresAt) : null;
+                  const isExpiringSoon = expiresAt && (expiresAt - Date.now()) < 24 * 60 * 60 * 1000;
+
+                  return (
+                    <div className="col-12 col-md-6 col-lg-4" key={share.token}>
+                      <div className="card h-100" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(107,189,208,0.15)", borderRadius: 12 }}>
+                        <div className="card-body p-3">
+                          {/* QR Code */}
+                          <div className="text-center mb-3">
+                            <img
+                              src={qrUrl}
+                              alt="QR Code"
+                              width={120}
+                              height={120}
+                              className="rounded-2"
+                              style={{ background: "#fff", padding: 6 }}
+                            />
+                          </div>
+
+                          {/* Media/Album name */}
+                          <h6 className="text-white fw-semibold text-truncate mb-1" style={{ fontSize: "0.85rem" }}>
+                            <i className={`fas fa-${share.media ? "image" : "folder"} me-2`} style={{ color: "#6BBDD0" }}></i>
+                            {share.media?.title || "Album Share"}
+                          </h6>
+
+                          {/* Stats row */}
+                          <div className="d-flex gap-2 flex-wrap mb-3">
+                            <span className="badge rounded-pill" style={{ background: "rgba(107,189,208,0.15)", color: "#6BBDD0", fontSize: "0.7rem" }}>
+                              <i className="fas fa-download me-1"></i>{share.downloads || "0/0"}
+                            </span>
+                            <span className="badge rounded-pill" style={{ background: "rgba(255,255,255,0.08)", color: "#ccc", fontSize: "0.7rem" }}>
+                              <i className="fas fa-eye me-1"></i>{share.accessCount || 0} views
+                            </span>
+                            {expiresAt && (
+                              <span className="badge rounded-pill" style={{ background: isExpiringSoon ? "rgba(232,85,85,0.2)" : "rgba(255,255,255,0.08)", color: isExpiringSoon ? "#E85555" : "#ccc", fontSize: "0.7rem" }}>
+                                <i className="fas fa-clock me-1"></i>
+                                {isExpiringSoon ? "Expires soon!" : expiresAt.toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Action buttons */}
+                          <div className="d-flex gap-2">
+                            <button
+                              className="btn btn-sm flex-grow-1 rounded-pill"
+                              style={{ background: isCopied ? "rgba(46,204,154,0.2)" : "rgba(107,189,208,0.15)", color: isCopied ? "#2ECC9A" : "#6BBDD0", border: `1px solid ${isCopied ? "rgba(46,204,154,0.4)" : "rgba(107,189,208,0.3)"}`, fontSize: "0.75rem" }}
+                              onClick={() => handleCopyLink(share.shareUrl, share.token)}
+                            >
+                              <i className={`fas fa-${isCopied ? "check" : "copy"} me-1`}></i>
+                              {isCopied ? "Copied!" : "Copy Link"}
+                            </button>
+                            <a
+                              href={qrUrl}
+                              download={`qr-${share.token?.substring(0, 8)}.png`}
+                              className="btn btn-sm rounded-pill"
+                              style={{ background: "rgba(255,255,255,0.06)", color: "#ccc", border: "1px solid rgba(255,255,255,0.1)", fontSize: "0.75rem" }}
+                              title="Download QR"
+                            >
+                              <i className="fas fa-qrcode"></i>
+                            </a>
+                            <button
+                              className="btn btn-sm btn-outline-danger rounded-pill"
+                              style={{ fontSize: "0.75rem" }}
+                              onClick={() => handleRevokeShare(share.token, share.media?.title || "this share")}
+                              title="Revoke"
+                            >
+                              <i className="fas fa-times"></i>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 

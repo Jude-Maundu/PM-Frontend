@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { toast } from '../utils/toast';
 
 const AuthCallback = () => {
   const navigate = useNavigate();
@@ -13,7 +14,7 @@ const AuthCallback = () => {
 
       if (error) {
         console.error('Authentication error:', error);
-        alert('Authentication failed. Please try again.');
+        toast.error('Authentication failed. Please try again.');
         navigate('/login');
         return;
       }
@@ -40,12 +41,12 @@ const AuthCallback = () => {
           }
         } catch (error) {
           console.error('Error processing authentication data:', error);
-          alert('Authentication failed. Please try again.');
+          toast.error('Authentication failed. Please try again.');
           navigate('/login');
         }
       } else {
         console.error('Missing authentication data');
-        alert('Authentication failed. Please try again.');
+        toast.error('Authentication failed. Please try again.');
         navigate('/login');
       }
     };

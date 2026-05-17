@@ -1,3 +1,4 @@
+import { toast } from "../../../utils/toast";
 import React, { useState, useEffect } from "react";
 import BuyerLayout from "./BuyerLayout";
 import { Link } from "react-router-dom";
@@ -52,7 +53,7 @@ const BuyerTransactions = () => {
       setShowReceiptModal(true);
     } catch (err) {
       console.error("Error fetching receipt:", err);
-      alert("Failed to load receipt");
+      toast.error("Failed to load receipt");
     }
   };
 
@@ -61,13 +62,13 @@ const BuyerTransactions = () => {
     try {
       const downloadUrl = await fetchProtectedUrl(mediaId);
       if (!downloadUrl) {
-        alert("Failed to generate download link. You may not have access to this media.");
+        toast.error("Failed to generate download link. You may not have access to this media.");
         return;
       }
       window.open(downloadUrl, '_blank');
     } catch (err) {
       console.error("Error getting download URL:", err);
-      alert("Failed to generate download link");
+      toast.error("Failed to generate download link");
     }
   };
 
@@ -77,6 +78,7 @@ const BuyerTransactions = () => {
       return;
     }
     fetchTransactions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const getStatusBadge = (status) => {

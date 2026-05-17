@@ -1,7 +1,8 @@
+import { toast } from "../../../utils/toast";
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import axios from "axios";
 import PhotographerLayout from "./PhotographerLayout";
-import { API_BASE_URL, API_ENDPOINTS } from "../../../api/apiConfig";
+import { API_ENDPOINTS } from "../../../api/apiConfig";
 import { getCurrentUserId, getAuthHeaders } from "../../../utils/auth";
 
 const PhotographerProfile = () => {
@@ -210,7 +211,7 @@ const PhotographerProfile = () => {
         console.log("Backend save failed, saved locally only", err?.response?.data || err.message);
       }
 
-      alert("Profile updated successfully!");
+      toast.success("Profile updated successfully!");
       setEditing(false);
     } catch (error) {
       console.error("Error saving profile:", error);
@@ -224,12 +225,12 @@ const PhotographerProfile = () => {
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      alert("Please select an image file");
+      toast.warning("Please select an image file");
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      alert("File size must be less than 5MB");
+      toast.warning("File size must be less than 5MB");
       return;
     }
 
@@ -260,7 +261,7 @@ const PhotographerProfile = () => {
       };
     } catch (error) {
       console.error("Error uploading image:", error);
-      alert("Failed to upload image");
+      toast.error("Failed to upload image");
       setUploadingImage(false);
     }
   };
@@ -559,19 +560,19 @@ const PhotographerProfile = () => {
               ) : (
                 <div className="d-flex gap-3">
                   {profile.social.instagram && (
-                    <a href={`https://instagram.com/${profile.social.instagram.replace('@', '')}`} target="_blank"
+                    <a href={`https://instagram.com/${profile.social.instagram.replace('@', '')}`} target="_blank" rel="noreferrer"
                        className="text-white-50 hover-warning">
                       <i className="fab fa-instagram fa-lg"></i>
                     </a>
                   )}
                   {profile.social.twitter && (
-                    <a href={`https://twitter.com/${profile.social.twitter.replace('@', '')}`} target="_blank"
+                    <a href={`https://twitter.com/${profile.social.twitter.replace('@', '')}`} target="_blank" rel="noreferrer"
                        className="text-white-50 hover-warning">
                       <i className="fab fa-twitter fa-lg"></i>
                     </a>
                   )}
                   {profile.social.facebook && (
-                    <a href={`https://facebook.com/${profile.social.facebook}`} target="_blank"
+                    <a href={`https://facebook.com/${profile.social.facebook}`} target="_blank" rel="noreferrer"
                        className="text-white-50 hover-warning">
                       <i className="fab fa-facebook fa-lg"></i>
                     </a>

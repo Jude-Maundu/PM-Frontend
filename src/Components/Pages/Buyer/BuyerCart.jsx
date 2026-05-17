@@ -3,13 +3,14 @@ import BuyerLayout from "./BuyerLayout";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { API_BASE_URL, API_ENDPOINTS } from "../../../api/apiConfig";
+import { toast } from "../../../utils/toast";
+import { showConfirm } from "../../../utils/confirm";
 import { placeholderMedium } from "../../../utils/placeholders";
 import { getImageUrl, fetchProtectedUrl } from "../../../utils/imageUrl";
 import {
   getLocalCart,
   removeFromLocalCart,
   clearLocalCart,
-  getLocalPurchases,
   addLocalPurchase,
   getLocalWalletBalance,
   isApiAvailable,
@@ -32,7 +33,6 @@ const BuyerCart = () => {
   const [mpesaStatus, setMpesaStatus] = useState(null);
   const [phoneError, setPhoneError] = useState('');
   const [mpesaPhone, setMpesaPhone] = useState('');
-  const [pollingInterval, setPollingInterval] = useState(null);
   const [cartImageUrls, setCartImageUrls] = useState({});
 
   const navigate = useNavigate();
@@ -195,9 +195,7 @@ const BuyerCart = () => {
       return;
     }
     fetchCart();
-    return () => {
-      if (pollingInterval) clearInterval(pollingInterval);
-    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchCart = async () => {
@@ -294,7 +292,8 @@ const BuyerCart = () => {
   };
 
   const clearCart = async () => {
-    if (!window.confirm("Clear your cart?")) return;
+    const ok = await showConfirm("Remove all items from your cart?", { title: "Clear Cart", confirmText: "Clear" });
+    if (!ok) return;
     const feature = "cart";
     try {
       setUpdating(true);
@@ -350,7 +349,7 @@ const BuyerCart = () => {
 
   const handleMpesaCheckout = async () => {
     if (cartItems.length === 0) {
-      alert("Your cart is empty");
+      toast.warning("Your cart is empty");
       return;
     }
 
@@ -370,7 +369,7 @@ const BuyerCart = () => {
 
     const feature = "mpesa";
     if (!isApiAvailable(feature)) {
-      alert("M-Pesa payment is not available on this backend.");
+      toast.error("M-Pesa payment is not available on this backend.");
       return;
     }
 
@@ -422,7 +421,7 @@ const BuyerCart = () => {
         await downloadPurchasedItems(cartItems);
         setCheckoutStep('success');
         setMpesaStatus('completed');
-        alert('Payment completed successfully! Your downloads are starting.');
+        toast.success('Payment completed successfully! Your downloads are starting.');
         setMpesaPhone('');
         navigate('/buyer/downloads');
       } else {
@@ -449,14 +448,14 @@ const BuyerCart = () => {
 
   const handleWalletCheckout = async () => {
     if (cartItems.length === 0) {
-      alert("Your cart is empty");
+      toast.warning("Your cart is empty");
       return;
     }
 
     const total = cartItems.reduce((sum, item) => sum + (item.price || 0), 0);
 
     if (total > walletBalance) {
-      alert("Insufficient wallet balance");
+      toast.error("Insufficient wallet balance. Please top up and try again.");
       navigate("/buyer/wallet");
       return;
     }
@@ -498,7 +497,7 @@ const BuyerCart = () => {
       await clearCart();
       await downloadPurchasedItems(cartItems);
       setCheckoutStep('success');
-      alert("Purchase successful! Your downloads are starting.");
+      toast.success("Purchase successful! Your downloads are starting.");
       navigate("/buyer/downloads");
     } catch (err) {
       const status = err.response?.status;
@@ -516,7 +515,7 @@ const BuyerCart = () => {
         await clearCart();
         await downloadPurchasedItems(cartItems);
         setCheckoutStep('success');
-        alert("Purchase successful (local fallback)! Your downloads are starting.");
+        toast.success("Purchase successful! Your downloads are starting.");
         navigate("/buyer/downloads");
       } else {
         setError(err.response?.data?.message || "Checkout failed");

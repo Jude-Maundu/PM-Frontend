@@ -10,16 +10,15 @@ const PhotographerSales = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
 
-  const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const photographerId = user?._id;
 
-  const headers = { Authorization: `Bearer ${token}` };
-
   const fetchSales = useCallback(async () => {
+    const token = localStorage.getItem("token");
+    const headers = { Authorization: `Bearer ${token}` };
     try {
       setLoading(true);
-      
+
       // Get photographer's transactions (sales)
       const transactionsRes = await axios.get(`${API}/payments/transactions/${photographerId}`, { headers });
       
@@ -41,7 +40,7 @@ const PhotographerSales = () => {
     } finally {
       setLoading(false);
     }
-  }, [photographerId, headers, API]);
+  }, [photographerId]);
 
   useEffect(() => {
     fetchSales();

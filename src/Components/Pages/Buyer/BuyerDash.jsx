@@ -7,12 +7,6 @@ import {
   getUserFavorites,
   getWalletBalance,
   getLikedMedia,
-  addFavorite,
-  removeFavorite,
-  likeMedia,
-  unlikeMedia,
-  followUser,
-  unfollowUser,
   getUserFollowing,
 } from "../../../api/API";
 import { placeholderMedium, placeholderSmall } from "../../../utils/placeholders";
@@ -32,10 +26,8 @@ const BuyerDashboard = () => {
     wallet: 0,
     totalSpent: 0
   });
-  const [likedItems, setLikedItems] = useState(new Set());
-  const [likingItem, setLikingItem] = useState(null);
-  const [followingUsers, setFollowingUsers] = useState(new Set());
-  const [followingUser, setFollowingUser] = useState(null);
+  const [, setLikedItems] = useState(new Set());
+  const [, setFollowingUsers] = useState(new Set());
   const [imageUrls, setImageUrls] = useState({});
 
   const navigate = useNavigate();
@@ -228,84 +220,6 @@ const BuyerDashboard = () => {
     fetchData();
   }, [userId, loadLikedItems, loadFollowingStatus]);
 
-  const handleLike = async (mediaId) => {
-    if (!token) {
-      alert("Please login to like photos");
-      return;
-    }
-
-    const isLiked = likedItems.has(mediaId);
-    try {
-      setLikingItem(mediaId);
-      if (isLiked) {
-        await unlikeMedia(mediaId);
-        if (userId) {
-          try {
-            await removeFavorite(userId, mediaId);
-          } catch (favErr) {
-            console.warn('Warning: unable to remove from favorites', favErr);
-          }
-        }
-        setLikedItems(prev => {
-          const next = new Set(prev);
-          next.delete(mediaId);
-          return next;
-        });
-      } else {
-        await likeMedia(mediaId);
-        if (userId) {
-          try {
-            await addFavorite({ userId, mediaId });
-          } catch (favErr) {
-            console.warn('Warning: unable to add to favorites', favErr);
-          }
-        }
-        setLikedItems(prev => new Set(prev).add(mediaId));
-      }
-
-      setFeaturedMedia(prev => prev.map(item =>
-        item._id === mediaId ? { ...item, likes: (item.likes || 0) + (isLiked ? -1 : 1) } : item
-      ));
-      setRecommended(prev => prev.map(item =>
-        item._id === mediaId ? { ...item, likes: (item.likes || 0) + (isLiked ? -1 : 1) } : item
-      ));
-    } catch (err) {
-      console.error("Error toggling like:", err);
-      alert("Failed to update like. Please try again.");
-    } finally {
-      setLikingItem(null);
-    }
-  };
-
-  const handleFollow = async (photographerId) => {
-    if (!token) {
-      alert("Please login to follow photographers");
-      return;
-    }
-
-    if (!photographerId) return;
-
-    const isFollowing = followingUsers.has(photographerId);
-    try {
-      setFollowingUser(photographerId);
-      if (isFollowing) {
-        await unfollowUser(photographerId);
-        setFollowingUsers(prev => {
-          const next = new Set(prev);
-          next.delete(photographerId);
-          return next;
-        });
-      } else {
-        await followUser(photographerId);
-        setFollowingUsers(prev => new Set(prev).add(photographerId));
-      }
-    } catch (err) {
-      console.error("Error toggling follow:", err);
-      alert("Failed to update following status.");
-    } finally {
-      setFollowingUser(null);
-    }
-  };
 
   // 🔧 Helper to get image for purchase item
   const getPurchaseImageUrl = (purchase) => {

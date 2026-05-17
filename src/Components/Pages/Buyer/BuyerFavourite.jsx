@@ -3,8 +3,9 @@ import BuyerLayout from "./BuyerLayout";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import { API_BASE_URL, API_ENDPOINTS } from "../../../api/apiConfig";
+import { toast } from "../../../utils/toast";
+import { showConfirm } from "../../../utils/confirm";
 import { placeholderMedium } from "../../../utils/placeholders";
-import { getImageUrl } from "../../../utils/imageUrl";
 import {
   getLocalFavorites,
   setLocalFavorites,
@@ -64,7 +65,8 @@ const BuyerFavorites = () => {
     }
     
     return placeholderMedium;
-  }, [API]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // 🔧 Extract title from favorite item
   const extractTitle = useCallback((item) => {
@@ -171,7 +173,7 @@ const BuyerFavorites = () => {
   // Add to cart
   const addToCart = useCallback(async (mediaId, item) => {
     if (!mediaId) {
-      alert("Cannot add to cart: Media ID not found");
+      toast.error("Cannot add to cart: Media ID not found");
       return;
     }
 
@@ -219,13 +221,12 @@ const BuyerFavorites = () => {
   // Remove from favorites
   const removeFromFavorites = useCallback(async (mediaId, title) => {
     if (!mediaId) {
-      alert("Cannot remove: Media ID not found");
+      toast.error("Cannot remove: Media ID not found");
       return;
     }
 
-    if (!window.confirm(`Remove "${title || 'this item'}" from favorites?`)) {
-      return;
-    }
+    const ok = await showConfirm(`Remove "${title || 'this item'}" from your favorites?`, { title: "Remove Favorite", confirmText: "Remove" });
+    if (!ok) return;
 
     const feature = "favorites";
     const apiAvailable = isApiAvailable(feature);
@@ -272,6 +273,7 @@ const BuyerFavorites = () => {
       return;
     }
     fetchFavorites();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // If not authenticated, show login prompt

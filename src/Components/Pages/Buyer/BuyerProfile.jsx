@@ -152,6 +152,7 @@ const BuyerProfile = () => {
     };
 
     loadUserFromServer();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Handle profile picture upload

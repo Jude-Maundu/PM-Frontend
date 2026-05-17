@@ -5,6 +5,8 @@ import "@fortawesome/fontawesome-free/css/all.min.css";
 import { getAllMedia, deleteMedia as apiDeleteMedia } from "../../../api/API";
 import { placeholderLarge, placeholderSmall } from "../../../utils/placeholders";
 import { getImageUrl, fetchProtectedUrl } from "../../../utils/imageUrl";
+import { toast } from "../../../utils/toast";
+import { showConfirm } from "../../../utils/confirm";
 
 const AdminMedia = () => {
   const [media, setMedia] = useState([]);
@@ -53,7 +55,7 @@ const AdminMedia = () => {
       setImageUrls(urls);
     } catch (err) {
       console.error("Error fetching media:", err);
-      alert("Failed to fetch media");
+      toast.error("Failed to fetch media");
     } finally {
       setLoading(false);
     }
@@ -64,12 +66,14 @@ const AdminMedia = () => {
   }, []);
 
   const deleteMedia = async (id) => {
-    if (!window.confirm("Delete this media permanently?")) return;
+    const ok = await showConfirm("This media will be permanently removed.", { title: "Delete Media?", confirmText: "Delete", danger: true });
+    if (!ok) return;
     try {
       await apiDeleteMedia(id);
+      toast.success("Media deleted successfully.");
       fetchMedia();
     } catch (err) {
-      alert("Delete failed");
+      toast.error("Delete failed");
     }
   };
 
@@ -394,7 +398,7 @@ const AdminMedia = () => {
                                 border: "1px solid rgba(107, 189, 208, 0.3)",
                                 color: "#6BBDD0",
                               }}
-                              onClick={() => alert("Edit functionality coming soon")}
+                              onClick={() => toast.info("Edit functionality coming soon")}
                             >
                               <i className="fas fa-edit"></i>
                             </button>

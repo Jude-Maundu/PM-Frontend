@@ -28,6 +28,7 @@ const AdminReceipts = () => {
 
   useEffect(() => {
     fetchReceipts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const filteredReceipts = receipts.filter(r => {

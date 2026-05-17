@@ -1,7 +1,8 @@
+import { toast } from "../../../utils/toast";
 import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import PhotographerLayout from "./PhotographerLayout";
-import { API_BASE_URL, API_ENDPOINTS } from "../../../api/apiConfig";
+import { API_ENDPOINTS } from "../../../api/apiConfig";
 import { getAuthHeaders, getCurrentUserId } from "../../../utils/auth";
 
 const PhotographerEarnings = () => {
@@ -52,10 +53,10 @@ const PhotographerEarnings = () => {
 
   const handleWithdraw = () => {
     if (earnings.available < 1000) {
-      alert("Minimum withdrawal amount is KES 1,000");
+      toast.warning("Minimum withdrawal amount is KES 1,000");
       return;
     }
-    alert("Withdrawal request submitted successfully!");
+    toast.success("Withdrawal request submitted successfully!");
   };
 
   return (

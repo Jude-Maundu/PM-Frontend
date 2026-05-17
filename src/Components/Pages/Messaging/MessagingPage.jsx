@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import BuyerLayout from "../Buyer/BuyerLayout";
 import PhotographerLayout from "../Photographer/PhotographerLayout";
@@ -8,6 +8,7 @@ import {
   getConversations,
   getConversationWithUser,
   markConversationAsRead,
+  searchUsersForShare,
 } from "../../../api/API";
 import "./Messaging.css";
 
@@ -17,9 +18,16 @@ const MessagingPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [syncKey, setSyncKey] = useState(0); // Trigger re-fetch
+  const [syncKey, setSyncKey] = useState(0);
   const [pendingUserId, setPendingUserId] = useState(null);
   const [pendingConversationId, setPendingConversationId] = useState(null);
+
+  // New conversation search
+  const [showNewConv, setShowNewConv] = useState(false);
+  const [userSearchQuery, setUserSearchQuery] = useState("");
+  const [userSearchResults, setUserSearchResults] = useState([]);
+  const [searchingUsers, setSearchingUsers] = useState(false);
+  const searchDebounceRef = useRef(null);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -125,6 +133,39 @@ const MessagingPage = () => {
     setSyncKey((prev) => prev + 1);
   };
 
+  // User search for new conversation
+  const handleUserSearchChange = (value) => {
+    setUserSearchQuery(value);
+    clearTimeout(searchDebounceRef.current);
+    if (!value.trim()) { setUserSearchResults([]); return; }
+    searchDebounceRef.current = setTimeout(async () => {
+      setSearchingUsers(true);
+      try {
+        const res = await searchUsersForShare(value);
+        const users = res.data?.users || res.data || [];
+        setUserSearchResults(users.filter(u => u._id !== userId));
+      } catch { setUserSearchResults([]); }
+      finally { setSearchingUsers(false); }
+    }, 300);
+  };
+
+  const handleStartConversation = async (otherUser) => {
+    try {
+      const res = await getConversationWithUser(otherUser._id);
+      const conv = res.data;
+      if (!conv) return;
+      setSelectedConversation(conv);
+      setShowNewConv(false);
+      setUserSearchQuery("");
+      setUserSearchResults([]);
+      setConversations(prev =>
+        prev.find(c => c._id === conv._id) ? prev : [conv, ...prev]
+      );
+    } catch (err) {
+      console.error("Failed to start conversation:", err);
+    }
+  };
+
   // Filter conversations by search
   const filteredConversations = conversations.filter((conv) => {
     const participantName =
@@ -141,19 +182,85 @@ const MessagingPage = () => {
           {/* Conversation List Sidebar */}
           <div className="messaging-sidebar">
             <div className="sidebar-header">
-              <h2 className="fs-4 fw-bold text-white mb-3">Messages</h2>
-              <input
-                type="text"
-                className="form-control form-control-sm"
-                placeholder="Search conversations..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={{
-                  backgroundColor: "rgba(255, 255, 255, 0.05)",
-                  border: "1px solid rgba(255, 255, 255, 0.1)",
-                  color: "white",
-                }}
-              />
+              <div className="d-flex align-items-center justify-content-between mb-3">
+                <h2 className="fs-4 fw-bold text-white mb-0">Messages</h2>
+                <button
+                  className="btn btn-sm rounded-circle d-flex align-items-center justify-content-center"
+                  style={{ width: 34, height: 34, background: "rgba(107,189,208,0.15)", color: "#6BBDD0", border: "1px solid rgba(107,189,208,0.3)" }}
+                  onClick={() => { setShowNewConv(!showNewConv); setUserSearchQuery(""); setUserSearchResults([]); }}
+                  title="New Message"
+                >
+                  <i className={`fas fa-${showNewConv ? "times" : "edit"}`} style={{ fontSize: "0.8rem" }}></i>
+                </button>
+              </div>
+
+              {/* New conversation user search */}
+              {showNewConv && (
+                <div className="mb-3 position-relative">
+                  <div className="input-group input-group-sm">
+                    <span className="input-group-text" style={{ background: "rgba(107,189,208,0.1)", border: "1px solid rgba(107,189,208,0.3)", color: "#6BBDD0" }}>
+                      <i className="fas fa-search" style={{ fontSize: "0.75rem" }}></i>
+                    </span>
+                    <input
+                      type="text"
+                      className="form-control form-control-sm"
+                      placeholder="Search by username..."
+                      value={userSearchQuery}
+                      onChange={(e) => handleUserSearchChange(e.target.value)}
+                      autoFocus
+                      style={{ background: "rgba(107,189,208,0.08)", border: "1px solid rgba(107,189,208,0.3)", borderLeft: "none", color: "white" }}
+                    />
+                  </div>
+                  {/* Search results dropdown */}
+                  {(userSearchResults.length > 0 || searchingUsers) && (
+                    <div className="position-absolute w-100 rounded-2 overflow-hidden mt-1" style={{ zIndex: 100, background: "#0d1f33", border: "1px solid rgba(107,189,208,0.25)", boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}>
+                      {searchingUsers && (
+                        <div className="text-center py-2">
+                          <span className="spinner-border spinner-border-sm" style={{ color: "#6BBDD0" }}></span>
+                        </div>
+                      )}
+                      {userSearchResults.map((user) => (
+                        <div
+                          key={user._id}
+                          className="d-flex align-items-center gap-2 px-3 py-2"
+                          style={{ cursor: "pointer", transition: "background 0.15s" }}
+                          onMouseEnter={e => e.currentTarget.style.background = "rgba(107,189,208,0.12)"}
+                          onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                          onClick={() => handleStartConversation(user)}
+                        >
+                          <div className="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                            style={{ width: 32, height: 32, background: "linear-gradient(135deg, #6BBDD0, #5AAFC3)", color: "#fff", fontWeight: 700, fontSize: "0.85rem" }}>
+                            {(user.username || user.email || "U").charAt(0).toUpperCase()}
+                          </div>
+                          <div className="overflow-hidden">
+                            <p className="text-white mb-0 text-truncate" style={{ fontSize: "0.85rem", fontWeight: 500 }}>
+                              {user.username || user.email}
+                            </p>
+                            <small className="text-white-50" style={{ fontSize: "0.7rem" }}>
+                              {user.role || "user"}
+                            </small>
+                          </div>
+                        </div>
+                      ))}
+                      {!searchingUsers && userSearchResults.length === 0 && userSearchQuery.trim() && (
+                        <p className="text-white-50 text-center py-2 mb-0" style={{ fontSize: "0.8rem" }}>No users found</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Filter existing conversations */}
+              {!showNewConv && (
+                <input
+                  type="text"
+                  className="form-control form-control-sm"
+                  placeholder="Search conversations..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{ backgroundColor: "rgba(255, 255, 255, 0.05)", border: "1px solid rgba(255, 255, 255, 0.1)", color: "white" }}
+                />
+              )}
             </div>
 
             {loading ? (

@@ -82,6 +82,7 @@ const Explore = () => {
 
     setNextBannerIndex(1 % bannerImages.length);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -231,6 +232,7 @@ const Explore = () => {
       setCategories(mockCategories);
       setLoading(false);
     }, 1000);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

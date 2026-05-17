@@ -1,3 +1,4 @@
+import { toast } from "../../../utils/toast";
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import BuyerLayout from "./BuyerLayout";
 import { Link } from "react-router-dom";
@@ -255,7 +256,7 @@ const BuyerDownloads = () => {
     const title = item.title;
     
     if (!mediaId) {
-      alert("Cannot download: Media ID not found");
+      toast.error("Cannot download: Media ID not found");
       return;
     }
 
@@ -338,7 +339,7 @@ const BuyerDownloads = () => {
       if (imageUrl && imageUrl !== placeholderMedium) {
         console.log(`🌐 Opening image in new tab: ${imageUrl}`);
         window.open(imageUrl, '_blank');
-        alert("Image opened in new tab. Right-click and select 'Save Image As...' to download.");
+        toast.info("Image opened in new tab. Right-click and select 'Save Image As...'");
         setDownloadingId(null);
         return;
       }
@@ -347,7 +348,7 @@ const BuyerDownloads = () => {
       
     } catch (err) {
       console.error("❌ Download error:", err);
-      alert("Unable to download this file. Please try again later.");
+      toast.error("Unable to download this file. Please try again later.");
     } finally {
       setDownloadingId(null);
     }

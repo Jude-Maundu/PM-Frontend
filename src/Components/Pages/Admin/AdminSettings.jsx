@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import AdminLayout from "./AdminLayout";
 import axios from "axios";
 import { API_ENDPOINTS } from "../../../api/apiConfig";
+import { toast } from "../../../utils/toast";
+import { showConfirm } from "../../../utils/confirm";
 
 const SETTINGS_API_AVAILABLE = true; // Backend implements /admin/settings routes (check backend docs or README)
 
@@ -139,9 +141,9 @@ const AdminSettings = () => {
         smtpPass: settings.smtpPass
       }, { headers });
       
-      alert("Test email sent successfully!");
+      toast.success("Test email sent successfully!");
     } catch (err) {
-      alert("Failed to send test email");
+      toast.error("Failed to send test email");
     } finally {
       setSaving(false);
     }
@@ -153,13 +155,14 @@ const AdminSettings = () => {
       return;
     }
 
-    if (!window.confirm("Are you sure you want to clear the cache?")) return;
-    
+    const ok = await showConfirm("Are you sure you want to clear the cache?", { title: "Clear Cache", confirmText: "Clear" });
+    if (!ok) return;
+
     try {
       await axios.post(API_ENDPOINTS.ADMIN.CLEAR_CACHE, {}, { headers });
-      alert("Cache cleared successfully!");
+      toast.success("Cache cleared successfully!");
     } catch (err) {
-      alert("Failed to clear cache");
+      toast.error("Failed to clear cache");
     }
   };
 

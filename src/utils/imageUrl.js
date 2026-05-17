@@ -42,7 +42,7 @@ export function resolveUrl(rawUrl) {
 
   // Handle server file paths like: /opt/render/project/src/uploads/photos/xxx.png
   // Extract the public /uploads/... portion.
-  const uploadsMatch = trimmed.match(/(\/uploads\/[\w\-\/.]+)/);
+  const uploadsMatch = trimmed.match(/(\/uploads\/[\w\-.]+)/);
   if (uploadsMatch && uploadsMatch[1]) {
     return `${PUBLIC_BASE_URL}${uploadsMatch[1]}`;
   }

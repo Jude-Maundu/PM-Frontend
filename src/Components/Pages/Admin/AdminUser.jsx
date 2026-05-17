@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import AdminLayout from "./AdminLayout";
-import { API_BASE_URL, API_ENDPOINTS } from "../../../api/apiConfig";
-
-const API = API_BASE_URL;
+import { API_ENDPOINTS } from "../../../api/apiConfig";
+import { toast } from "../../../utils/toast";
+import { showConfirm } from "../../../utils/confirm";
 
 const AdminUsers = () => {
   const [users, setUsers] = useState([]);
@@ -47,6 +47,7 @@ const AdminUsers = () => {
 
   useEffect(() => {
     fetchUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Filter users
@@ -162,7 +163,7 @@ const AdminUsers = () => {
       await axios.put(API_ENDPOINTS.AUTH.UPDATE_USER(userId), { role: newRole }, { headers });
       fetchUsers();
     } catch (error) {
-      alert("Failed to update role");
+      toast.error("Failed to update role");
     }
   };
 
@@ -173,7 +174,7 @@ const AdminUsers = () => {
       }, { headers });
       fetchUsers();
     } catch (error) {
-      alert("Failed to update status");
+      toast.error("Failed to update status");
     }
   };
 
@@ -198,7 +199,7 @@ const AdminUsers = () => {
       setShowAddModal(false);
       resetForm();
     } catch (error) {
-      alert(error.response?.data?.message || "Failed to add user");
+      toast.error(error.response?.data?.message || "Failed to add user");
     } finally {
       setSubmitting(false);
     }
@@ -231,22 +232,22 @@ const AdminUsers = () => {
       setEditingUser(null);
       resetForm();
     } catch (error) {
-      alert(error.response?.data?.message || "Failed to update user");
+      toast.success("User updated successfully!");
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDeleteUser = async (userId) => {
-    if (!window.confirm("Are you sure you want to delete this user? This action cannot be undone.")) {
-      return;
-    }
-    
+    const ok = await showConfirm("This action cannot be undone. The user's data will be permanently removed.", { title: "Delete User?", confirmText: "Delete", danger: true });
+    if (!ok) return;
+
     try {
       await axios.delete(API_ENDPOINTS.AUTH.DELETE_USER(userId), { headers });
+      toast.success("User deleted successfully.");
       fetchUsers();
     } catch (error) {
-      alert(error.response?.data?.message || "Failed to delete user");
+      toast.error(error.response?.data?.message || "Failed to delete user");
     }
   };
 

@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import AdminLayout from "./AdminLayout";
 import { API_BASE_URL } from "../../../api/apiConfig";
+import { toast } from "../../../utils/toast";
+import { showConfirm } from "../../../utils/confirm";
 
 const API = API_BASE_URL;
 
@@ -26,35 +28,42 @@ const AdminRefunds = () => {
 
   useEffect(() => {
     fetchRefunds();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleApprove = async (refundId) => {
-    if (!window.confirm("Approve this refund?")) return;
+    const ok = await showConfirm("Approve this refund?", { title: "Approve Refund", confirmText: "Approve" });
+    if (!ok) return;
     try {
       await axios.post(`${API}/payments/refund/approve`, { refundId }, { headers });
+      toast.success("Refund approved successfully!");
       fetchRefunds();
     } catch (error) {
-      alert("Failed to approve refund");
+      toast.error("Failed to approve refund");
     }
   };
 
   const handleReject = async (refundId) => {
-    if (!window.confirm("Reject this refund?")) return;
+    const ok = await showConfirm("Reject this refund?", { title: "Reject Refund", confirmText: "Reject", danger: true });
+    if (!ok) return;
     try {
       await axios.post(`${API}/payments/refund/reject`, { refundId }, { headers });
+      toast.success("Refund rejected.");
       fetchRefunds();
     } catch (error) {
-      alert("Failed to reject refund");
+      toast.error("Failed to reject refund");
     }
   };
 
   const handleProcess = async (refundId) => {
-    if (!window.confirm("Process this refund and credit wallet?")) return;
+    const ok = await showConfirm("Process this refund and credit the buyer's wallet?", { title: "Process Refund", confirmText: "Process" });
+    if (!ok) return;
     try {
       await axios.post(`${API}/payments/refund/process`, { refundId }, { headers });
+      toast.success("Refund processed and wallet credited.");
       fetchRefunds();
     } catch (error) {
-      alert("Failed to process refund");
+      toast.error("Failed to process refund");
     }
   };
 

@@ -3,6 +3,7 @@ import PhotographerLayout from "./PhotographerLayout";
 import { useNavigate } from "react-router-dom";
 import { uploadMedia, getAllMedia } from "../../../api/API";
 import { API_BASE_URL } from "../../../api/apiConfig";
+import { toast } from "../../../utils/toast";
 
 const PhotographerUpload = () => {
   const [formData, setFormData] = useState({
@@ -30,7 +31,6 @@ const PhotographerUpload = () => {
 
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
-  const headers = { Authorization: `Bearer ${token}` };
 
   const bannerImages = [
     { 
@@ -88,6 +88,7 @@ const PhotographerUpload = () => {
     
     setNextBannerIndex(1 % bannerImages.length);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Handle window resize
@@ -144,7 +145,7 @@ const PhotographerUpload = () => {
       }
     };
 
-    const isAuthenticated = checkAuth();
+    checkAuth();
     setAuthChecked(true);
     setLoading(false);
   }, [navigate]);
@@ -213,7 +214,7 @@ const PhotographerUpload = () => {
       });
 
       console.log("Upload successful!", response.data);
-      alert("Media uploaded successfully!");
+      toast.success("Media uploaded successfully!");
       const uploadedItem = response.data?.media || response.data?.item || response.data;
       navigate("/photographer/media", { state: { recentUpload: uploadedItem } });
       
@@ -234,10 +235,10 @@ const PhotographerUpload = () => {
     try {
       const response = await getAllMedia();
       console.log("API connection successful:", response.data);
-      alert("✅ API is reachable!");
+      toast.success("API is reachable!");
     } catch (error) {
       console.error("API connection failed:", error);
-      alert("❌ Cannot reach API. Check if server is running");
+      toast.error("Cannot reach API. Check if server is running.");
     }
   };
 
