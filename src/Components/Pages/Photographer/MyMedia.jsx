@@ -419,12 +419,14 @@ const PhotographerMedia = () => {
 
       const res = await generateShareLink(payload);
       const data = res.data || {};
-      const link = data.shareUrl || data.link || data.url;
+      const token = data.token;
 
-      if (!link) {
-        throw new Error("No share URL returned.");
+      if (!token) {
+        throw new Error("No share token returned.");
       }
 
+      // Always build the link from the current frontend origin — backend may not know the frontend URL
+      const link = `${window.location.origin}/share/${token}`;
       setShareLink(link);
       setShareQrUrl(`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(link)}`);
     } catch (err) {
@@ -440,10 +442,10 @@ const PhotographerMedia = () => {
       setShareError("No album selected.");
       return;
     }
-    
+
     setShareError(null);
     setShareLoading(true);
-    
+
     try {
       const payload = {
         albumId: album._id,
@@ -453,10 +455,11 @@ const PhotographerMedia = () => {
       };
       const res = await generateShareLink(payload);
       const data = res.data || {};
-      const link = data.shareUrl || data.link || data.url;
-      
-      if (!link) throw new Error("No share URL returned");
-      
+      const token = data.token;
+
+      if (!token) throw new Error("No share token returned");
+
+      const link = `${window.location.origin}/share/${token}`;
       setShareLink(link);
       setShareQrUrl(`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(link)}`);
     } catch (err) {
@@ -795,7 +798,9 @@ const PhotographerMedia = () => {
             ) : (
               <div className="row g-3">
                 {activeShares.map((share) => {
-                  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(share.shareUrl)}`;
+                  // Rebuild frontend URL from token — backend shareUrl may point to backend domain
+                  const shareUrl = `${window.location.origin}/share/${share.token}`;
+                  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(shareUrl)}`;
                   const isCopied = copiedToken === share.token;
                   const expiresAt = share.expiresAt ? new Date(share.expiresAt) : null;
                   const isExpiringSoon = expiresAt && (expiresAt - Date.now()) < 24 * 60 * 60 * 1000;
@@ -843,7 +848,7 @@ const PhotographerMedia = () => {
                             <button
                               className="btn btn-sm flex-grow-1 rounded-pill"
                               style={{ background: isCopied ? "rgba(46,204,154,0.2)" : "rgba(107,189,208,0.15)", color: isCopied ? "#2ECC9A" : "#6BBDD0", border: `1px solid ${isCopied ? "rgba(46,204,154,0.4)" : "rgba(107,189,208,0.3)"}`, fontSize: "0.75rem" }}
-                              onClick={() => handleCopyLink(share.shareUrl, share.token)}
+                              onClick={() => handleCopyLink(shareUrl, share.token)}
                             >
                               <i className={`fas fa-${isCopied ? "check" : "copy"} me-1`}></i>
                               {isCopied ? "Copied!" : "Copy Link"}
