@@ -160,21 +160,37 @@ const AdminUsers = () => {
 
   const handleRoleChange = async (userId, newRole) => {
     try {
-      await axios.put(API_ENDPOINTS.AUTH.UPDATE_USER(userId), { role: newRole }, { headers });
+      await axios.patch(`${API_ENDPOINTS.ADMIN.BASE}/users/${userId}/role`, { role: newRole }, { headers });
+      toast.success("Role updated");
       fetchUsers();
     } catch (error) {
       toast.error("Failed to update role");
     }
   };
 
-  const handleToggleStatus = async (userId, currentStatus) => {
+  const handleBanUser = async (user) => {
+    const action = user.isBanned ? "unban" : "ban";
+    const ok = await showConfirm(
+      user.isBanned ? `Unban ${user.username}? They will regain access.` : `Ban ${user.username}? They will lose access immediately.`,
+      { title: user.isBanned ? "Unban User" : "Ban User", confirmText: action.charAt(0).toUpperCase() + action.slice(1), danger: !user.isBanned }
+    );
+    if (!ok) return;
     try {
-      await axios.put(API_ENDPOINTS.AUTH.UPDATE_USER(userId), { 
-        active: !currentStatus 
-      }, { headers });
+      await axios.patch(`${API_ENDPOINTS.ADMIN.BASE}/users/${user._id}/ban`, {}, { headers });
+      toast.success(`User ${action}ned`);
       fetchUsers();
     } catch (error) {
-      toast.error("Failed to update status");
+      toast.error(`Failed to ${action} user`);
+    }
+  };
+
+  const handleVerifyUser = async (user) => {
+    try {
+      await axios.patch(`${API_ENDPOINTS.ADMIN.BASE}/users/${user._id}/verify`, {}, { headers });
+      toast.success(`User ${user.isVerified ? "unverified" : "verified"}`);
+      fetchUsers();
+    } catch (error) {
+      toast.error("Failed to update verification");
     }
   };
 
@@ -499,25 +515,22 @@ const AdminUsers = () => {
                           </select>
                         </td>
                         <td>
-                          <span 
-                            className="badge rounded-pill px-3 py-2"
-                            style={{
-                              background: user.active !== false 
-                                ? "rgba(40, 167, 69, 0.2)" 
-                                : "rgba(220, 53, 69, 0.2)",
-                              color: user.active !== false ? "#28a745" : "#dc3545",
-                              border: `1px solid ${
-                                user.active !== false 
-                                  ? "rgba(40, 167, 69, 0.3)" 
-                                  : "rgba(220, 53, 69, 0.3)"
-                              }`,
-                            }}
-                          >
-                            <i className={`fas ${
-                              user.active !== false ? "fa-check-circle" : "fa-ban"
-                            } me-2`}></i>
-                            {user.active !== false ? 'Active' : 'Inactive'}
-                          </span>
+                          <div className="d-flex flex-column gap-1">
+                            <span className="badge rounded-pill px-2 py-1" style={{
+                              background: user.isBanned ? "rgba(220,53,69,0.2)" : "rgba(40,167,69,0.2)",
+                              color: user.isBanned ? "#dc3545" : "#28a745",
+                              border: `1px solid ${user.isBanned ? "rgba(220,53,69,0.3)" : "rgba(40,167,69,0.3)"}`,
+                              fontSize: "0.7rem"
+                            }}>
+                              <i className={`fas ${user.isBanned ? "fa-ban" : "fa-check-circle"} me-1`}></i>
+                              {user.isBanned ? "Banned" : "Active"}
+                            </span>
+                            {user.isVerified && (
+                              <span className="badge rounded-pill px-2 py-1" style={{ background: "rgba(107,189,208,0.15)", color: "#6BBDD0", fontSize: "0.7rem" }}>
+                                <i className="fas fa-shield-check me-1"></i>Verified
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td>
                           <small className="text-white-50">
@@ -538,59 +551,30 @@ const AdminUsers = () => {
                           </span>
                         </td>
                         <td className="pe-4">
-                          <div className="d-flex gap-2">
-                            <button
-                              className="btn btn-sm rounded-3 px-3"
-                              style={{
-                                background: user.active !== false 
-                                  ? "rgba(220, 53, 69, 0.1)" 
-                                  : "rgba(40, 167, 69, 0.1)",
-                                border: `1px solid ${
-                                  user.active !== false 
-                                    ? "rgba(220, 53, 69, 0.3)" 
-                                    : "rgba(40, 167, 69, 0.3)"
-                                }`,
-                                color: user.active !== false ? "#dc3545" : "#28a745",
-                              }}
-                              onClick={() => handleToggleStatus(user._id, user.active)}
-                              title={user.active !== false ? "Deactivate" : "Activate"}
-                            >
-                              <i className={`fas ${user.active !== false ? 'fa-ban' : 'fa-check'}`}></i>
+                          <div className="d-flex gap-1 flex-wrap">
+                            <button className="btn btn-sm rounded-3 px-2"
+                              style={{ background: user.isBanned ? "rgba(40,167,69,0.1)" : "rgba(220,53,69,0.1)", border: `1px solid ${user.isBanned ? "rgba(40,167,69,0.3)" : "rgba(220,53,69,0.3)"}`, color: user.isBanned ? "#28a745" : "#dc3545" }}
+                              onClick={() => handleBanUser(user)} title={user.isBanned ? "Unban" : "Ban"}>
+                              <i className={`fas ${user.isBanned ? "fa-check" : "fa-ban"}`}></i>
                             </button>
-                            <button
-                              className="btn btn-sm rounded-3 px-3"
-                              style={{
-                                background: "rgba(107, 189, 208, 0.1)",
-                                border: "1px solid rgba(107, 189, 208, 0.3)",
-                                color: "#6BBDD0",
-                              }}
-                              onClick={() => openEditModal(user)}
-                              title="Edit User"
-                            >
+                            <button className="btn btn-sm rounded-3 px-2"
+                              style={{ background: user.isVerified ? "rgba(255,193,7,0.1)" : "rgba(107,189,208,0.1)", border: `1px solid ${user.isVerified ? "rgba(255,193,7,0.3)" : "rgba(107,189,208,0.3)"}`, color: user.isVerified ? "#ffc107" : "#6BBDD0" }}
+                              onClick={() => handleVerifyUser(user)} title={user.isVerified ? "Remove Verification" : "Verify"}>
+                              <i className="fas fa-shield-alt"></i>
+                            </button>
+                            <button className="btn btn-sm rounded-3 px-2"
+                              style={{ background: "rgba(107,189,208,0.1)", border: "1px solid rgba(107,189,208,0.3)", color: "#6BBDD0" }}
+                              onClick={() => openEditModal(user)} title="Edit">
                               <i className="fas fa-edit"></i>
                             </button>
-                            <button
-                              className="btn btn-sm rounded-3 px-3"
-                              style={{
-                                background: "rgba(23, 162, 184, 0.1)",
-                                border: "1px solid rgba(23, 162, 184, 0.3)",
-                                color: "#17a2b8",
-                              }}
-                              onClick={() => setSelectedUser(user)}
-                              title="View Details"
-                            >
+                            <button className="btn btn-sm rounded-3 px-2"
+                              style={{ background: "rgba(23,162,184,0.1)", border: "1px solid rgba(23,162,184,0.3)", color: "#17a2b8" }}
+                              onClick={() => setSelectedUser(user)} title="View Details">
                               <i className="fas fa-eye"></i>
                             </button>
-                            <button
-                              className="btn btn-sm rounded-3 px-3"
-                              style={{
-                                background: "rgba(220, 53, 69, 0.1)",
-                                border: "1px solid rgba(220, 53, 69, 0.3)",
-                                color: "#dc3545",
-                              }}
-                              onClick={() => handleDeleteUser(user._id)}
-                              title="Delete User"
-                            >
+                            <button className="btn btn-sm rounded-3 px-2"
+                              style={{ background: "rgba(220,53,69,0.1)", border: "1px solid rgba(220,53,69,0.3)", color: "#dc3545" }}
+                              onClick={() => handleDeleteUser(user._id)} title="Delete">
                               <i className="fas fa-trash"></i>
                             </button>
                           </div>

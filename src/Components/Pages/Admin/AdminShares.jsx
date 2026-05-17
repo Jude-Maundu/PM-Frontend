@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from "react";
+import axios from "axios";
 import AdminLayout from "./AdminLayout";
 import { adminGetAllShares } from "../../../api/API";
+import { API_ENDPOINTS } from "../../../api/apiConfig";
+import { toast } from "../../../utils/toast";
+import { showConfirm } from "../../../utils/confirm";
 
 const AdminShares = () => {
   const [shares, setShares] = useState([]);
@@ -13,6 +17,10 @@ const AdminShares = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [revoking, setRevoking] = useState(null);
+
+  const token = localStorage.getItem("token");
+  const headers = { Authorization: `Bearer ${token}` };
 
   const fetchShares = async () => {
     try {
@@ -42,8 +50,27 @@ const AdminShares = () => {
     }
   };
 
+  const handleRevoke = async (share) => {
+    const ok = await showConfirm(
+      `Revoke this share link? It will no longer be accessible.`,
+      { title: "Revoke Share Link", confirmText: "Revoke", danger: true }
+    );
+    if (!ok) return;
+    setRevoking(share.token);
+    try {
+      await axios.delete(API_ENDPOINTS.ADMIN.REVOKE_SHARE(share.token), { headers });
+      toast.success("Share link revoked");
+      fetchShares();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to revoke share link");
+    } finally {
+      setRevoking(null);
+    }
+  };
+
   useEffect(() => {
     fetchShares();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -113,12 +140,13 @@ const AdminShares = () => {
                       <th>Remaining</th>
                       <th>Expires</th>
                       <th>Status</th>
+                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {shares.length === 0 ? (
                       <tr>
-                        <td colSpan="8" className="text-center text-white-50 py-4">
+                        <td colSpan="9" className="text-center text-white-50 py-4">
                           No share data available.
                         </td>
                       </tr>
@@ -138,6 +166,22 @@ const AdminShares = () => {
                             <span className={`badge bg-${share.isActive ? "success" : "secondary"}`}>
                               {share.isActive ? "Active" : "Revoked"}
                             </span>
+                          </td>
+                          <td>
+                            {share.isActive && (
+                              <button
+                                className="btn btn-sm rounded-3 px-2"
+                                style={{ background: "rgba(220,53,69,0.15)", color: "#dc3545", border: "1px solid rgba(220,53,69,0.3)" }}
+                                onClick={() => handleRevoke(share)}
+                                disabled={revoking === share.token}
+                                title="Revoke"
+                              >
+                                {revoking === share.token
+                                  ? <span className="spinner-border spinner-border-sm"></span>
+                                  : <><i className="fas fa-ban me-1"></i>Revoke</>
+                                }
+                              </button>
+                            )}
                           </td>
                         </tr>
                       ))

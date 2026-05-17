@@ -43,6 +43,24 @@ const AdminSidebar = ({ isOpen, onToggle, onNav }) => {
       badge: null,
     },
     {
+      path: "/admin/withdrawals",
+      icon: "fa-money-check-alt",
+      label: "Withdrawals",
+      badge: null,
+    },
+    {
+      path: "/admin/albums",
+      icon: "fa-folder-open",
+      label: "Albums",
+      badge: null,
+    },
+    {
+      path: "/admin/wallets",
+      icon: "fa-wallet",
+      label: "Wallets",
+      badge: null,
+    },
+    {
       path: "/admin/receipts",
       icon: "fa-receipt",
       label: "Receipts",

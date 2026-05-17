@@ -108,6 +108,7 @@ const API_ENDPOINTS = {
 
   // ==================== ADMIN ====================
   ADMIN: {
+    BASE: `${API_BASE_URL}/admin`,
     SETTINGS: `${API_BASE_URL}/admin/settings`,
     UPDATE_SETTINGS: `${API_BASE_URL}/admin/settings`,
     PLATFORM_FEE: `${API_BASE_URL}/admin/settings/platform-fee`,
@@ -116,6 +117,22 @@ const API_ENDPOINTS = {
     CLEAR_CACHE: `${API_BASE_URL}/admin/clear-cache`,
     MAINTENANCE_MODE: `${API_BASE_URL}/admin/maintenance-mode`,
     AUDIT_PURCHASES: `${API_BASE_URL}/admin/audit/purchases`,
+    // User management
+    BAN_USER: (id) => `${API_BASE_URL}/admin/users/${id}/ban`,
+    SET_ROLE: (id) => `${API_BASE_URL}/admin/users/${id}/role`,
+    VERIFY_USER: (id) => `${API_BASE_URL}/admin/users/${id}/verify`,
+    // Withdrawals
+    GET_WITHDRAWALS: `${API_BASE_URL}/admin/withdrawals`,
+    PROCESS_WITHDRAWAL: (id) => `${API_BASE_URL}/admin/withdrawals/${id}/process`,
+    // Albums
+    GET_ALBUMS: `${API_BASE_URL}/admin/albums`,
+    DELETE_ALBUM: (id) => `${API_BASE_URL}/admin/albums/${id}`,
+    // Share links
+    GET_SHARES: `${API_BASE_URL}/admin/shares`,
+    REVOKE_SHARE: (token) => `${API_BASE_URL}/admin/shares/${token}`,
+    // Wallets
+    GET_WALLETS: `${API_BASE_URL}/admin/wallets`,
+    ADJUST_WALLET: (userId) => `${API_BASE_URL}/admin/wallets/${userId}/adjust`,
   },
 
   // ==================== SHARE ====================

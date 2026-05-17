@@ -25,6 +25,9 @@ import AdminRefunds from './Components/Pages/Admin/AdminRefunds';
 import AdminSettings from './Components/Pages/Admin/AdminSettings';
 import AdminAudit from './Components/Pages/Admin/AdminAudit';
 import AdminShares from './Components/Pages/Admin/AdminShares';
+import AdminWithdrawals from './Components/Pages/Admin/AdminWithdrawals';
+import AdminAlbums from './Components/Pages/Admin/AdminAlbums';
+import AdminWallets from './Components/Pages/Admin/AdminWallets';
 import ShareAccess from './Components/Pages/Buyer/ShareAccess';
 
 // Photographer Pages
@@ -95,6 +98,9 @@ function App() {
           <Route path="/admin/settings" element={<ProtectedRoute requiredRole="admin"><AdminSettings /></ProtectedRoute>} />
           <Route path="/admin/profile" element={<ProtectedRoute requiredRole="admin"><AdminSettings /></ProtectedRoute>} />
           <Route path="/admin/audit" element={<ProtectedRoute requiredRole="admin"><AdminAudit /></ProtectedRoute>} />
+          <Route path="/admin/withdrawals" element={<ProtectedRoute requiredRole="admin"><AdminWithdrawals /></ProtectedRoute>} />
+          <Route path="/admin/albums" element={<ProtectedRoute requiredRole="admin"><AdminAlbums /></ProtectedRoute>} />
+          <Route path="/admin/wallets" element={<ProtectedRoute requiredRole="admin"><AdminWallets /></ProtectedRoute>} />
           
           {/* Photographer Routes */}
           <Route path='/photographer/dashboard' element={<ProtectedRoute requiredRole="photographer"><PhotographerDash /></ProtectedRoute>} />
