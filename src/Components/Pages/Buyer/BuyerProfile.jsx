@@ -177,19 +177,24 @@ const BuyerProfile = () => {
       
       const reader = new FileReader();
       reader.readAsDataURL(file);
-      reader.onload = () => {
+      reader.onload = async () => {
         const base64Image = reader.result;
-        
-        setProfile(prev => ({
-          ...prev,
-          profilePicture: base64Image
-        }));
-        
+
+        setProfile(prev => ({ ...prev, profilePicture: base64Image }));
         localStorage.setItem("profilePicture", base64Image);
-        
         const updatedUser = { ...user, profilePicture: base64Image };
         localStorage.setItem("user", JSON.stringify(updatedUser));
-        
+
+        try {
+          await axios.put(API_ENDPOINTS.AUTH.UPDATE_USER(userId), {
+            username: user.username,
+            email: user.email,
+            profilePicture: base64Image,
+          }, { headers });
+        } catch (err) {
+          console.warn("Could not sync profile picture to backend:", err.message);
+        }
+
         setSuccess("Profile picture updated!");
         setTimeout(() => setSuccess(null), 3000);
       };
@@ -215,6 +220,7 @@ const BuyerProfile = () => {
     try {
       const updatePayload = {
         username: profile.username || user.username,
+        name: profile.name,
         email: profile.email || user.email,
         phoneNumber: profile.phone || user.phoneNumber,
         profilePicture: profile.profilePicture || user.profilePicture,

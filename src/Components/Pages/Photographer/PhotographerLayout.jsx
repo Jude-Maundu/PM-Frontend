@@ -62,6 +62,8 @@ const PhotographerLayout = ({ children }) => {
     { path: "/messages", icon: "fa-comments", label: "Messages", mobileLabel: "Messages" },
     { path: "/photographer/withdrawals", icon: "fa-money-bill-wave", label: "Withdrawals", mobileLabel: "Withdraw" },
     { path: "/photographer/profile", icon: "fa-user", label: "Profile", mobileLabel: "Profile" },
+    { path: "/photographer/portfolio", icon: "fa-globe", label: "My Portfolio", mobileLabel: "Portfolio" },
+    { path: "/photographer/settings", icon: "fa-cog", label: "Settings", mobileLabel: "Settings" },
   ];
 
   // Don't render layout on login page

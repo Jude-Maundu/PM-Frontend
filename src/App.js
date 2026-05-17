@@ -28,9 +28,12 @@ import AdminShares from './Components/Pages/Admin/AdminShares';
 import AdminWithdrawals from './Components/Pages/Admin/AdminWithdrawals';
 import AdminAlbums from './Components/Pages/Admin/AdminAlbums';
 import AdminWallets from './Components/Pages/Admin/AdminWallets';
+import AdminProfile from './Components/Pages/Admin/AdminProfile';
 import ShareAccess from './Components/Pages/Buyer/ShareAccess';
 
 // Photographer Pages
+import PhotographerPortfolio from './Components/Pages/Photographer/PhotographerPortfolio';
+import PublicPortfolio from './Components/Pages/Portfolio/PublicPortfolio';
 import PhotographerDash from './Components/Pages/Photographer/PhotographerDash';
 import PhotographerEarnings from './Components/Pages/Photographer/Earnings';
 import PhotographerMedia from './Components/Pages/Photographer/MyMedia';
@@ -38,6 +41,7 @@ import PhotographerProfile from './Components/Pages/Photographer/Profile';
 import PhotographerSales from './Components/Pages/Photographer/SalesHistory';
 import PhotographerUpload from './Components/Pages/Photographer/UploadMedia';
 import PhotographerWithdrawals from './Components/Pages/Photographer/Withdrawals';
+import PhotographerSettings from './Components/Pages/Photographer/PhotographerSettings';
 
 // BuyerPages 
 import BuyerCart from './Components/Pages/Buyer/BuyerCart';
@@ -48,6 +52,7 @@ import BuyerFavorites from './Components/Pages/Buyer/BuyerFavourite';
 import BuyerProfile from './Components/Pages/Buyer/BuyerProfile';
 import BuyerWallet from './Components/Pages/Buyer/BuyerWallet';
 import BuyerExplore from './Components/Pages/Buyer/BuyerExplore';
+import BuyerSettings from './Components/Pages/Buyer/BuyerSettings';
 import BuyerAlbumAccess from './Components/Pages/Buyer/BuyerAlbumAccess';
 import MessagingPage from './Components/Pages/Messaging/MessagingPage';
 import BuyerFollowPage from './Components/Pages/Buyer/BuyerFollowPage';
@@ -96,7 +101,7 @@ function App() {
           <Route path="/admin/receipts" element={<ProtectedRoute requiredRole="admin"><AdminReceipts /></ProtectedRoute>} />
           <Route path="/admin/refunds" element={<ProtectedRoute requiredRole="admin"><AdminRefunds /></ProtectedRoute>} />
           <Route path="/admin/settings" element={<ProtectedRoute requiredRole="admin"><AdminSettings /></ProtectedRoute>} />
-          <Route path="/admin/profile" element={<ProtectedRoute requiredRole="admin"><AdminSettings /></ProtectedRoute>} />
+          <Route path="/admin/profile" element={<ProtectedRoute requiredRole="admin"><AdminProfile /></ProtectedRoute>} />
           <Route path="/admin/audit" element={<ProtectedRoute requiredRole="admin"><AdminAudit /></ProtectedRoute>} />
           <Route path="/admin/withdrawals" element={<ProtectedRoute requiredRole="admin"><AdminWithdrawals /></ProtectedRoute>} />
           <Route path="/admin/albums" element={<ProtectedRoute requiredRole="admin"><AdminAlbums /></ProtectedRoute>} />
@@ -111,7 +116,9 @@ function App() {
           <Route path="/photographer/upload" element={<ProtectedRoute requiredRole="photographer"><PhotographerUpload /></ProtectedRoute>} />
           <Route path="/photographer/withdrawals" element={<ProtectedRoute requiredRole="photographer"><PhotographerWithdrawals /></ProtectedRoute>} />
           <Route path="/photographer/follow" element={<ProtectedRoute requiredRole="photographer"><PhotographerFollowPage /></ProtectedRoute>} />
-          
+          <Route path="/photographer/settings" element={<ProtectedRoute requiredRole="photographer"><PhotographerSettings /></ProtectedRoute>} />
+          <Route path="/photographer/portfolio" element={<ProtectedRoute requiredRole="photographer"><PhotographerPortfolio /></ProtectedRoute>} />
+
           {/* Buyer Routes */}
           <Route path="/buyer/cart" element={<ProtectedRoute requiredRole="buyer"><BuyerCart /></ProtectedRoute>} />
           <Route path="/buyer/dashboard" element={<ProtectedRoute requiredRole="buyer"><BuyerDashboard /></ProtectedRoute>} />
@@ -122,10 +129,14 @@ function App() {
           <Route path="/buyer/wallet" element={<ProtectedRoute requiredRole="buyer"><BuyerWallet /></ProtectedRoute>} />
           <Route path="/buyer/explore" element={<ProtectedRoute requiredRole="buyer"><BuyerExplore /></ProtectedRoute>} />
           <Route path="/buyer/follow" element={<ProtectedRoute requiredRole="buyer"><BuyerFollowPage /></ProtectedRoute>} />
+          <Route path="/buyer/settings" element={<ProtectedRoute requiredRole="buyer"><BuyerSettings /></ProtectedRoute>} />
           <Route path="/buyer/messages" element={<ProtectedRoute><MessagingPage /></ProtectedRoute>} />
           <Route path="/messages" element={<ProtectedRoute><MessagingPage /></ProtectedRoute>} />
           <Route path="/album/:albumId/access/:token" element={<ProtectedRoute requiredRole="buyer"><BuyerAlbumAccess /></ProtectedRoute>} />
           <Route path="/share/:token" element={<ShareAccess />} />
+
+          {/* Public Portfolio */}
+          <Route path="/portfolio/:username" element={<PublicPortfolio />} />
 
           {/* Catch-all fallback */}
           <Route path="*" element={<Navigate to="/explore" replace />} />

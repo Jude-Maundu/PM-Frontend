@@ -72,6 +72,7 @@ const PhotographerMedia = () => {
   const [updatingAlbum, setUpdatingAlbum] = useState(false);
   const [newAlbumName, setNewAlbumName] = useState("");
   const [newAlbumDescription, setNewAlbumDescription] = useState("");
+  const [newAlbumPrice, setNewAlbumPrice] = useState(0);
   const [createAlbumError, setCreateAlbumError] = useState(null);
   const [selectedAlbum, setSelectedAlbum] = useState(null);
   const [showAlbumMediaModal, setShowAlbumMediaModal] = useState(false);
@@ -293,15 +294,17 @@ const PhotographerMedia = () => {
       const payload = {
         name: newAlbumName.trim(),
         description: newAlbumDescription.trim(),
+        price: parseFloat(newAlbumPrice) || 0,
       };
 
       const res = await createAlbum(payload);
       const data = res.data || {};
       const album = data.album || data;
-      
+
       setAlbums(prev => [...prev, { ...album, coverImage: placeholderMedium }]);
       setNewAlbumName("");
       setNewAlbumDescription("");
+      setNewAlbumPrice(0);
       setShowAlbumModal(false);
       
     } catch (err) {
@@ -503,6 +506,7 @@ const PhotographerMedia = () => {
       const payload = {
         name: editingAlbum.name.trim(),
         description: editingAlbum.description?.trim() || "",
+        price: parseFloat(editingAlbum.price) || 0,
       };
 
       const res = await updateAlbum(editingAlbum._id, payload);
@@ -955,29 +959,38 @@ const PhotographerMedia = () => {
                         </div>
                       </div>
                       <div className="card-body p-2 p-sm-3">
-                        <h6 className="text-warning mb-1 text-truncate fs-7">{album.name}</h6>
+                        <div className="d-flex justify-content-between align-items-start mb-1">
+                          <h6 className="text-warning mb-0 text-truncate fs-7 flex-grow-1 me-1">{album.name}</h6>
+                          {album.price > 0 ? (
+                            <span className="badge bg-warning text-dark" style={{ fontSize: "0.65rem", whiteSpace: "nowrap" }}>
+                              KES {Number(album.price).toLocaleString()}
+                            </span>
+                          ) : (
+                            <span className="badge bg-success" style={{ fontSize: "0.65rem" }}>Free</span>
+                          )}
+                        </div>
                         <p className="text-white-50 small text-truncate mb-2 fs-8">
                           {album.description || 'No description'}
                         </p>
                         <div className="d-flex justify-content-between align-items-center">
                           <small className="text-white-50 fs-8">
-                            <i className="fas fa-calendar me-1"></i>
-                            {new Date(album.createdAt).toLocaleDateString()}
+                            <i className="fas fa-images me-1"></i>
+                            {album.mediaCount || 0} photos
                           </small>
-                          <button 
+                          <button
                             className="btn btn-sm btn-outline-warning"
                             onClick={() => handleViewAlbum(album)}
                           >
-                            View ({album.mediaCount || 0})
+                            View
                           </button>
                         </div>
-                        <button 
+                        <button
                           className="btn btn-sm btn-warning w-100 mt-2"
                           onClick={() => handleAddAlbumToCart(album)}
                           disabled={addingAlbumToCart}
                         >
                           <i className="fas fa-shopping-cart me-1"></i>
-                          {addingAlbumToCart ? 'Adding to Cart...' : 'Add All to Cart'}
+                          {addingAlbumToCart ? 'Adding...' : 'Add All to Cart'}
                         </button>
                       </div>
                     </div>
@@ -1273,6 +1286,22 @@ const PhotographerMedia = () => {
                       onChange={(e) => setNewAlbumDescription(e.target.value)}
                     />
                   </div>
+                  <div className="mb-3">
+                    <label className="form-label text-white small">
+                      <i className="fas fa-tag me-1 text-warning"></i>
+                      Album Price (KES)
+                    </label>
+                    <input
+                      type="number"
+                      className="form-control bg-dark text-white border-secondary"
+                      value={newAlbumPrice}
+                      onChange={(e) => setNewAlbumPrice(e.target.value)}
+                      min="0"
+                      step="50"
+                      placeholder="0 = Free"
+                    />
+                    <small className="text-white-50">Set 0 to make the album free to access</small>
+                  </div>
                   <div className="d-flex gap-2">
                     <button type="submit" className="btn btn-warning flex-grow-1" disabled={creatingAlbum}>
                       {creatingAlbum ? 'Creating...' : 'Create Album'}
@@ -1320,6 +1349,22 @@ const PhotographerMedia = () => {
                       value={editingAlbum.description || ""}
                       onChange={(e) => setEditingAlbum({ ...editingAlbum, description: e.target.value })}
                     />
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label text-white small">
+                      <i className="fas fa-tag me-1 text-warning"></i>
+                      Album Price (KES)
+                    </label>
+                    <input
+                      type="number"
+                      className="form-control bg-dark text-white border-secondary"
+                      value={editingAlbum.price ?? 0}
+                      onChange={(e) => setEditingAlbum({ ...editingAlbum, price: e.target.value })}
+                      min="0"
+                      step="50"
+                      placeholder="0 = Free"
+                    />
+                    <small className="text-white-50">Set 0 to make the album free to access</small>
                   </div>
                   <div className="d-flex gap-2">
                     <button type="submit" className="btn btn-warning flex-grow-1" disabled={updatingAlbum}>

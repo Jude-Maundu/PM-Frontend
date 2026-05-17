@@ -98,6 +98,7 @@ const BuyerLayout = ({ children }) => {
     { path: "/messages", icon: "fa-comments", label: "Messages", mobileLabel: "Messages" },
     { path: "/buyer/wallet", icon: "fa-wallet", label: "Wallet", mobileLabel: "Wallet" },
     { path: "/buyer/profile", icon: "fa-user", label: "Profile", mobileLabel: "Profile" },
+    { path: "/buyer/settings", icon: "fa-cog", label: "Settings", mobileLabel: "Settings" },
   ];
 
   // Don't render layout on login page

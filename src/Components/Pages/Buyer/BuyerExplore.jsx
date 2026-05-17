@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import BuyerLayout from "./BuyerLayout";
 import axios from "axios";
-import { API_BASE_URL } from "../../../api/apiConfig";
+import { API_BASE_URL, API_ENDPOINTS } from "../../../api/apiConfig";
 import { toast } from "../../../utils/toast";
 import { placeholderMedium } from "../../../utils/placeholders";
 import { getImageUrl, fetchProtectedUrl } from "../../../utils/imageUrl";
@@ -36,6 +36,11 @@ const BuyerExplore = () => {
   const [nextBannerIndex, setNextBannerIndex] = useState(1);
   const [isFading, setIsFading] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
+  const [activeView, setActiveView] = useState("photos");
+  const [albums, setAlbums] = useState([]);
+  const [albumsLoading, setAlbumsLoading] = useState(false);
+  const [albumSearch, setAlbumSearch] = useState("");
+  const [buyingAlbum, setBuyingAlbum] = useState(null);
   
   // Ref for modal content to detect keyboard shortcuts
   const modalRef = useRef(null); // eslint-disable-line no-unused-vars
@@ -246,6 +251,41 @@ const BuyerExplore = () => {
       }
     }
   }, [token]);
+
+  const fetchAlbums = useCallback(async () => {
+    setAlbumsLoading(true);
+    try {
+      const res = await axios.get(API_ENDPOINTS.MEDIA.GET_PUBLIC_ALBUMS, { headers, timeout: 10000 });
+      setAlbums(res.data?.albums || []);
+    } catch (err) {
+      console.error("Failed to load albums:", err);
+    } finally {
+      setAlbumsLoading(false);
+    }
+  }, [headers]);
+
+  useEffect(() => {
+    if (activeView === "albums") fetchAlbums();
+  }, [activeView, fetchAlbums]);
+
+  const handleBuyAlbum = async (album) => {
+    if (!token || !userId) { toast.error("Please log in to purchase albums"); return; }
+    if (album.price <= 0) { toast.info("This album is free — no purchase needed"); return; }
+    setBuyingAlbum(album._id);
+    try {
+      const res = await axios.post(API_ENDPOINTS.WALLET.BUY_ALBUM(album._id), {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success(res.data.message || "Album purchased!");
+      setAlbums(prev => prev.map(a =>
+        a._id === album._id ? { ...a, purchasedBy: [...(a.purchasedBy || []), userId] } : a
+      ));
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Purchase failed");
+    } finally {
+      setBuyingAlbum(null);
+    }
+  };
 
   useEffect(() => {
     const fetchMedia = async () => {
@@ -505,8 +545,26 @@ const BuyerExplore = () => {
               </div>
             </div>
 
-            {/* Categories */}
-            <div className="mb-4 px-2 px-sm-0">
+            {/* View Toggle */}
+            <div className="d-flex gap-2 mb-4 px-2 px-sm-0">
+              <button
+                className={`btn rounded-pill px-4 fw-semibold ${activeView === "photos" ? "btn-warning text-dark" : "btn-outline-secondary text-white-50"}`}
+                style={{ fontSize: "0.85rem" }}
+                onClick={() => setActiveView("photos")}
+              >
+                <i className="fas fa-images me-2"></i>Photos
+              </button>
+              <button
+                className={`btn rounded-pill px-4 fw-semibold ${activeView === "albums" ? "btn-warning text-dark" : "btn-outline-secondary text-white-50"}`}
+                style={{ fontSize: "0.85rem" }}
+                onClick={() => setActiveView("albums")}
+              >
+                <i className="fas fa-folder-open me-2"></i>Albums
+              </button>
+            </div>
+
+            {/* Categories - photos view only */}
+            {activeView === "photos" && <div className="mb-4 px-2 px-sm-0">
               <div className="d-flex justify-content-between align-items-center mb-2">
                 <h6 className="fw-bold mb-0" style={{ fontSize: "0.85rem" }}>
                   <i className="fas fa-tags me-1 text-warning"></i>
@@ -527,15 +585,16 @@ const BuyerExplore = () => {
                   </button>
                 ))}
               </div>
-            </div>
+            </div>}
 
-            {/* Error Alert */}
-            {error && (
-              <div className="alert alert-danger alert-dismissible fade show mb-3 mx-2" role="alert">
-                <i className="fas fa-exclamation-circle me-2"></i> {error}
-                <button type="button" className="btn-close" onClick={() => setError(null)}></button>
-              </div>
-            )}
+            {/* Photos view: error + masonry grid */}
+            {activeView === "photos" && <>
+              {error && (
+                <div className="alert alert-danger alert-dismissible fade show mb-3 mx-2" role="alert">
+                  <i className="fas fa-exclamation-circle me-2"></i> {error}
+                  <button type="button" className="btn-close" onClick={() => setError(null)}></button>
+                </div>
+              )}
 
             {/* Masonry Grid */}
             {loading ? (
@@ -637,6 +696,112 @@ const BuyerExplore = () => {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+            </>}
+
+            {/* Albums view */}
+            {activeView === "albums" && (
+              <div className="px-2 px-sm-0">
+                {/* Album search */}
+                <div className="mb-3 position-relative">
+                  <i className="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-white-50" style={{ fontSize: "0.8rem" }}></i>
+                  <input
+                    type="text"
+                    className="form-control rounded-pill ps-5"
+                    style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", color: "#fff", fontSize: "0.85rem" }}
+                    placeholder="Search albums or photographer..."
+                    value={albumSearch}
+                    onChange={e => setAlbumSearch(e.target.value)}
+                  />
+                </div>
+
+                {albumsLoading ? (
+                  <div className="text-center py-5">
+                    <div className="spinner-border text-warning mb-2" style={{ width: "2rem", height: "2rem" }}></div>
+                    <p className="text-white-50 small">Loading albums...</p>
+                  </div>
+                ) : albums.filter(a =>
+                  a.name?.toLowerCase().includes(albumSearch.toLowerCase()) ||
+                  a.photographer?.username?.toLowerCase().includes(albumSearch.toLowerCase())
+                ).length === 0 ? (
+                  <div className="text-center py-5">
+                    <i className="fas fa-folder-open fa-3x text-white-50 mb-3"></i>
+                    <p className="text-white-50">No albums found</p>
+                  </div>
+                ) : (
+                  <div className="row g-3">
+                    {albums
+                      .filter(a =>
+                        a.name?.toLowerCase().includes(albumSearch.toLowerCase()) ||
+                        a.photographer?.username?.toLowerCase().includes(albumSearch.toLowerCase())
+                      )
+                      .map(album => {
+                        const alreadyPurchased = (album.purchasedBy || []).map(id => id.toString()).includes(userId?.toString());
+                        const isFree = !album.price || album.price <= 0;
+                        return (
+                          <div key={album._id} className="col-12 col-sm-6 col-lg-4">
+                            <div className="card bg-dark border-secondary h-100 overflow-hidden" style={{ borderRadius: 14 }}>
+                              <div className="position-relative" style={{ height: 160 }}>
+                                <img
+                                  src={album.coverImage || placeholderMedium}
+                                  alt={album.name}
+                                  className="w-100 h-100"
+                                  style={{ objectFit: "cover" }}
+                                  onError={e => { e.target.src = placeholderMedium; }}
+                                />
+                                <div className="position-absolute top-0 start-0 end-0 bottom-0"
+                                  style={{ background: "linear-gradient(transparent 40%, rgba(0,0,0,0.75))" }} />
+                                <div className="position-absolute bottom-0 start-0 p-2">
+                                  {isFree ? (
+                                    <span className="badge bg-success rounded-pill px-2" style={{ fontSize: "0.7rem" }}>Free</span>
+                                  ) : (
+                                    <span className="badge bg-warning text-dark rounded-pill px-2" style={{ fontSize: "0.7rem" }}>
+                                      KES {Number(album.price).toLocaleString()}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="card-body p-3">
+                                <h6 className="text-white fw-bold mb-1 text-truncate">{album.name}</h6>
+                                <p className="text-white-50 small mb-2 text-truncate">{album.description || "No description"}</p>
+                                <div className="d-flex align-items-center gap-2 mb-3">
+                                  <i className="fas fa-camera text-warning" style={{ fontSize: "0.75rem" }}></i>
+                                  <small className="text-white-50">{album.photographer?.username || "Unknown"}</small>
+                                  <span className="ms-auto">
+                                    <i className="fas fa-images text-white-50 me-1" style={{ fontSize: "0.7rem" }}></i>
+                                    <small className="text-white-50">{album.mediaCount || 0}</small>
+                                  </span>
+                                </div>
+                                {isFree ? (
+                                  <button className="btn btn-sm btn-outline-success w-100 rounded-pill" style={{ fontSize: "0.8rem" }}>
+                                    <i className="fas fa-unlock me-1"></i>Free Access
+                                  </button>
+                                ) : alreadyPurchased ? (
+                                  <button className="btn btn-sm btn-outline-secondary w-100 rounded-pill" style={{ fontSize: "0.8rem" }} disabled>
+                                    <i className="fas fa-check me-1"></i>Purchased
+                                  </button>
+                                ) : (
+                                  <button
+                                    className="btn btn-sm btn-warning w-100 rounded-pill fw-bold"
+                                    style={{ fontSize: "0.8rem" }}
+                                    onClick={() => handleBuyAlbum(album)}
+                                    disabled={buyingAlbum === album._id}
+                                  >
+                                    {buyingAlbum === album._id
+                                      ? <><span className="spinner-border spinner-border-sm me-1"></span>Buying...</>
+                                      : <><i className="fas fa-shopping-bag me-1"></i>Buy — KES {Number(album.price).toLocaleString()}</>
+                                    }
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    }
+                  </div>
+                )}
               </div>
             )}
           </div>

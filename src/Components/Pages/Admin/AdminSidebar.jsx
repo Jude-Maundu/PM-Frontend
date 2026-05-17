@@ -84,6 +84,12 @@ const AdminSidebar = ({ isOpen, onToggle, onNav }) => {
       label: "Settings",
       badge: null,
     },
+    {
+      path: "/admin/profile",
+      icon: "fa-user-circle",
+      label: "My Profile",
+      badge: null,
+    },
   ];
 
   return (

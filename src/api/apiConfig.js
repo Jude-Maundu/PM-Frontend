@@ -28,6 +28,7 @@ const API_ENDPOINTS = {
     GET_USER: (id) => `${API_BASE_URL}/auth/users/${id}`,
     UPDATE_USER: (id) => `${API_BASE_URL}/auth/users/${id}`,
     DELETE_USER: (id) => `${API_BASE_URL}/auth/users/${id}`,
+    CHANGE_PASSWORD: (id) => `${API_BASE_URL}/auth/users/${id}/change-password`,
     UPDATE_PHONE: (id) => `${API_BASE_URL}/auth/photographers/${id}/phone`,
   },
 
@@ -54,6 +55,7 @@ const API_ENDPOINTS = {
     ALBUM_ACCESS_HISTORY: (albumId) => `${API_BASE_URL}/media/album/${albumId}/access`,
     CREATE_ALBUM: `${API_BASE_URL}/media/album`,
     GET_ALBUMS: `${API_BASE_URL}/media/albums`,
+    GET_PUBLIC_ALBUMS: `${API_BASE_URL}/media/albums/public`,
     GET_ALBUM: (albumId) => `${API_BASE_URL}/media/album/${albumId}`,
     UPDATE_ALBUM: (albumId) => `${API_BASE_URL}/media/album/${albumId}`,
     DELETE_ALBUM: (albumId) => `${API_BASE_URL}/media/album/${albumId}`,
@@ -104,6 +106,8 @@ const API_ENDPOINTS = {
     GET_BALANCE: (userId) => `${API_BASE_URL}/payments/wallet/${userId}`,
     GET_TRANSACTIONS: (userId) => `${API_BASE_URL}/payments/transactions/${userId}`,
     ADD_FUNDS: `${API_BASE_URL}/payments/wallet/add`,
+    BUY_ALBUM: (albumId) => `${API_BASE_URL}/payments/album/${albumId}/buy`,
+    CHECK_ALBUM_PURCHASED: (albumId) => `${API_BASE_URL}/payments/album/${albumId}/purchased`,
   },
 
   // ==================== ADMIN ====================
@@ -173,6 +177,13 @@ const API_ENDPOINTS = {
     UNARCHIVE: (conversationId) => `${API_BASE_URL}/messages/conversations/${conversationId}/unarchive`,
     ADD_REACTION: (messageId) => `${API_BASE_URL}/messages/${messageId}/reactions`,
     REMOVE_REACTION: (messageId) => `${API_BASE_URL}/messages/${messageId}/reactions`,
+  },
+
+  // ==================== PORTFOLIO ====================
+  PORTFOLIO: {
+    GET_MY: `${API_BASE_URL}/portfolio/me`,
+    SAVE: `${API_BASE_URL}/portfolio`,
+    GET_PUBLIC: (username) => `${API_BASE_URL}/portfolio/${username}`,
   },
 
   // ==================== WITHDRAWALS ====================

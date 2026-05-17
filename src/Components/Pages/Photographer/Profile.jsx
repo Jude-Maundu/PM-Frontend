@@ -184,8 +184,8 @@ const PhotographerProfile = () => {
     
     try {
       const updatePayload = {
-        username: profile.name,
-        email: profile.email,
+        username: profile.name || user.username,
+        email: profile.email || user.email,
         bio: profile.bio,
         location: profile.location,
         website: profile.website,
