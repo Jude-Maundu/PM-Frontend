@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import AdminLayout from "./AdminLayout";
+import PageHeader from "../../PageHeader";
 import { API_BASE_URL } from "../../../api/apiConfig";
 
 const API = API_BASE_URL;
@@ -33,21 +34,21 @@ const AdminReceipts = () => {
 
   const filteredReceipts = receipts.filter(r => {
     const searchTerm = search.toLowerCase();
-    const matchesSearch = 
+    const matchesSearch =
       r.user?.email?.toLowerCase().includes(searchTerm) ||
       r.receiptNumber?.toLowerCase().includes(searchTerm) ||
       r.transactionId?.toLowerCase().includes(searchTerm);
-    
+
     if (dateFilter === "all") return matchesSearch;
-    
+
     const date = new Date(r.createdAt);
     const now = new Date();
     const days = (now - date) / (1000 * 60 * 60 * 24);
-    
+
     if (dateFilter === "today") return days <= 1 && matchesSearch;
     if (dateFilter === "week") return days <= 7 && matchesSearch;
     if (dateFilter === "month") return days <= 30 && matchesSearch;
-    
+
     return matchesSearch;
   });
 
@@ -57,66 +58,44 @@ const AdminReceipts = () => {
 
   return (
     <AdminLayout>
-      {/* Header */}
-      <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
-        <h4 className="fw-bold mb-3 mb-md-0">
-          <i className="fas fa-receipt me-2 text-warning"></i>
-          Receipts Management
-        </h4>
-        <button className="btn btn-warning" onClick={fetchReceipts}>
-          <i className="fas fa-sync-alt me-2"></i>
-          Refresh
-        </button>
-      </div>
+      <PageHeader
+        title="Transaction Receipts"
+        subtitle="All platform payment records"
+        onSearch={setSearch}
+        searchQuery={search}
+        searchPlaceholder="Search by email or receipt number..."
+        actions={
+          <button className="mc-btn mc-btn-ghost" onClick={fetchReceipts}>
+            <i className="fas fa-sync-alt me-1"></i>Refresh
+          </button>
+        }
+      />
+      <div className="mc-page">
+        {/* Summary Stats */}
+        <div className="mc-stats-row-sm" style={{ marginBottom: "1.25rem" }}>
+          <div className="mc-stat-card">
+            <div className="mc-stat-label">TOTAL REVENUE</div>
+            <div className="mc-stat-value" style={{ fontSize: "1.2rem" }}>KES {totalRevenue.toLocaleString()}</div>
+          </div>
+          <div className="mc-stat-card">
+            <div className="mc-stat-label">PHOTOGRAPHERS SHARE (70%)</div>
+            <div className="mc-stat-value" style={{ fontSize: "1.2rem", color: "var(--mc-accent-teal)" }}>KES {photographerShare.toLocaleString()}</div>
+          </div>
+          <div className="mc-stat-card">
+            <div className="mc-stat-label">PLATFORM FEES (30%)</div>
+            <div className="mc-stat-value" style={{ fontSize: "1.2rem", color: "var(--mc-accent-pink)" }}>KES {platformFees.toLocaleString()}</div>
+          </div>
+          <div className="mc-stat-card">
+            <div className="mc-stat-label">TOTAL TRANSACTIONS</div>
+            <div className="mc-stat-value">{filteredReceipts.length}</div>
+          </div>
+        </div>
 
-      {/* Summary Cards */}
-      <div className="row g-3 mb-4">
-        <div className="col-md-4">
-          <div className="card bg-dark border-warning">
-            <div className="card-body">
-              <small className="text-white-50">Total Revenue</small>
-              <h4 className="fw-bold text-warning">KES {totalRevenue.toLocaleString()}</h4>
-              <small className="text-success">
-                <i className="fas fa-arrow-up me-1"></i>
-                +12.5% this month
-              </small>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-4">
-          <div className="card bg-dark border-info">
-            <div className="card-body">
-              <small className="text-white-50">Photographers Share (70%)</small>
-              <h4 className="fw-bold text-info">KES {photographerShare.toLocaleString()}</h4>
-              <small className="text-white-50">To be disbursed</small>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-4">
-          <div className="card bg-dark border-success">
-            <div className="card-body">
-              <small className="text-white-50">Platform Fees (30%)</small>
-              <h4 className="fw-bold text-success">KES {platformFees.toLocaleString()}</h4>
-              <small className="text-white-50">Net profit</small>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="row g-3 mb-4">
-        <div className="col-md-6">
-          <input
-            type="text"
-            className="form-control bg-dark border-secondary text-white"
-            placeholder="Search by email or receipt number..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-        <div className="col-md-6">
+        {/* Date Filter */}
+        <div className="mc-card mb-3" style={{ padding: "0.75rem 1rem" }}>
           <select
-            className="form-select bg-dark border-secondary text-white"
+            className="form-select"
+            style={{ maxWidth: 220 }}
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
           >
@@ -126,132 +105,141 @@ const AdminReceipts = () => {
             <option value="month">This Month</option>
           </select>
         </div>
-      </div>
 
-      {/* Loading */}
-      {loading && (
-        <div className="text-center py-5">
-          <div className="spinner-border text-warning mb-3"></div>
-          <p>Loading receipts...</p>
-        </div>
-      )}
+        {/* Loading */}
+        {loading && (
+          <div style={{ padding: "2rem", textAlign: "center" }}>
+            <div className="spinner-border" style={{ color: "var(--mc-accent)" }}></div>
+          </div>
+        )}
 
-      {/* Receipts Table */}
-      {!loading && (
-        <div className="table-responsive bg-dark rounded-3 border border-secondary">
-          <table className="table table-dark table-hover mb-0">
-            <thead>
-              <tr>
-                <th className="ps-3">Receipt #</th>
-                <th>User</th>
-                <th>Amount</th>
-                <th>Method</th>
-                <th>Txn Code</th>
-                <th>Status</th>
-                <th>Date</th>
-                <th className="pe-3">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredReceipts.map((r) => (
-                <tr key={r._id}>
-                  <td className="ps-3">
-                    <small className="fw-bold">{r.receiptNumber || `REC-${r._id?.substring(0, 8)}`}</small>
-                  </td>
-                  <td>
-                    <div className="d-flex align-items-center gap-2">
-                      <i className="fas fa-user-circle text-warning"></i>
-                      {r.user?.email || "N/A"}
-                    </div>
-                  </td>
-                  <td>
-                    <span className="badge bg-warning text-dark">KES {r.amount}</span>
-                  </td>
-                  <td>
-                    <span className={`badge bg-${r.method === 'mpesa' ? 'success' : 'info'}`}>
-                      <i className={`fas fa-${r.method === 'mpesa' ? 'mobile-alt' : 'credit-card'} me-1`}></i>
-                      {r.method || 'card'}
-                    </span>
-                  </td>
-                  <td>
-                    <span className="text-white-50" style={{ fontSize: '0.8rem' }}>
-                      {r.transactionId || 'N/A'}
-                    </span>
-                  </td>
-                  <td>
-                    <span className={`badge bg-${r.status === 'completed' ? 'success' : 'warning'}`}>
-                      {r.status || 'pending'}
-                    </span>
-                  </td>
-                  <td>
-                    <small>{new Date(r.createdAt).toLocaleString()}</small>
-                  </td>
-                  <td className="pe-3">
-                    <button
-                      className="btn btn-sm btn-outline-warning"
-                      onClick={() => setSelectedReceipt(r)}
-                    >
-                      <i className="fas fa-eye"></i>
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+        {/* Receipts Table */}
+        {!loading && (
+          <div className="mc-table-card">
+            <div className="table-responsive">
+              <table className="table table-borderless mb-0">
+                <thead>
+                  <tr>
+                    <th className="ps-3 py-3">Receipt #</th>
+                    <th className="py-3">User</th>
+                    <th className="py-3">Amount</th>
+                    <th className="py-3">Method</th>
+                    <th className="py-3">Txn Code</th>
+                    <th className="py-3">Status</th>
+                    <th className="py-3">Date</th>
+                    <th className="pe-3 py-3">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredReceipts.length === 0 ? (
+                    <tr>
+                      <td colSpan="8">
+                        <div className="mc-empty">
+                          <i className="fas fa-receipt"></i>
+                          <p>No receipts found</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : filteredReceipts.map((r) => (
+                    <tr key={r._id}>
+                      <td className="ps-3">
+                        <small className="fw-bold">{r.receiptNumber || `REC-${r._id?.substring(0, 8)}`}</small>
+                      </td>
+                      <td>
+                        <div className="d-flex align-items-center gap-2">
+                          <i className="fas fa-user-circle" style={{ color: "var(--mc-accent)" }}></i>
+                          {r.user?.email || "N/A"}
+                        </div>
+                      </td>
+                      <td>
+                        <span className="badge px-3 py-2" style={{ background: "rgba(245,166,35,0.15)", color: "var(--mc-accent-gold)" }}>
+                          KES {r.amount}
+                        </span>
+                      </td>
+                      <td>
+                        <span className="badge rounded-pill px-3 py-2"
+                          style={{ background: r.method === 'mpesa' ? "rgba(76,201,166,0.15)" : "rgba(91,127,229,0.15)", color: r.method === 'mpesa' ? "var(--mc-accent-teal)" : "var(--mc-accent)" }}>
+                          <i className={`fas fa-${r.method === 'mpesa' ? 'mobile-alt' : 'credit-card'} me-1`}></i>
+                          {r.method || 'card'}
+                        </span>
+                      </td>
+                      <td>
+                        <small className="text-muted">{r.transactionId || 'N/A'}</small>
+                      </td>
+                      <td>
+                        <span className="badge rounded-pill px-3 py-2"
+                          style={{ background: r.status === 'completed' ? "rgba(76,201,166,0.15)" : "rgba(245,166,35,0.15)", color: r.status === 'completed' ? "var(--mc-accent-teal)" : "var(--mc-accent-gold)" }}>
+                          {r.status || 'pending'}
+                        </span>
+                      </td>
+                      <td>
+                        <small>{new Date(r.createdAt).toLocaleString()}</small>
+                      </td>
+                      <td className="pe-3">
+                        <button className="mc-btn mc-btn-ghost btn-sm" onClick={() => setSelectedReceipt(r)}>
+                          <i className="fas fa-eye"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
-      {/* Receipt Modal */}
-      {selectedReceipt && (
-        <div className="modal show d-block" style={{ background: "rgba(0,0,0,0.8)" }}>
-          <div className="modal-dialog">
-            <div className="modal-content bg-dark border-warning">
-              <div className="modal-header border-warning">
-                <h5 className="modal-title text-warning">Receipt Details</h5>
-                <button className="btn-close btn-close-white" onClick={() => setSelectedReceipt(null)}></button>
-              </div>
-              <div className="modal-body">
-                <div className="text-center mb-4">
-                  <i className="fas fa-receipt fa-3x text-warning mb-2"></i>
-                  <h5>{selectedReceipt.receiptNumber || `REC-${selectedReceipt._id?.substring(0, 8)}`}</h5>
+        {/* Receipt Modal */}
+        {selectedReceipt && (
+          <div className="modal show d-block" style={{ background: "rgba(0,0,0,0.7)", zIndex: 1050 }}>
+            <div className="modal-dialog modal-dialog-centered">
+              <div className="mc-card modal-content border-0">
+                <div className="mc-card-header d-flex justify-content-between align-items-center">
+                  <h5 className="mc-card-title mb-0">Receipt Details</h5>
+                  <button className="btn-close" onClick={() => setSelectedReceipt(null)}></button>
                 </div>
-                <div className="row g-3">
-                  <div className="col-6">
-                    <div className="card bg-dark border-secondary p-2">
-                      <small className="text-white-50">User</small>
-                      <span>{selectedReceipt.user?.email || "N/A"}</span>
-                    </div>
+                <div style={{ padding: "1rem" }}>
+                  <div className="text-center mb-4">
+                    <i className="fas fa-receipt fa-3x mb-2" style={{ color: "var(--mc-accent)" }}></i>
+                    <h5>{selectedReceipt.receiptNumber || `REC-${selectedReceipt._id?.substring(0, 8)}`}</h5>
                   </div>
-                  <div className="col-6">
-                    <div className="card bg-dark border-secondary p-2">
-                      <small className="text-white-50">Amount</small>
-                      <span className="text-warning fw-bold">KES {selectedReceipt.amount}</span>
+                  <div className="row g-3">
+                    <div className="col-6">
+                      <div className="mc-card p-2">
+                        <small className="text-muted">User</small>
+                        <div>{selectedReceipt.user?.email || "N/A"}</div>
+                      </div>
                     </div>
-                  </div>
-                  <div className="col-6">
-                    <div className="card bg-dark border-secondary p-2">
-                      <small className="text-white-50">Method</small>
-                      <span>{selectedReceipt.method || 'card'}</span>
+                    <div className="col-6">
+                      <div className="mc-card p-2">
+                        <small className="text-muted">Amount</small>
+                        <div className="fw-bold" style={{ color: "var(--mc-accent-gold)" }}>KES {selectedReceipt.amount}</div>
+                      </div>
                     </div>
-                  </div>
-                  <div className="col-6">
-                    <div className="card bg-dark border-secondary p-2">
-                      <small className="text-white-50">Transaction Code</small>
-                      <span>{selectedReceipt.transactionId || 'N/A'}</span>
+                    <div className="col-6">
+                      <div className="mc-card p-2">
+                        <small className="text-muted">Method</small>
+                        <div>{selectedReceipt.method || 'card'}</div>
+                      </div>
                     </div>
-                  </div>
-                  <div className="col-6">
-                    <div className="card bg-dark border-secondary p-2">
-                      <small className="text-white-50">Date</small>
-                      <span>{new Date(selectedReceipt.createdAt).toLocaleString()}</span>
+                    <div className="col-6">
+                      <div className="mc-card p-2">
+                        <small className="text-muted">Transaction Code</small>
+                        <div>{selectedReceipt.transactionId || 'N/A'}</div>
+                      </div>
+                    </div>
+                    <div className="col-6">
+                      <div className="mc-card p-2">
+                        <small className="text-muted">Date</small>
+                        <div>{new Date(selectedReceipt.createdAt).toLocaleString()}</div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </AdminLayout>
   );
 };

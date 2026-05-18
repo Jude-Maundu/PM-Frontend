@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 import { API_BASE_URL } from "../../../api/apiConfig";
 import { fetchProtectedUrl } from "../../../utils/imageUrl";
+import PageHeader from "../../PageHeader";
 
 const API = API_BASE_URL;
 
@@ -25,7 +26,6 @@ const BuyerTransactions = () => {
     try {
       setLoading(true);
       const res = await axios.get(`${API}/payments/purchase-history/${userId}`, { headers });
-      // Handle various response formats
       let transactionData = [];
       if (Array.isArray(res.data)) {
         transactionData = res.data;
@@ -91,53 +91,72 @@ const BuyerTransactions = () => {
     return `badge bg-${colors[status] || "secondary"}`;
   };
 
+  // Summary totals
+  const totalSpent = transactions.reduce((sum, tx) => sum + (tx.amount || tx.price || 0), 0);
+  const completed = transactions.filter(tx => !tx.status || tx.status === "completed").length;
+
   return (
     <BuyerLayout>
-      <div className="text-white">
-        {/* Header */}
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <h2 className="fw-bold">
-            <i className="fas fa-history me-2 text-warning"></i>
-            Transaction History
-          </h2>
-          <button 
-            className="btn btn-outline-warning"
+      <PageHeader
+        title="My Transactions"
+        subtitle="Purchase and payment history"
+        actions={
+          <button
+            className="mc-btn mc-btn-ghost"
             onClick={fetchTransactions}
             disabled={loading}
           >
-            <i className="fas fa-sync-alt me-2"></i>
-            Refresh
+            <i className="fas fa-sync-alt me-2"></i>Refresh
           </button>
-        </div>
-
+        }
+      />
+      <div className="mc-page">
         {/* Error Alert */}
         {error && (
-          <div className="alert alert-danger alert-dismissible fade show" role="alert">
+          <div className="alert alert-danger alert-dismissible fade show mb-3" role="alert">
             <i className="fas fa-exclamation-circle me-2"></i>
             {error}
             <button type="button" className="btn-close" onClick={() => setError(null)}></button>
           </div>
         )}
 
-        {/* Loading State */}
-        {loading ? (
-          <div className="text-center py-5">
-            <div className="spinner-border text-warning" role="status">
-              <span className="visually-hidden">Loading...</span>
+        {/* Stats row */}
+        {!loading && transactions.length > 0 && (
+          <div className="mc-stats-row-sm mb-4">
+            <div className="mc-stat-card">
+              <div className="mc-stat-label">Total Transactions</div>
+              <div className="mc-stat-value">{transactions.length}</div>
+            </div>
+            <div className="mc-stat-card">
+              <div className="mc-stat-label">Completed</div>
+              <div className="mc-stat-value">{completed}</div>
+            </div>
+            <div className="mc-stat-card">
+              <div className="mc-stat-label">Total Spent</div>
+              <div className="mc-stat-value">KES {totalSpent.toLocaleString()}</div>
             </div>
           </div>
+        )}
+
+        {/* Loading State */}
+        {loading ? (
+          <div style={{ padding: "2rem", textAlign: "center" }}>
+            <div className="spinner-border" style={{ color: "var(--mc-accent)" }}></div>
+          </div>
         ) : transactions.length === 0 ? (
-          <div className="text-center py-5">
-            <i className="fas fa-receipt fa-4x text-white-50 mb-3"></i>
-            <h5 className="mb-3">No transactions yet</h5>
-            <p className="text-white-50 mb-4">Start exploring and purchase your first photo!</p>
-            <Link to="/buyer/explore" className="btn btn-warning">
-              <i className="fas fa-compass me-2"></i>
-              Explore Photos
+          <div className="mc-empty">
+            <i className="fas fa-receipt"></i>
+            <p>No transactions yet</p>
+            <Link to="/buyer/explore" className="mc-btn mc-btn-primary mt-3">
+              <i className="fas fa-compass me-2"></i>Explore Photos
             </Link>
           </div>
         ) : (
-          <div className="card bg-dark border-secondary">
+          <div className="mc-table-card">
+            <div className="mc-card-header">
+              <span className="mc-card-title">TRANSACTION HISTORY</span>
+              <span className="mc-card-badge">{transactions.length}</span>
+            </div>
             <div className="table-responsive">
               <table className="table table-dark table-hover mb-0">
                 <thead>
@@ -180,13 +199,13 @@ const BuyerTransactions = () => {
                       <td>
                         <div className="d-flex gap-2">
                           <button
-                            className="btn btn-sm btn-outline-info"
+                            className="mc-btn mc-btn-ghost btn-sm"
                             onClick={() => fetchReceipt(tx.receiptId || tx._id)}
                           >
                             <i className="fas fa-receipt"></i>
                           </button>
                           <button
-                            className="btn btn-sm btn-outline-success"
+                            className="mc-btn mc-btn-primary btn-sm"
                             onClick={() => getSignedUrl(tx.mediaId)}
                           >
                             <i className="fas fa-download"></i>
@@ -214,15 +233,15 @@ const BuyerTransactions = () => {
           onClick={() => setShowReceiptModal(false)}
         >
           <div className="modal-dialog modal-dialog-centered">
-            <div 
-              className="modal-content bg-dark border-warning"
+            <div
+              className="mc-card"
+              style={{ borderRadius: "16px" }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="modal-header border-warning">
-                <h5 className="modal-title text-warning">
-                  <i className="fas fa-receipt me-2"></i>
-                  Payment Receipt
-                </h5>
+              <div className="mc-card-header" style={{ borderBottom: "1px solid var(--mc-border)" }}>
+                <span className="mc-card-title">
+                  <i className="fas fa-receipt me-2"></i>PAYMENT RECEIPT
+                </span>
                 <button
                   type="button"
                   className="btn-close btn-close-white"
@@ -234,7 +253,7 @@ const BuyerTransactions = () => {
                   <i className="fas fa-check-circle text-success fa-4x mb-3"></i>
                   <h5>Payment Successful!</h5>
                 </div>
-                
+
                 <div className="bg-dark p-3 rounded border border-secondary">
                   <div className="d-flex justify-content-between mb-2">
                     <span className="text-white-50">Receipt ID:</span>
@@ -261,14 +280,13 @@ const BuyerTransactions = () => {
               </div>
               <div className="modal-footer border-secondary">
                 <button
-                  className="btn btn-warning"
+                  className="mc-btn mc-btn-primary"
                   onClick={() => window.print()}
                 >
-                  <i className="fas fa-print me-2"></i>
-                  Print Receipt
+                  <i className="fas fa-print me-2"></i>Print Receipt
                 </button>
                 <button
-                  className="btn btn-outline-secondary"
+                  className="mc-btn mc-btn-ghost"
                   onClick={() => setShowReceiptModal(false)}
                 >
                   Close

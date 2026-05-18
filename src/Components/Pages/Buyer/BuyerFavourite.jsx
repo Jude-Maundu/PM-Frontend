@@ -14,6 +14,7 @@ import {
   isApiAvailable,
   disableApi,
 } from "../../../utils/localStore";
+import PageHeader from "../../PageHeader";
 
 const API = API_BASE_URL;
 
@@ -30,11 +31,10 @@ const BuyerFavorites = () => {
   const userId = user.id || user._id;
   const headers = useMemo(() => token ? { Authorization: `Bearer ${token}` } : {}, [token]);
 
-  // 🔧 Extract image URL from favorite item
+  // Extract image URL from favorite item
   const extractImageUrl = useCallback((item) => {
     if (!item) return placeholderMedium;
-    
-    // Try all possible locations where the image URL might be stored
+
     const possibleUrlFields = [
       item.media?.fileUrl,
       item.media?.imageUrl,
@@ -47,14 +47,13 @@ const BuyerFavorites = () => {
       item.mediaDetails?.fileUrl,
       item.mediaDetails?.imageUrl,
     ];
-    
+
     for (const url of possibleUrlFields) {
       if (url && typeof url === 'string' && url.startsWith('http')) {
         return url;
       }
     }
-    
-    // Try to construct from fileUrl
+
     for (const url of possibleUrlFields) {
       if (url && typeof url === 'string') {
         const filename = url.split('/').pop();
@@ -63,29 +62,19 @@ const BuyerFavorites = () => {
         }
       }
     }
-    
+
     return placeholderMedium;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 🔧 Extract title from favorite item
   const extractTitle = useCallback((item) => {
     if (!item) return "Untitled";
-    
-    return item.media?.title || 
-           item.title || 
-           item.mediaDetails?.title || 
-           "Untitled";
+    return item.media?.title || item.title || item.mediaDetails?.title || "Untitled";
   }, []);
 
-  // 🔧 Extract photographer from favorite item
   const extractPhotographer = useCallback((item) => {
     if (!item) return "Anonymous";
-    
-    const photographer = item.media?.photographer || 
-                         item.photographer || 
-                         item.mediaDetails?.photographer;
-    
+    const photographer = item.media?.photographer || item.photographer || item.mediaDetails?.photographer;
     if (photographer) {
       if (typeof photographer === 'object') {
         return photographer.username || photographer.name || photographer.email || "Anonymous";
@@ -95,24 +84,14 @@ const BuyerFavorites = () => {
     return "Anonymous";
   }, []);
 
-  // 🔧 Extract price from favorite item
   const extractPrice = useCallback((item) => {
     if (!item) return 0;
-    
-    return item.media?.price || 
-           item.price || 
-           item.mediaDetails?.price || 
-           0;
+    return item.media?.price || item.price || item.mediaDetails?.price || 0;
   }, []);
 
-  // 🔧 Extract media ID from favorite item
   const extractMediaId = useCallback((item) => {
     if (!item) return null;
-    
-    return item.mediaId || 
-           item.media?._id || 
-           item._id || 
-           item.id;
+    return item.mediaId || item.media?._id || item._id || item.id;
   }, []);
 
   // Fetch favorites from backend
@@ -126,16 +105,16 @@ const BuyerFavorites = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       console.log("❤️ Fetching favorites for user:", userId);
-      
+
       const res = await axios.get(API_ENDPOINTS.USERS.FAVORITES.GET(userId), {
         headers,
         timeout: 10000
       });
-      
+
       console.log("✅ Favorites response:", res.data);
-      
+
       let favoritesData = [];
       if (Array.isArray(res.data)) {
         favoritesData = res.data;
@@ -146,18 +125,17 @@ const BuyerFavorites = () => {
       } else if (res.data?.data && Array.isArray(res.data.data)) {
         favoritesData = res.data.data;
       }
-      
-      // Log first item structure for debugging
+
       if (favoritesData.length > 0) {
         console.log("🔍 First favorite item structure:", JSON.stringify(favoritesData[0], null, 2));
       }
-      
+
       setFavorites(favoritesData);
       setLocalFavorites(favoritesData);
-      
+
     } catch (err) {
       console.error("❌ Error fetching favorites:", err);
-      
+
       const localFavs = getLocalFavorites();
       if (localFavs && localFavs.length > 0) {
         setFavorites(localFavs);
@@ -194,10 +172,7 @@ const BuyerFavorites = () => {
         return;
       }
 
-      await axios.post(`${API}/payments/cart/add`, {
-        userId,
-        mediaId,
-      }, { headers });
+      await axios.post(`${API}/payments/cart/add`, { userId, mediaId }, { headers });
 
       setSuccess(`${extractTitle(item)} added to cart!`);
       setTimeout(() => setSuccess(null), 3000);
@@ -265,7 +240,6 @@ const BuyerFavorites = () => {
     }
   }, [userId, headers, extractMediaId]);
 
-  // Fetch favorites on mount only
   useEffect(() => {
     if (!token || !userId) {
       setError("Please login to view your favorites");
@@ -284,9 +258,8 @@ const BuyerFavorites = () => {
           <i className="fas fa-heart text-warning fa-4x mb-3"></i>
           <h4 className="text-white mb-3">Authentication Required</h4>
           <p className="text-white-50 mb-4">Please login to view your favorites</p>
-          <Link to="/login" className="btn btn-warning">
-            <i className="fas fa-sign-in-alt me-2"></i>
-            Go to Login
+          <Link to="/login" className="mc-btn mc-btn-primary">
+            <i className="fas fa-sign-in-alt me-2"></i>Go to Login
           </Link>
         </div>
       </BuyerLayout>
@@ -295,29 +268,20 @@ const BuyerFavorites = () => {
 
   return (
     <BuyerLayout>
-      <div className="text-white">
-        {/* Header */}
-        <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
-          <div>
-            <h2 className="fw-bold mb-1">
-              <i className="fas fa-heart me-2 text-warning"></i>
-              My Favorites
-            </h2>
-            <p className="text-white-50 small">
-              <i className="fas fa-images me-1"></i> 
-              {favorites.length} {favorites.length === 1 ? 'photo' : 'photos'} saved
-            </p>
-          </div>
-          <button 
-            className="btn btn-outline-warning rounded-pill px-4"
+      <PageHeader
+        title="My Favorites"
+        subtitle="Photos you've saved"
+        actions={
+          <button
+            className="mc-btn mc-btn-ghost"
             onClick={fetchFavorites}
             disabled={loading}
           >
-            <i className={`fas fa-sync-alt me-2 ${loading ? 'fa-spin' : ''}`}></i>
-            Refresh
+            <i className={`fas fa-sync-alt me-2 ${loading ? 'fa-spin' : ''}`}></i>Refresh
           </button>
-        </div>
-
+        }
+      />
+      <div className="mc-page">
         {/* Success Alert */}
         {success && (
           <div className="alert alert-success alert-dismissible fade show mb-4" role="alert">
@@ -338,20 +302,16 @@ const BuyerFavorites = () => {
 
         {/* Loading State */}
         {loading ? (
-          <div className="text-center py-5">
-            <div className="spinner-border text-warning mb-3" role="status">
-              <span className="visually-hidden">Loading...</span>
-            </div>
-            <p className="text-white-50">Loading your favorites...</p>
+          <div style={{ padding: "2rem", textAlign: "center" }}>
+            <div className="spinner-border" style={{ color: "var(--mc-accent)" }}></div>
+            <p className="text-white-50 mt-3">Loading your favorites...</p>
           </div>
         ) : favorites.length === 0 ? (
-          <div className="text-center py-5">
-            <i className="fas fa-heart-broken fa-4x text-white-50 mb-3"></i>
-            <h5 className="mb-3">No favorites yet</h5>
-            <p className="text-white-50 mb-4">Save your favorite photos for later!</p>
-            <Link to="/buyer/explore" className="btn btn-warning btn-lg">
-              <i className="fas fa-compass me-2"></i>
-              Explore Photos
+          <div className="mc-empty">
+            <i className="fas fa-heart-broken"></i>
+            <p>No favorites yet</p>
+            <Link to="/buyer/explore" className="mc-btn mc-btn-primary mt-3">
+              <i className="fas fa-compass me-2"></i>Explore Photos
             </Link>
           </div>
         ) : (
@@ -362,17 +322,16 @@ const BuyerFavorites = () => {
               const photographer = extractPhotographer(item);
               const price = extractPrice(item);
               const imageUrl = extractImageUrl(item);
-              
+
               console.log(`🎨 Rendering: ${title}, imageUrl: ${imageUrl?.substring(0, 60)}...`);
-              
+
               return (
                 <div className="col-xl-3 col-lg-4 col-md-6 col-sm-6" key={mediaId || index}>
-                  <div className="card bg-dark border-secondary h-100 position-relative overflow-hidden">
+                  <div className="mc-card h-100 position-relative overflow-hidden" style={{ padding: 0 }}>
                     <div className="position-relative">
                       <img
                         src={imageUrl}
-                        className="card-img-top"
-                        style={{ height: "180px", objectFit: "cover", backgroundColor: "#1a1a1a" }}
+                        style={{ height: "180px", objectFit: "cover", width: "100%", backgroundColor: "#1a1a1a" }}
                         alt={title}
                         loading="lazy"
                         onError={(e) => {
@@ -381,17 +340,17 @@ const BuyerFavorites = () => {
                           e.target.src = placeholderMedium;
                         }}
                       />
-                      
+
                       {/* Price Badge */}
                       {price > 0 && (
                         <span className="position-absolute top-0 start-0 m-2 badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold">
                           KES {price.toLocaleString()}
                         </span>
                       )}
-                      
+
                       {/* Remove Favorite Button */}
                       <button
-                        className="position-absolute top-0 end-0 m-2 btn btn-sm btn-danger rounded-circle p-2"
+                        className="position-absolute top-0 end-0 m-2 mc-btn mc-btn-danger rounded-circle p-2"
                         onClick={() => removeFromFavorites(mediaId, title)}
                         disabled={updating}
                         title="Remove from favorites"
@@ -400,33 +359,43 @@ const BuyerFavorites = () => {
                         <i className="fas fa-heart-broken"></i>
                       </button>
                     </div>
-                    
-                    <div className="card-body d-flex flex-column">
-                      <h6 className="fw-bold text-truncate mb-1" title={title}>
-                        {title}
-                      </h6>
+
+                    <div style={{ padding: "1rem" }} className="d-flex flex-column flex-grow-1">
+                      <h6 className="fw-bold text-truncate mb-1" title={title}>{title}</h6>
                       <small className="text-white-50 d-block mb-2 text-truncate">
-                        <i className="fas fa-camera me-1"></i>
-                        {photographer}
+                        <i className="fas fa-camera me-1"></i>{photographer}
                       </small>
-                      
-                      <div className="d-flex justify-content-between align-items-center mt-auto pt-2">
-                        <span className="text-warning fw-bold">KES {price.toLocaleString()}</span>
-                        <button
-                          className="btn btn-sm btn-warning rounded-pill px-3"
-                          onClick={() => addToCart(mediaId, item)}
-                          disabled={updating}
-                          title="Add to cart"
-                        >
-                          {updating ? (
-                            <span className="spinner-border spinner-border-sm"></span>
-                          ) : (
-                            <>
-                              <i className="fas fa-cart-plus me-1"></i>
-                              Cart
-                            </>
-                          )}
-                        </button>
+
+                      <div className="mt-auto pt-2">
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                          <span className="text-warning fw-bold fs-6">
+                            {price > 0 ? `KES ${price.toLocaleString()}` : <span className="text-white-50">Free</span>}
+                          </span>
+                        </div>
+                        <div className="d-flex gap-2">
+                          <button
+                            className="mc-btn mc-btn-primary flex-grow-1"
+                            onClick={() => addToCart(mediaId, item)}
+                            disabled={updating}
+                            title="Add to cart"
+                          >
+                            {updating ? (
+                              <span className="spinner-border spinner-border-sm"></span>
+                            ) : (
+                              <>
+                                <i className="fas fa-cart-plus me-1"></i>Add to Cart
+                              </>
+                            )}
+                          </button>
+                          <Link
+                            to="/buyer/cart"
+                            className="mc-btn mc-btn-ghost"
+                            title="Buy Now"
+                            onClick={() => addToCart(mediaId, item)}
+                          >
+                            <i className="fas fa-bolt me-1"></i>Buy Now
+                          </Link>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -435,13 +404,13 @@ const BuyerFavorites = () => {
             })}
           </div>
         )}
-        
+
         {/* Quick Stats Footer */}
         {favorites.length > 0 && (
-          <div className="mt-4 p-3 rounded-3 bg-dark bg-opacity-50 text-center">
+          <div className="mc-card mt-4 text-center" style={{ padding: "0.75rem 1rem" }}>
             <small className="text-white-50">
-              <i className="fas fa-info-circle me-2 text-warning"></i>
-              You have <strong className="text-warning">{favorites.length}</strong> favorite 
+              <i className="fas fa-info-circle me-2" style={{ color: "var(--mc-accent)" }}></i>
+              Your wishlist has <strong style={{ color: "var(--mc-accent)" }}>{favorites.length}</strong> item
               {favorites.length !== 1 ? 's' : ''}. Click the heart icon to remove.
             </small>
           </div>

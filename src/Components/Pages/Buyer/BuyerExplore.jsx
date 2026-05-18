@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import BuyerLayout from "./BuyerLayout";
+import PageHeader from "../../PageHeader";
 import axios from "axios";
 import { API_BASE_URL, API_ENDPOINTS } from "../../../api/apiConfig";
 import { toast } from "../../../utils/toast";
@@ -494,58 +495,35 @@ const BuyerExplore = () => {
         </div>
       )}
 
-      <div className="text-white" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
-        
+      <div className="mc-page text-white" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
+        <PageHeader
+          title="Explore"
+          subtitle="Discover amazing photography"
+          searchQuery={searchTerm}
+          onSearch={setSearchTerm}
+          searchPlaceholder="Search photos, artists..."
+        />
+
         {/* Main Content with Flexible Sidebar Layout */}
         <div className="d-flex flex-column flex-lg-row gap-4" style={{ gap: "clamp(1rem, 3vw, 2rem)" }}>
-          
+
           {/* Main Image Grid Area */}
           <div className="flex-grow-1" style={{ minWidth: 0 }}>
-            
-            {/* Hero Section */}
-            <div className="position-relative rounded-3 overflow-hidden mb-4 mx-2 mx-sm-0" style={{ 
-              minHeight: isMobile ? "120px" : "140px", 
-              background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)", 
-              borderRadius: "16px" 
-            }}>
-              <div className="position-relative h-100 d-flex align-items-center p-3">
-                <div className="w-100">
-                  <div className="badge bg-warning text-dark px-2 py-1 rounded-pill mb-2 d-inline-flex align-items-center gap-1">
-                    <i className="fas fa-star" style={{ fontSize: "0.7rem" }}></i>
-                    <span className="small">Discover</span>
-                  </div>
-                  <h2 className="fw-bold mb-2" style={{ fontSize: isMobile ? "1.1rem" : "1.3rem" }}>
-                    Explore <span className="text-warning">Photos</span>
-                  </h2>
-                  <div className="d-flex flex-column flex-sm-row gap-2">
-                    <div className="position-relative flex-grow-1">
-                      <i className="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-dark"></i>
-                      <input
-                        type="text"
-                        className="form-control rounded-pill py-2 ps-5"
-                        placeholder="Search photos..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        style={{ background: "white", fontSize: "0.85rem" }}
-                      />
-                    </div>
-                    <select
-                      className="form-select rounded-pill py-2"
-                      value={sortBy}
-                      onChange={(e) => setSortBy(e.target.value)}
-                      style={{ width: isMobile ? "100%" : "130px", background: "white", fontSize: "0.85rem" }}
-                    >
-                      <option value="newest">Newest</option>
-                      <option value="popular">Popular</option>
-                      <option value="price_low">Price ↑</option>
-                      <option value="price_high">Price ↓</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </div>
 
-            {/* View Toggle */}
+            {/* Sort + View Toggle */}
+            <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3 px-2 px-sm-0">
+              <select
+                className="form-select rounded-pill py-2"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                style={{ width: "130px", fontSize: "0.85rem" }}
+              >
+                <option value="newest">Newest</option>
+                <option value="popular">Popular</option>
+                <option value="price_low">Price ↑</option>
+                <option value="price_high">Price ↓</option>
+              </select>
+            </div>
             <div className="d-flex gap-2 mb-4 px-2 px-sm-0">
               <button
                 className={`btn rounded-pill px-4 fw-semibold ${activeView === "photos" ? "btn-warning text-dark" : "btn-outline-secondary text-white-50"}`}
@@ -564,7 +542,7 @@ const BuyerExplore = () => {
             </div>
 
             {/* Categories - photos view only */}
-            {activeView === "photos" && <div className="mb-4 px-2 px-sm-0">
+            {activeView === "photos" && <div className="mc-card mb-4 px-2 px-sm-0">
               <div className="d-flex justify-content-between align-items-center mb-2">
                 <h6 className="fw-bold mb-0" style={{ fontSize: "0.85rem" }}>
                   <i className="fas fa-tags me-1 text-warning"></i>

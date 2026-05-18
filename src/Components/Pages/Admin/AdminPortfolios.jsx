@@ -4,6 +4,7 @@ import AdminLayout from "./AdminLayout";
 import { API_ENDPOINTS, SITE_URL } from "../../../api/apiConfig";
 import { toast } from "../../../utils/toast";
 import { showConfirm } from "../../../utils/confirm";
+import PageHeader from "../../PageHeader";
 
 const TEMPLATE_LABELS = {
   noir: { label: "Noir", color: "#c9a84c", bg: "rgba(201,168,76,0.12)" },
@@ -104,43 +105,33 @@ const AdminPortfolios = () => {
 
   return (
     <AdminLayout>
-      <div className="p-4">
-        {/* Header */}
-        <div className="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
-          <div>
-            <h2 className="fw-bold mb-0" style={{ color: "#fff", fontFamily: "var(--font-serif)" }}>
-              Photographer Portfolios
-            </h2>
-            <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.85rem", marginTop: "0.25rem" }}>
-              Oversee and manage all photographer mini-websites
-            </p>
-          </div>
-          <button className="btn btn-outline-light btn-sm" onClick={fetchPortfolios}>
+      <div className="mc-page">
+        <div className="d-flex align-items-start justify-content-between mb-2 flex-wrap gap-3">
+          <PageHeader title="Portfolio Oversight" subtitle="Manage photographer portfolios" />
+          <button className="btn btn-outline-light btn-sm mt-1" onClick={fetchPortfolios}>
             <i className="fas fa-sync-alt me-2"></i>Refresh
           </button>
         </div>
 
         {/* Stats Row */}
-        <div className="row g-3 mb-4">
+        <div className="mc-stats-row-sm mb-4">
           {[
             { label: "Total Portfolios", value: stats.total, icon: "fa-globe", color: "var(--pm-teal)" },
             { label: "Published", value: stats.published, icon: "fa-eye", color: "var(--pm-success)" },
             { label: "Unpublished", value: stats.unpublished, icon: "fa-eye-slash", color: "rgba(255,255,255,0.4)" },
           ].map(stat => (
-            <div className="col-6 col-md-4" key={stat.label}>
-              <div className="glass-card p-3 h-100">
-                <div className="d-flex align-items-center gap-3">
-                  <div style={{
-                    width: 42, height: 42, borderRadius: 10,
-                    background: `rgba(107,189,208,0.1)`,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                  }}>
-                    <i className={`fas ${stat.icon}`} style={{ color: stat.color, fontSize: "1.1rem" }}></i>
-                  </div>
-                  <div>
-                    <div className="fw-bold fs-4" style={{ color: "#fff", lineHeight: 1 }}>{stat.value}</div>
-                    <small style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.75rem" }}>{stat.label}</small>
-                  </div>
+            <div className="mc-card p-3 h-100" key={stat.label}>
+              <div className="d-flex align-items-center gap-3">
+                <div style={{
+                  width: 42, height: 42, borderRadius: 10,
+                  background: `rgba(107,189,208,0.1)`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  <i className={`fas ${stat.icon}`} style={{ color: stat.color, fontSize: "1.1rem" }}></i>
+                </div>
+                <div>
+                  <div className="fw-bold fs-4 text-white" style={{ lineHeight: 1 }}>{stat.value}</div>
+                  <small style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.75rem" }}>{stat.label}</small>
                 </div>
               </div>
             </div>
@@ -173,16 +164,16 @@ const AdminPortfolios = () => {
         ) : error ? (
           <div className="alert alert-danger">{error}</div>
         ) : filtered.length === 0 ? (
-          <div className="glass-card p-5 text-center">
+          <div className="mc-card p-5 text-center">
             <i className="fas fa-globe fa-3x mb-3" style={{ color: "rgba(255,255,255,0.2)" }}></i>
             <p style={{ color: "rgba(255,255,255,0.5)" }}>
               {search ? "No portfolios match your search." : "No portfolios have been created yet."}
             </p>
           </div>
         ) : (
-          <div className="glass-card overflow-hidden">
+          <div className="mc-table-card">
             <div className="table-responsive">
-              <table className="table table-dark mb-0" style={{ borderColor: "rgba(107,189,208,0.1)" }}>
+              <table className="table table-borderless mb-0">
                 <thead>
                   <tr style={{ borderColor: "rgba(107,189,208,0.15)" }}>
                     <th style={{ color: "rgba(255,255,255,0.5)", fontWeight: 500, fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>Photographer</th>
@@ -196,7 +187,6 @@ const AdminPortfolios = () => {
                 <tbody>
                   {filtered.map(portfolio => {
                     const tmpl = TEMPLATE_LABELS[portfolio.template] || { label: portfolio.template, color: "var(--pm-teal)", bg: "rgba(107,189,208,0.1)" };
-                    const publicUrl = `/portfolio/${portfolio.username}`;
                     return (
                       <tr key={portfolio._id} style={{ borderColor: "rgba(107,189,208,0.08)" }}>
                         {/* Photographer */}

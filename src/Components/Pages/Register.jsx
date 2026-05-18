@@ -3,6 +3,14 @@ import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import { API_BASE_URL } from "../../api/apiConfig";
 
+function getRefFromUrl() {
+  try {
+    return new URLSearchParams(window.location.search).get("ref") || "";
+  } catch {
+    return "";
+  }
+}
+
 const BOKEH = [
   { size: 12, top: "8%",  left: "22%", delay: "0s",   dur: "3.6s" },
   { size: 7,  top: "25%", left: "68%", delay: "0.9s", dur: "4.4s" },
@@ -31,6 +39,7 @@ const Register = () => {
   const [showPassword, setShowPassword]       = useState(false);
   const [showConfirmPass, setShowConfirmPass] = useState(false);
   const [termsAccepted, setTermsAccepted]     = useState(false);
+  const [referralCode, setReferralCode]       = useState(getRefFromUrl);
   const [isDark, setIsDark]                   = useState(true);
 
   const navigate = useNavigate();
@@ -77,7 +86,7 @@ const Register = () => {
 
     try {
       const response = await axios.post(`${API_BASE_URL}/auth/register`,
-        { username, email, password, role, phoneNumber }
+        { username, email, password, role, phoneNumber, ...(referralCode.trim() ? { referralCode: referralCode.trim() } : {}) }
       );
 
       if (response.data.token)  localStorage.setItem("token", response.data.token);
@@ -247,6 +256,21 @@ const Register = () => {
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
                   required
+                />
+              </div>
+
+              {/* Referral Code */}
+              <div className="mb-3">
+                <label className="form-label small fw-semibold mb-1 d-block" style={{ color: col.label }}>
+                  <i className="fas fa-ticket-alt me-1" style={{ color: "var(--pm-teal)" }}></i> Referral Code{" "}
+                  <span style={{ color: col.muted, fontWeight: 400 }}>(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  className={`form-control form-control-sm auth-input-v2 ${m}`}
+                  placeholder="Enter referral code if you have one"
+                  value={referralCode}
+                  onChange={(e) => setReferralCode(e.target.value)}
                 />
               </div>
 

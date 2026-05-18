@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import PhotographerLayout from "./PhotographerLayout";
+import PageHeader from "../../PageHeader";
 import { API_BASE_URL } from "../../../api/apiConfig";
 
 const API = API_BASE_URL;
@@ -21,7 +22,7 @@ const PhotographerSales = () => {
 
       // Get photographer's transactions (sales)
       const transactionsRes = await axios.get(`${API}/payments/transactions/${photographerId}`, { headers });
-      
+
       // Transform transactions to sales format
       const sales = (transactionsRes.data || []).map(transaction => ({
         _id: transaction.id || transaction._id,
@@ -34,7 +35,7 @@ const PhotographerSales = () => {
       }));
 
       setSales(sales);
-      
+
     } catch (error) {
       console.error("Error fetching sales:", error);
     } finally {
@@ -64,71 +65,56 @@ const PhotographerSales = () => {
 
   return (
     <PhotographerLayout>
-      <h4 className="fw-bold mb-4">
-        <i className="fas fa-chart-line me-2 text-warning"></i>
-        Sales History
-      </h4>
-
-      {/* Summary */}
-      <div className="row g-3 mb-4">
-        <div className="col-md-4">
-          <div className="card bg-dark border-warning">
-            <div className="card-body">
-              <small className="text-white-50">Total Sales</small>
-              <h4 className="text-warning fw-bold">{filteredSales.length}</h4>
+      <PageHeader title="Sales History" subtitle="All your completed transactions" />
+      <div className="mc-page">
+        {/* Summary Stats */}
+        <div className="mc-stats-row-sm" style={{ marginBottom: "1.25rem" }}>
+          <div className="mc-stat-card">
+            <div className="mc-stat-label">TOTAL SALES</div>
+            <div className="mc-stat-value">{filteredSales.length}</div>
+            <div className="mc-stat-trend up"><i className="fas fa-shopping-bag"></i> Transactions</div>
+          </div>
+          <div className="mc-stat-card">
+            <div className="mc-stat-label">REVENUE</div>
+            <div className="mc-stat-value">KES {totalRevenue.toLocaleString()}</div>
+            <div className="mc-stat-trend up"><i className="fas fa-arrow-up"></i> Earned</div>
+          </div>
+          <div className="mc-stat-card">
+            <div className="mc-stat-label">AVERAGE SALE</div>
+            <div className="mc-stat-value">
+              KES {filteredSales.length ? (totalRevenue / filteredSales.length).toFixed(0) : 0}
             </div>
+            <div className="mc-stat-trend"><i className="fas fa-chart-line"></i> Per sale</div>
           </div>
         </div>
-        <div className="col-md-4">
-          <div className="card bg-dark border-success">
-            <div className="card-body">
-              <small className="text-white-50">Revenue</small>
-              <h4 className="text-success fw-bold">KES {totalRevenue.toLocaleString()}</h4>
-            </div>
+
+        {/* Filter */}
+        <div className="mc-card" style={{ marginBottom: "1.25rem" }}>
+          <div className="mc-card-header">
+            <span className="mc-card-title">FILTER BY PERIOD</span>
+          </div>
+          <div className="d-flex gap-2 flex-wrap">
+            {["all", "today", "week"].map(f => (
+              <button
+                key={f}
+                className={filter === f ? "mc-btn mc-btn-primary" : "mc-btn mc-btn-ghost"}
+                onClick={() => setFilter(f)}
+              >
+                {f === "all" ? "All Time" : f === "today" ? "Today" : "This Week"}
+              </button>
+            ))}
           </div>
         </div>
-        <div className="col-md-4">
-          <div className="card bg-dark border-info">
-            <div className="card-body">
-              <small className="text-white-50">Average Sale</small>
-              <h4 className="text-info fw-bold">
-                KES {filteredSales.length ? (totalRevenue / filteredSales.length).toFixed(0) : 0}
-              </h4>
-            </div>
+
+        {/* Sales Table */}
+        <div className="mc-table-card">
+          <div className="mc-card-header" style={{ padding: "1rem 1.25rem 0" }}>
+            <span className="mc-card-title">TRANSACTIONS</span>
+            <span className="mc-card-badge">{filteredSales.length} records</span>
           </div>
-        </div>
-      </div>
-
-      {/* Filter */}
-      <div className="mb-4">
-        <div className="btn-group">
-          <button
-            className={`btn ${filter === "all" ? "btn-warning" : "btn-outline-warning"}`}
-            onClick={() => setFilter("all")}
-          >
-            All Time
-          </button>
-          <button
-            className={`btn ${filter === "today" ? "btn-warning" : "btn-outline-warning"}`}
-            onClick={() => setFilter("today")}
-          >
-            Today
-          </button>
-          <button
-            className={`btn ${filter === "week" ? "btn-warning" : "btn-outline-warning"}`}
-            onClick={() => setFilter("week")}
-          >
-            This Week
-          </button>
-        </div>
-      </div>
-
-      {/* Sales Table */}
-      <div className="card bg-dark border-secondary">
-        <div className="card-body p-0">
           {loading ? (
-            <div className="text-center py-4">
-              <div className="spinner-border text-warning"></div>
+            <div style={{ padding: "2rem", textAlign: "center" }}>
+              <div className="spinner-border" style={{ color: "var(--mc-accent)" }}></div>
             </div>
           ) : (
             <div className="table-responsive">
@@ -167,8 +153,11 @@ const PhotographerSales = () => {
                   ))}
                   {filteredSales.length === 0 && (
                     <tr>
-                      <td colSpan="6" className="text-center text-white-50 py-4">
-                        No sales found
+                      <td colSpan="6">
+                        <div className="mc-empty">
+                          <i className="fas fa-chart-line"></i>
+                          <p>No sales found</p>
+                        </div>
                       </td>
                     </tr>
                   )}

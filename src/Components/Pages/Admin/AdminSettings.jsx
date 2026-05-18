@@ -4,15 +4,22 @@ import axios from "axios";
 import { API_ENDPOINTS } from "../../../api/apiConfig";
 import { toast } from "../../../utils/toast";
 import { showConfirm } from "../../../utils/confirm";
+import PageHeader from "../../PageHeader";
 
 const SETTINGS_API_AVAILABLE = true; // Backend implements /admin/settings routes (check backend docs or README)
+
+const inputStyle = {
+  background: "rgba(255,255,255,0.06)",
+  border: "1px solid rgba(107,189,208,0.3)",
+  color: "#fff",
+};
 
 const AdminSettings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
-  
+
   const [settings, setSettings] = useState({
     siteName: "PhotoMarket",
     siteUrl: "https://pm-frontend-1-u2y3.onrender.com",
@@ -37,7 +44,7 @@ const AdminSettings = () => {
   });
 
   const [activeTab, setActiveTab] = useState("general");
-  
+
   const token = localStorage.getItem("token");
   const headers = useMemo(() => ({ Authorization: token ? `Bearer ${token}` : "" }), [token]);
 
@@ -68,11 +75,11 @@ const AdminSettings = () => {
       setSaving(true);
       setError(null);
       setSuccess(null);
-      
+
       await axios.put(API_ENDPOINTS.ADMIN.UPDATE_SETTINGS, settings, { headers });
-      
+
       setSuccess("Settings saved successfully!");
-      
+
       // Auto-hide success message after 3 seconds
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
@@ -94,7 +101,7 @@ const AdminSettings = () => {
       await axios.put(API_ENDPOINTS.ADMIN.PLATFORM_FEE, {
         fee: settings.platformFee
       }, { headers });
-      
+
       setSuccess("Platform fee updated!");
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
@@ -115,7 +122,7 @@ const AdminSettings = () => {
       await axios.put(API_ENDPOINTS.ADMIN.PAYOUT, {
         minPayout: settings.minPayout
       }, { headers });
-      
+
       setSuccess("Payout settings updated!");
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
@@ -140,7 +147,7 @@ const AdminSettings = () => {
         smtpUser: settings.smtpUser,
         smtpPass: settings.smtpPass
       }, { headers });
-      
+
       toast.success("Test email sent successfully!");
     } catch (err) {
       toast.error("Failed to send test email");
@@ -177,7 +184,7 @@ const AdminSettings = () => {
       await axios.post(API_ENDPOINTS.ADMIN.MAINTENANCE_MODE, {
         enabled: newMode
       }, { headers });
-      
+
       setSettings({ ...settings, maintenanceMode: newMode });
       setSuccess(`Maintenance mode ${newMode ? 'enabled' : 'disabled'}`);
       setTimeout(() => setSuccess(null), 3000);
@@ -194,7 +201,7 @@ const AdminSettings = () => {
     return (
       <AdminLayout>
         <div className="text-center py-5">
-          <div className="spinner-border text-warning" role="status">
+          <div className="spinner-border" style={{ color: "#6BBDD0" }} role="status">
             <span className="visually-hidden">Loading...</span>
           </div>
         </div>
@@ -204,164 +211,127 @@ const AdminSettings = () => {
 
   return (
     <AdminLayout>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h4 className="fw-bold">
-          <i className="fas fa-cog me-2 text-warning"></i>
-          System Settings
-        </h4>
-        <div className="d-flex gap-2">
-          <button 
-            className="btn btn-outline-warning"
-            onClick={handleClearCache}
-            disabled={!SETTINGS_API_AVAILABLE}
-          >
-            <i className="fas fa-broom me-2"></i>
-            Clear Cache
-          </button>
-          <button 
-            className="btn btn-warning"
-            onClick={handleSave}
-            disabled={saving || !SETTINGS_API_AVAILABLE}
-          >
-            {saving ? (
-              <>
-                <span className="spinner-border spinner-border-sm me-2"></span>
-                Saving...
-              </>
-            ) : (
-              <>
-                <i className="fas fa-save me-2"></i>
-                Save All
-              </>
-            )}
-          </button>
+      <div className="mc-page">
+        <div className="d-flex justify-content-between align-items-start mb-2">
+          <PageHeader title="Platform Settings" subtitle="Configure global platform behavior" />
+          <div className="d-flex gap-2 mt-1">
+            <button
+              className="btn mc-btn mc-btn-ghost rounded-pill px-4"
+              onClick={handleClearCache}
+              disabled={!SETTINGS_API_AVAILABLE}
+            >
+              <i className="fas fa-broom me-2"></i>
+              Clear Cache
+            </button>
+            <button
+              className="btn mc-btn mc-btn-primary rounded-pill px-4"
+              onClick={handleSave}
+              disabled={saving || !SETTINGS_API_AVAILABLE}
+            >
+              {saving ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2"></span>
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <i className="fas fa-save me-2"></i>
+                  Save All
+                </>
+              )}
+            </button>
+          </div>
         </div>
-      </div>
 
-      {/* Alerts */}
-      {error && (
-        <div className="alert alert-danger alert-dismissible fade show" role="alert">
-          <i className="fas fa-exclamation-circle me-2"></i>
-          {error}
-          <button type="button" className="btn-close" onClick={() => setError(null)}></button>
+        {/* Alerts */}
+        {error && (
+          <div className="alert alert-danger alert-dismissible fade show" role="alert">
+            <i className="fas fa-exclamation-circle me-2"></i>
+            {error}
+            <button type="button" className="btn-close" onClick={() => setError(null)}></button>
+          </div>
+        )}
+
+        {success && (
+          <div className="alert alert-success alert-dismissible fade show" role="alert">
+            <i className="fas fa-check-circle me-2"></i>
+            {success}
+            <button type="button" className="btn-close" onClick={() => setSuccess(null)}></button>
+          </div>
+        )}
+
+        {!SETTINGS_API_AVAILABLE && (
+          <div className="alert alert-info" role="alert">
+            <i className="fas fa-info-circle me-2"></i>
+            Settings management endpoints are not available on the backend, so changes can't be saved.
+          </div>
+        )}
+
+        {/* Tabs */}
+        <div className="d-flex gap-2 mb-4 flex-wrap">
+          {[
+            { key: "general", icon: "fa-globe", label: "General" },
+            { key: "payment", icon: "fa-credit-card", label: "Payment" },
+            { key: "upload", icon: "fa-upload", label: "Upload" },
+            { key: "email", icon: "fa-envelope", label: "Email" },
+            { key: "security", icon: "fa-shield-alt", label: "Security" },
+          ].map(tab => (
+            <button
+              key={tab.key}
+              className="btn rounded-pill px-4"
+              onClick={() => setActiveTab(tab.key)}
+              style={activeTab === tab.key
+                ? { background: "rgba(107,189,208,0.2)", color: "#6BBDD0", border: "1px solid rgba(107,189,208,0.4)" }
+                : { background: "transparent", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.1)" }
+              }
+            >
+              <i className={`fas ${tab.icon} me-2`}></i>{tab.label}
+            </button>
+          ))}
         </div>
-      )}
-      
-      {success && (
-        <div className="alert alert-success alert-dismissible fade show" role="alert">
-          <i className="fas fa-check-circle me-2"></i>
-          {success}
-          <button type="button" className="btn-close" onClick={() => setSuccess(null)}></button>
-        </div>
-      )}
 
-      {!SETTINGS_API_AVAILABLE && (
-        <div className="alert alert-info" role="alert">
-          <i className="fas fa-info-circle me-2"></i>
-          Settings management endpoints are not available on the backend, so changes can’t be saved.
-        </div>
-      )}
-
-      {/* Tabs */}
-      <ul className="nav nav-tabs border-secondary mb-4">
-        <li className="nav-item">
-          <button
-            className={`nav-link ${activeTab === 'general' ? 'active bg-dark text-warning' : 'text-white-50'}`}
-            onClick={() => setActiveTab('general')}
-            style={{ background: activeTab === 'general' ? '#1a1a1a' : 'transparent', borderColor: '#495057' }}
-          >
-            <i className="fas fa-globe me-2"></i>
-            General
-          </button>
-        </li>
-        <li className="nav-item">
-          <button
-            className={`nav-link ${activeTab === 'payment' ? 'active bg-dark text-warning' : 'text-white-50'}`}
-            onClick={() => setActiveTab('payment')}
-            style={{ background: activeTab === 'payment' ? '#1a1a1a' : 'transparent', borderColor: '#495057' }}
-          >
-            <i className="fas fa-credit-card me-2"></i>
-            Payment
-          </button>
-        </li>
-        <li className="nav-item">
-          <button
-            className={`nav-link ${activeTab === 'upload' ? 'active bg-dark text-warning' : 'text-white-50'}`}
-            onClick={() => setActiveTab('upload')}
-            style={{ background: activeTab === 'upload' ? '#1a1a1a' : 'transparent', borderColor: '#495057' }}
-          >
-            <i className="fas fa-upload me-2"></i>
-            Upload
-          </button>
-        </li>
-        <li className="nav-item">
-          <button
-            className={`nav-link ${activeTab === 'email' ? 'active bg-dark text-warning' : 'text-white-50'}`}
-            onClick={() => setActiveTab('email')}
-            style={{ background: activeTab === 'email' ? '#1a1a1a' : 'transparent', borderColor: '#495057' }}
-          >
-            <i className="fas fa-envelope me-2"></i>
-            Email
-          </button>
-        </li>
-        <li className="nav-item">
-          <button
-            className={`nav-link ${activeTab === 'security' ? 'active bg-dark text-warning' : 'text-white-50'}`}
-            onClick={() => setActiveTab('security')}
-            style={{ background: activeTab === 'security' ? '#1a1a1a' : 'transparent', borderColor: '#495057' }}
-          >
-            <i className="fas fa-shield-alt me-2"></i>
-            Security
-          </button>
-        </li>
-      </ul>
-
-      {/* General Settings Tab */}
-      {activeTab === 'general' && (
-        <div className="row">
-          <div className="col-md-6">
-            <div className="card bg-dark border-secondary mb-4">
-              <div className="card-header bg-transparent border-secondary">
-                <h6 className="mb-0 text-warning">Site Information</h6>
-              </div>
-              <div className="card-body">
+        {/* General Settings Tab */}
+        {activeTab === 'general' && (
+          <div className="row g-4">
+            <div className="col-md-6">
+              <div className="mc-card">
+                <h6 className="text-white-50 mb-4 text-uppercase" style={{ fontSize: "0.75rem", letterSpacing: "0.1em" }}>Site Information</h6>
                 <div className="mb-3">
-                  <label className="form-label text-white-50">Site Name</label>
+                  <label className="form-label text-white-50 small">Site Name</label>
                   <input
                     type="text"
-                    className="form-control bg-dark border-secondary text-white"
+                    className="form-control rounded-3"
+                    style={inputStyle}
                     value={settings.siteName}
                     onChange={(e) => setSettings({...settings, siteName: e.target.value})}
                   />
                 </div>
                 <div className="mb-3">
-                  <label className="form-label text-white-50">Site URL</label>
+                  <label className="form-label text-white-50 small">Site URL</label>
                   <input
                     type="text"
-                    className="form-control bg-dark border-secondary text-white"
+                    className="form-control rounded-3"
+                    style={inputStyle}
                     value={settings.siteUrl}
                     onChange={(e) => setSettings({...settings, siteUrl: e.target.value})}
                   />
                 </div>
                 <div className="mb-3">
-                  <label className="form-label text-white-50">Admin Email</label>
+                  <label className="form-label text-white-50 small">Admin Email</label>
                   <input
                     type="email"
-                    className="form-control bg-dark border-secondary text-white"
+                    className="form-control rounded-3"
+                    style={inputStyle}
                     value={settings.adminEmail}
                     onChange={(e) => setSettings({...settings, adminEmail: e.target.value})}
                   />
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="col-md-6">
-            <div className="card bg-dark border-secondary mb-4">
-              <div className="card-header bg-transparent border-secondary">
-                <h6 className="mb-0 text-warning">System Status</h6>
-              </div>
-              <div className="card-body">
+            <div className="col-md-6">
+              <div className="mc-card">
+                <h6 className="text-white-50 mb-4 text-uppercase" style={{ fontSize: "0.75rem", letterSpacing: "0.1em" }}>System Status</h6>
                 <div className="mb-3">
                   <div className="form-check form-switch">
                     <input
@@ -410,31 +380,28 @@ const AdminSettings = () => {
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Payment Settings Tab */}
-      {activeTab === 'payment' && (
-        <div className="row">
-          <div className="col-md-6">
-            <div className="card bg-dark border-secondary mb-4">
-              <div className="card-header bg-transparent border-secondary">
-                <h6 className="mb-0 text-warning">Platform Fees</h6>
-              </div>
-              <div className="card-body">
+        {/* Payment Settings Tab */}
+        {activeTab === 'payment' && (
+          <div className="row g-4">
+            <div className="col-md-6">
+              <div className="mc-card">
+                <h6 className="text-white-50 mb-4 text-uppercase" style={{ fontSize: "0.75rem", letterSpacing: "0.1em" }}>Platform Fees</h6>
                 <div className="mb-3">
-                  <label className="form-label text-white-50">Platform Fee (%)</label>
+                  <label className="form-label text-white-50 small">Platform Fee (%)</label>
                   <div className="input-group">
                     <input
                       type="number"
-                      className="form-control bg-dark border-secondary text-white"
+                      className="form-control rounded-3"
+                      style={inputStyle}
                       value={settings.platformFee}
                       onChange={(e) => setSettings({...settings, platformFee: e.target.value})}
                       min="0"
                       max="100"
                     />
-                    <button 
-                      className="btn btn-outline-warning"
+                    <button
+                      className="btn mc-btn mc-btn-ghost"
                       onClick={handleUpdatePlatformFee}
                       disabled={saving || !SETTINGS_API_AVAILABLE}
                     >
@@ -444,17 +411,18 @@ const AdminSettings = () => {
                   <small className="text-white-50">Percentage taken from each sale</small>
                 </div>
                 <div className="mb-3">
-                  <label className="form-label text-white-50">Minimum Payout (KES)</label>
+                  <label className="form-label text-white-50 small">Minimum Payout (KES)</label>
                   <div className="input-group">
                     <input
                       type="number"
-                      className="form-control bg-dark border-secondary text-white"
+                      className="form-control rounded-3"
+                      style={inputStyle}
                       value={settings.minPayout}
                       onChange={(e) => setSettings({...settings, minPayout: e.target.value})}
                       min="100"
                     />
-                    <button 
-                      className="btn btn-outline-warning"
+                    <button
+                      className="btn mc-btn mc-btn-ghost"
                       onClick={handleUpdatePayoutSettings}
                       disabled={saving || !SETTINGS_API_AVAILABLE}
                     >
@@ -465,14 +433,10 @@ const AdminSettings = () => {
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="col-md-6">
-            <div className="card bg-dark border-secondary mb-4">
-              <div className="card-header bg-transparent border-secondary">
-                <h6 className="mb-0 text-warning">Payment Methods</h6>
-              </div>
-              <div className="card-body">
+            <div className="col-md-6">
+              <div className="mc-card mb-4">
+                <h6 className="text-white-50 mb-4 text-uppercase" style={{ fontSize: "0.75rem", letterSpacing: "0.1em" }}>Payment Methods</h6>
                 <div className="mb-3">
                   <div className="form-check form-switch">
                     <input
@@ -502,28 +466,26 @@ const AdminSettings = () => {
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div className="card bg-dark border-secondary">
-              <div className="card-header bg-transparent border-secondary">
-                <h6 className="mb-0 text-warning">Payment Gateway Keys</h6>
-              </div>
-              <div className="card-body">
+              <div className="mc-card">
+                <h6 className="text-white-50 mb-4 text-uppercase" style={{ fontSize: "0.75rem", letterSpacing: "0.1em" }}>Payment Gateway Keys</h6>
                 <div className="mb-3">
-                  <label className="form-label text-white-50">Razorpay Key</label>
+                  <label className="form-label text-white-50 small">Razorpay Key</label>
                   <input
                     type="text"
-                    className="form-control bg-dark border-secondary text-white"
+                    className="form-control rounded-3"
+                    style={inputStyle}
                     value={settings.razorpayKey}
                     onChange={(e) => setSettings({...settings, razorpayKey: e.target.value})}
                     placeholder="rzp_test_..."
                   />
                 </div>
                 <div className="mb-3">
-                  <label className="form-label text-white-50">Stripe Public Key</label>
+                  <label className="form-label text-white-50 small">Stripe Public Key</label>
                   <input
                     type="text"
-                    className="form-control bg-dark border-secondary text-white"
+                    className="form-control rounded-3"
+                    style={inputStyle}
                     value={settings.stripeKey}
                     onChange={(e) => setSettings({...settings, stripeKey: e.target.value})}
                     placeholder="pk_test_..."
@@ -532,23 +494,20 @@ const AdminSettings = () => {
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Upload Settings Tab */}
-      {activeTab === 'upload' && (
-        <div className="row">
-          <div className="col-md-6">
-            <div className="card bg-dark border-secondary mb-4">
-              <div className="card-header bg-transparent border-secondary">
-                <h6 className="mb-0 text-warning">Upload Limits</h6>
-              </div>
-              <div className="card-body">
+        {/* Upload Settings Tab */}
+        {activeTab === 'upload' && (
+          <div className="row g-4">
+            <div className="col-md-6">
+              <div className="mc-card">
+                <h6 className="text-white-50 mb-4 text-uppercase" style={{ fontSize: "0.75rem", letterSpacing: "0.1em" }}>Upload Limits</h6>
                 <div className="mb-3">
-                  <label className="form-label text-white-50">Max Upload Size (MB)</label>
+                  <label className="form-label text-white-50 small">Max Upload Size (MB)</label>
                   <input
                     type="number"
-                    className="form-control bg-dark border-secondary text-white"
+                    className="form-control rounded-3"
+                    style={inputStyle}
                     value={settings.maxUploadSize}
                     onChange={(e) => setSettings({...settings, maxUploadSize: e.target.value})}
                     min="1"
@@ -557,19 +516,16 @@ const AdminSettings = () => {
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="col-md-6">
-            <div className="card bg-dark border-secondary mb-4">
-              <div className="card-header bg-transparent border-secondary">
-                <h6 className="mb-0 text-warning">File Formats</h6>
-              </div>
-              <div className="card-body">
+            <div className="col-md-6">
+              <div className="mc-card">
+                <h6 className="text-white-50 mb-4 text-uppercase" style={{ fontSize: "0.75rem", letterSpacing: "0.1em" }}>File Formats</h6>
                 <div className="mb-3">
-                  <label className="form-label text-white-50">Allowed Formats</label>
+                  <label className="form-label text-white-50 small">Allowed Formats</label>
                   <input
                     type="text"
-                    className="form-control bg-dark border-secondary text-white"
+                    className="form-control rounded-3"
+                    style={inputStyle}
                     value={settings.allowedFormats.join(", ")}
                     onChange={(e) => setSettings({...settings, allowedFormats: e.target.value.split(",").map(f => f.trim())})}
                     placeholder="jpg, png, mp4"
@@ -607,60 +563,60 @@ const AdminSettings = () => {
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Email Settings Tab */}
-      {activeTab === 'email' && (
-        <div className="row">
-          <div className="col-md-6">
-            <div className="card bg-dark border-secondary mb-4">
-              <div className="card-header bg-transparent border-secondary">
-                <h6 className="mb-0 text-warning">SMTP Configuration</h6>
-              </div>
-              <div className="card-body">
+        {/* Email Settings Tab */}
+        {activeTab === 'email' && (
+          <div className="row g-4">
+            <div className="col-md-6">
+              <div className="mc-card">
+                <h6 className="text-white-50 mb-4 text-uppercase" style={{ fontSize: "0.75rem", letterSpacing: "0.1em" }}>SMTP Configuration</h6>
                 <div className="mb-3">
-                  <label className="form-label text-white-50">SMTP Host</label>
+                  <label className="form-label text-white-50 small">SMTP Host</label>
                   <input
                     type="text"
-                    className="form-control bg-dark border-secondary text-white"
+                    className="form-control rounded-3"
+                    style={inputStyle}
                     value={settings.smtpHost}
                     onChange={(e) => setSettings({...settings, smtpHost: e.target.value})}
                     placeholder="smtp.gmail.com"
                   />
                 </div>
                 <div className="mb-3">
-                  <label className="form-label text-white-50">SMTP Port</label>
+                  <label className="form-label text-white-50 small">SMTP Port</label>
                   <input
                     type="number"
-                    className="form-control bg-dark border-secondary text-white"
+                    className="form-control rounded-3"
+                    style={inputStyle}
                     value={settings.smtpPort}
                     onChange={(e) => setSettings({...settings, smtpPort: e.target.value})}
                     placeholder="587"
                   />
                 </div>
                 <div className="mb-3">
-                  <label className="form-label text-white-50">SMTP Username</label>
+                  <label className="form-label text-white-50 small">SMTP Username</label>
                   <input
                     type="text"
-                    className="form-control bg-dark border-secondary text-white"
+                    className="form-control rounded-3"
+                    style={inputStyle}
                     value={settings.smtpUser}
                     onChange={(e) => setSettings({...settings, smtpUser: e.target.value})}
                     placeholder="user@example.com"
                   />
                 </div>
                 <div className="mb-3">
-                  <label className="form-label text-white-50">SMTP Password</label>
+                  <label className="form-label text-white-50 small">SMTP Password</label>
                   <input
                     type="password"
-                    className="form-control bg-dark border-secondary text-white"
+                    className="form-control rounded-3"
+                    style={inputStyle}
                     value={settings.smtpPass}
                     onChange={(e) => setSettings({...settings, smtpPass: e.target.value})}
                     placeholder="••••••••"
                   />
                 </div>
-                <button 
-                  className="btn btn-outline-warning"
+                <button
+                  className="btn mc-btn mc-btn-ghost rounded-pill px-4"
                   onClick={handleTestEmail}
                   disabled={saving || !SETTINGS_API_AVAILABLE}
                 >
@@ -669,53 +625,37 @@ const AdminSettings = () => {
                 </button>
               </div>
             </div>
-          </div>
 
-          <div className="col-md-6">
-            <div className="card bg-dark border-secondary">
-              <div className="card-header bg-transparent border-secondary">
-                <h6 className="mb-0 text-warning">Email Templates</h6>
-              </div>
-              <div className="card-body">
-                <p className="text-white-50">Manage email templates sent to users</p>
-                <div className="list-group list-group-flush bg-dark">
-                  <div className="list-group-item bg-transparent text-white border-secondary d-flex justify-content-between align-items-center">
-                    <span>Welcome Email</span>
-                    <button className="btn btn-sm btn-outline-warning">Edit</button>
-                  </div>
-                  <div className="list-group-item bg-transparent text-white border-secondary d-flex justify-content-between align-items-center">
-                    <span>Password Reset</span>
-                    <button className="btn btn-sm btn-outline-warning">Edit</button>
-                  </div>
-                  <div className="list-group-item bg-transparent text-white border-secondary d-flex justify-content-between align-items-center">
-                    <span>Purchase Confirmation</span>
-                    <button className="btn btn-sm btn-outline-warning">Edit</button>
-                  </div>
-                  <div className="list-group-item bg-transparent text-white border-secondary d-flex justify-content-between align-items-center">
-                    <span>Withdrawal Notification</span>
-                    <button className="btn btn-sm btn-outline-warning">Edit</button>
-                  </div>
+            <div className="col-md-6">
+              <div className="mc-card">
+                <h6 className="text-white-50 mb-4 text-uppercase" style={{ fontSize: "0.75rem", letterSpacing: "0.1em" }}>Email Templates</h6>
+                <p className="text-white-50 small">Manage email templates sent to users</p>
+                <div className="d-flex flex-column gap-2">
+                  {["Welcome Email", "Password Reset", "Purchase Confirmation", "Withdrawal Notification"].map(template => (
+                    <div key={template} className="d-flex justify-content-between align-items-center py-2"
+                      style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+                      <span className="text-white small">{template}</span>
+                      <button className="btn btn-sm mc-btn mc-btn-ghost rounded-pill px-3">Edit</button>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Security Settings Tab */}
-      {activeTab === 'security' && (
-        <div className="row">
-          <div className="col-md-6">
-            <div className="card bg-dark border-secondary mb-4">
-              <div className="card-header bg-transparent border-secondary">
-                <h6 className="mb-0 text-warning">Security Options</h6>
-              </div>
-              <div className="card-body">
+        {/* Security Settings Tab */}
+        {activeTab === 'security' && (
+          <div className="row g-4">
+            <div className="col-md-6">
+              <div className="mc-card">
+                <h6 className="text-white-50 mb-4 text-uppercase" style={{ fontSize: "0.75rem", letterSpacing: "0.1em" }}>Security Options</h6>
                 <div className="mb-3">
-                  <label className="form-label text-white-50">Session Timeout (minutes)</label>
+                  <label className="form-label text-white-50 small">Session Timeout (minutes)</label>
                   <input
                     type="number"
-                    className="form-control bg-dark border-secondary text-white"
+                    className="form-control rounded-3"
+                    style={inputStyle}
                     value={30}
                     min="5"
                     max="120"
@@ -749,33 +689,30 @@ const AdminSettings = () => {
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="col-md-6">
-            <div className="card bg-dark border-secondary">
-              <div className="card-header bg-transparent border-secondary">
-                <h6 className="mb-0 text-warning">API Security</h6>
-              </div>
-              <div className="card-body">
+            <div className="col-md-6">
+              <div className="mc-card">
+                <h6 className="text-white-50 mb-4 text-uppercase" style={{ fontSize: "0.75rem", letterSpacing: "0.1em" }}>API Security</h6>
                 <div className="mb-3">
-                  <label className="form-label text-white-50">API Rate Limit (requests/minute)</label>
+                  <label className="form-label text-white-50 small">API Rate Limit (requests/minute)</label>
                   <input
                     type="number"
-                    className="form-control bg-dark border-secondary text-white"
+                    className="form-control rounded-3"
+                    style={inputStyle}
                     value={60}
                     min="10"
                     max="1000"
                   />
                 </div>
-                <button className="btn btn-outline-danger">
+                <button className="btn mc-btn mc-btn-danger rounded-pill px-4">
                   <i className="fas fa-key me-2"></i>
                   Rotate API Keys
                 </button>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </AdminLayout>
   );
 };

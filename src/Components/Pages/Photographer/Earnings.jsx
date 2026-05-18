@@ -2,6 +2,7 @@ import { toast } from "../../../utils/toast";
 import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import PhotographerLayout from "./PhotographerLayout";
+import PageHeader from "../../PageHeader";
 import { API_ENDPOINTS } from "../../../api/apiConfig";
 import { getAuthHeaders, getCurrentUserId } from "../../../utils/auth";
 
@@ -27,7 +28,7 @@ const PhotographerEarnings = () => {
 
     try {
       setLoading(true);
-      
+
       const summaryRes = await axios.get(API_ENDPOINTS.PAYMENTS.EARNINGS_SUMMARY(photographerId), { headers });
       const transactionsRes = await axios.get(API_ENDPOINTS.PAYMENTS.TRANSACTIONS(photographerId), { headers });
 
@@ -39,7 +40,7 @@ const PhotographerEarnings = () => {
       });
 
       setTransactions(transactionsRes.data || []);
-      
+
     } catch (error) {
       console.error("Error fetching earnings:", error);
     } finally {
@@ -61,81 +62,59 @@ const PhotographerEarnings = () => {
 
   return (
     <PhotographerLayout>
-      <h4 className="fw-bold mb-4">
-        <i className="fas fa-dollar-sign me-2 text-warning"></i>
-        My Earnings
-      </h4>
+      <PageHeader title="My Earnings" subtitle="Track your income and payouts" />
+      <div className="mc-page">
+        {/* Stat Cards */}
+        <div className="mc-stats-row-sm" style={{ marginBottom: "1.25rem" }}>
+          <div className="mc-stat-card">
+            <div className="mc-stat-label">TOTAL EARNINGS</div>
+            <div className="mc-stat-value">KES {earnings.total.toLocaleString()}</div>
+            <div className="mc-stat-trend up"><i className="fas fa-coins"></i> All time</div>
+          </div>
+          <div className="mc-stat-card">
+            <div className="mc-stat-label">AVAILABLE</div>
+            <div className="mc-stat-value">KES {earnings.available.toLocaleString()}</div>
+            <div className="mc-stat-trend up"><i className="fas fa-wallet"></i> Ready to withdraw</div>
+          </div>
+          <div className="mc-stat-card">
+            <div className="mc-stat-label">PENDING</div>
+            <div className="mc-stat-value">KES {earnings.pending.toLocaleString()}</div>
+            <div className="mc-stat-trend"><i className="fas fa-clock"></i> Processing</div>
+          </div>
+          <div className="mc-stat-card">
+            <div className="mc-stat-label">WITHDRAWN</div>
+            <div className="mc-stat-value">KES {earnings.withdrawn.toLocaleString()}</div>
+            <div className="mc-stat-trend up"><i className="fas fa-check-circle"></i> Paid out</div>
+          </div>
+        </div>
 
-      {/* Earnings Cards */}
-      <div className="row g-3 mb-4">
-        <div className="col-md-3">
-          <div className="card bg-dark border-warning">
-            <div className="card-body text-center">
-              <small className="text-white-50">Total Earnings</small>
-              <h3 className="text-warning fw-bold">KES {earnings.total.toLocaleString()}</h3>
-            </div>
+        {/* Withdraw Action Card */}
+        <div className="mc-card" style={{ marginBottom: "1.25rem" }}>
+          <div className="mc-card-header">
+            <span className="mc-card-title">AVAILABLE FOR WITHDRAWAL</span>
+            <span className="mc-card-badge">KES {earnings.available.toLocaleString()}</span>
           </div>
+          <p style={{ fontSize: "0.85rem", opacity: 0.6, marginBottom: "1rem" }}>
+            Minimum withdrawal: KES 1,000
+          </p>
+          <button
+            className="mc-btn mc-btn-primary"
+            onClick={handleWithdraw}
+            disabled={earnings.available < 1000}
+          >
+            <i className="fas fa-money-bill-wave me-2"></i>
+            Withdraw Funds
+          </button>
         </div>
-        <div className="col-md-3">
-          <div className="card bg-dark border-info">
-            <div className="card-body text-center">
-              <small className="text-white-50">Available</small>
-              <h3 className="text-info fw-bold">KES {earnings.available.toLocaleString()}</h3>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-3">
-          <div className="card bg-dark border-warning">
-            <div className="card-body text-center">
-              <small className="text-white-50">Pending</small>
-              <h3 className="text-warning fw-bold">KES {earnings.pending.toLocaleString()}</h3>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-3">
-          <div className="card bg-dark border-success">
-            <div className="card-body text-center">
-              <small className="text-white-50">Withdrawn</small>
-              <h3 className="text-success fw-bold">KES {earnings.withdrawn.toLocaleString()}</h3>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Withdraw Button */}
-      <div className="card bg-dark border-secondary mb-4">
-        <div className="card-body">
-          <div className="row align-items-center">
-            <div className="col-md-8">
-              <h6>Available for Withdrawal: <span className="text-warning">KES {earnings.available.toLocaleString()}</span></h6>
-              <p className="text-white-50 small mb-md-0">Minimum withdrawal: KES 1,000</p>
-            </div>
-            <div className="col-md-4 text-end">
-              <button
-                className="btn btn-warning px-4"
-                onClick={handleWithdraw}
-                disabled={earnings.available < 1000}
-              >
-                <i className="fas fa-money-bill-wave me-2"></i>
-                Withdraw Funds
-              </button>
-            </div>
+        {/* Transactions Table */}
+        <div className="mc-table-card">
+          <div className="mc-card-header" style={{ padding: "1rem 1.25rem 0" }}>
+            <span className="mc-card-title">TRANSACTION HISTORY</span>
           </div>
-        </div>
-      </div>
-
-      {/* Transactions Table */}
-      <div className="card bg-dark border-secondary">
-        <div className="card-header bg-transparent border-secondary">
-          <h6 className="mb-0 text-warning">
-            <i className="fas fa-history me-2"></i>
-            Transaction History
-          </h6>
-        </div>
-        <div className="card-body p-0">
           {loading ? (
-            <div className="text-center py-4">
-              <div className="spinner-border text-warning"></div>
+            <div style={{ padding: "2rem", textAlign: "center" }}>
+              <div className="spinner-border" style={{ color: "var(--mc-accent)" }}></div>
             </div>
           ) : (
             <div className="table-responsive">
@@ -171,8 +150,11 @@ const PhotographerEarnings = () => {
                   ))}
                   {transactions.length === 0 && (
                     <tr>
-                      <td colSpan="5" className="text-center text-white-50 py-4">
-                        No transactions yet
+                      <td colSpan="5">
+                        <div className="mc-empty">
+                          <i className="fas fa-receipt"></i>
+                          <p>No transactions yet</p>
+                        </div>
                       </td>
                     </tr>
                   )}

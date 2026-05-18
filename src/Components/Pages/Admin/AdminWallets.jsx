@@ -3,6 +3,7 @@ import axios from "axios";
 import AdminLayout from "./AdminLayout";
 import { API_ENDPOINTS } from "../../../api/apiConfig";
 import { toast } from "../../../utils/toast";
+import PageHeader from "../../PageHeader";
 
 const AdminWallets = () => {
   const [wallets, setWallets] = useState([]);
@@ -15,12 +16,6 @@ const AdminWallets = () => {
 
   const token = localStorage.getItem("token");
   const headers = { Authorization: `Bearer ${token}` };
-
-  const glassStyle = {
-    background: "rgba(255,255,255,0.05)",
-    backdropFilter: "blur(10px)",
-    border: "1px solid rgba(255,255,255,0.1)",
-  };
 
   const fetchWallets = async () => {
     try {
@@ -70,25 +65,20 @@ const AdminWallets = () => {
 
   return (
     <AdminLayout>
-      <div className="position-relative" style={{ zIndex: 1 }}>
-        {/* Header */}
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <div>
-            <h2 className="fw-bold mb-1">
-              <i className="fas fa-wallet me-2 text-warning"></i>
-              Wallet Management
-            </h2>
-            <p className="text-white-50 small mb-0">
-              Total platform balance: <span className="text-warning fw-bold">KES {totalBalance.toLocaleString()}</span> across {wallets.length} wallets
-            </p>
-          </div>
-          <button className="btn btn-outline-warning rounded-pill px-4" onClick={fetchWallets}>
+      <div className="mc-page">
+        <div className="d-flex justify-content-between align-items-start mb-2">
+          <PageHeader title="Wallet Management" subtitle="User balances and adjustments" />
+          <button className="btn btn-outline-warning rounded-pill px-4 mt-1" onClick={fetchWallets}>
             <i className="fas fa-sync-alt me-2"></i>Refresh
           </button>
         </div>
 
+        <p className="text-white-50 small mb-4">
+          Total platform balance: <span className="text-warning fw-bold">KES {totalBalance.toLocaleString()}</span> across {wallets.length} wallets
+        </p>
+
         {/* Search */}
-        <div className="mb-4 p-3 rounded-4" style={glassStyle}>
+        <div className="mc-card mb-4">
           <div className="position-relative">
             <i className="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-white-50"></i>
             <input type="text" className="form-control"
@@ -99,14 +89,14 @@ const AdminWallets = () => {
         </div>
 
         {loading ? (
-          <div className="text-center py-5 rounded-4" style={glassStyle}>
+          <div className="mc-card text-center py-5">
             <div className="spinner-border mb-3" style={{ color: "#6BBDD0" }}></div>
             <p className="text-white-50">Loading wallets...</p>
           </div>
         ) : (
-          <div className="rounded-4 overflow-hidden" style={glassStyle}>
+          <div className="mc-table-card">
             <div className="table-responsive">
-              <table className="table table-dark table-hover align-middle mb-0">
+              <table className="table table-borderless align-middle mb-0">
                 <thead>
                   <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
                     <th className="ps-4 py-3">User</th>
@@ -123,7 +113,7 @@ const AdminWallets = () => {
                   ) : filtered.map(w => (
                     <tr key={w._id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                       <td className="ps-4">
-                        <div className="fw-bold">{w.user?.username || "Unknown"}</div>
+                        <div className="fw-bold text-white">{w.user?.username || "Unknown"}</div>
                         <small className="text-white-50">{w.user?.email}</small>
                       </td>
                       <td>
@@ -144,8 +134,7 @@ const AdminWallets = () => {
                         </span>
                       </td>
                       <td className="pe-4">
-                        <button className="btn btn-sm rounded-3 px-3"
-                          style={{ background: "rgba(255,193,7,0.15)", color: "#ffc107", border: "1px solid rgba(255,193,7,0.3)" }}
+                        <button className="btn mc-btn mc-btn-primary btn-sm rounded-3 px-3"
                           onClick={() => { setAdjustModal({ wallet: w }); setAdjustAmount(""); setAdjustReason(""); }}>
                           <i className="fas fa-plus-minus me-1"></i>Adjust
                         </button>
@@ -194,8 +183,7 @@ const AdminWallets = () => {
                 </div>
                 <div className="modal-footer border-0 px-4 pb-4 pt-0 gap-2">
                   <button type="button" className="btn btn-outline-secondary rounded-pill px-4" onClick={() => setAdjustModal(null)}>Cancel</button>
-                  <button type="submit" className="btn rounded-pill px-4 fw-bold"
-                    style={{ background: "#ffc107", color: "#000" }} disabled={adjusting}>
+                  <button type="submit" className="btn mc-btn mc-btn-primary rounded-pill px-4 fw-bold" disabled={adjusting}>
                     {adjusting ? <><span className="spinner-border spinner-border-sm me-2"></span>Saving...</> : "Apply Adjustment"}
                   </button>
                 </div>

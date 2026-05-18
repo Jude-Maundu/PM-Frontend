@@ -10,6 +10,7 @@ import {
   isApiAvailable,
   disableApi,
 } from "../../../utils/localStore";
+import PageHeader from "../../PageHeader";
 
 const API = API_BASE_URL;
 
@@ -28,8 +29,7 @@ const BuyerWallet = () => {
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const userId = user.id || user._id;
-  
-  // ✅ FIXED: Define headers properly
+
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
   const quickAmounts = [100, 500, 1000, 2000, 5000];
@@ -49,7 +49,6 @@ const BuyerWallet = () => {
         return;
       }
 
-      // Fetch wallet balance
       try {
         const balanceRes = await axios.get(`${API}/payments/wallet/${userId}`, { headers, timeout: 10000 });
         let balanceValue = 0;
@@ -70,12 +69,9 @@ const BuyerWallet = () => {
         setBalance(getLocalWalletBalance());
       }
 
-      // Fetch wallet transactions
       try {
-        // Try multiple possible endpoints
         let transactionData = [];
-        
-        // Try the transaction endpoint first
+
         try {
           const transactionsRes = await axios.get(`${API}/payments/transactions/${userId}`, { headers, timeout: 10000 });
           if (Array.isArray(transactionsRes.data)) {
@@ -90,8 +86,7 @@ const BuyerWallet = () => {
           console.log("✅ Transactions from /transactions:", transactionData.length);
         } catch (err) {
           console.log("Transactions endpoint failed, trying purchase history...");
-          
-          // Try purchase history endpoint as fallback
+
           try {
             const purchaseRes = await axios.get(`${API}/payments/purchase-history/${userId}`, { headers, timeout: 10000 });
             if (Array.isArray(purchaseRes.data)) {
@@ -109,8 +104,7 @@ const BuyerWallet = () => {
             console.log("Purchase history endpoint also failed");
           }
         }
-        
-        // If still no transactions, use local storage
+
         if (transactionData.length === 0) {
           const localTransactions = getLocalWalletTransactions();
           if (localTransactions && localTransactions.length > 0) {
@@ -119,7 +113,6 @@ const BuyerWallet = () => {
           }
         }
 
-        // Normalize transactions to consistent fields
         transactionData = transactionData.map((tx, index) => ({
           id: tx.id || tx._id || tx.reference || `tx_${index}`,
           type: tx.type || (Number(tx.amount) >= 0 ? 'credit' : 'debit'),
@@ -128,15 +121,15 @@ const BuyerWallet = () => {
           createdAt: tx.date || tx.createdAt || tx.timestamp || new Date().toISOString(),
           status: tx.status || 'completed',
         }));
-        
+
         setTransactions(transactionData);
-        
+
       } catch (err) {
         console.error("Error fetching transactions:", err);
         const localTransactions = getLocalWalletTransactions();
         setTransactions(localTransactions || []);
       }
-      
+
     } catch (err) {
       console.error("Error fetching wallet data:", err);
       const status = err.response?.status;
@@ -210,8 +203,7 @@ const BuyerWallet = () => {
 
       if (res.data.success) {
         setSuccessMessage("STK Push sent to your phone. Please enter your PIN to complete payment.");
-        
-        // Poll for payment completion
+
         const paymentId = res.data.payment?._id;
         if (paymentId) {
           const checkPayment = setInterval(async () => {
@@ -231,7 +223,7 @@ const BuyerWallet = () => {
               console.log("Checking payment status...");
             }
           }, 3000);
-          
+
           setTimeout(() => {
             clearInterval(checkPayment);
             fetchWalletData();
@@ -270,8 +262,7 @@ const BuyerWallet = () => {
     const added = parseFloat(amount);
     const newBalance = getLocalWalletBalance() + added;
     setLocalWalletBalance(newBalance);
-    
-    // Add transaction to local storage
+
     const newTransaction = {
       _id: `tx_${Date.now()}`,
       amount: added,
@@ -281,12 +272,11 @@ const BuyerWallet = () => {
       status: "completed"
     };
     addLocalWalletTransaction(newTransaction);
-    
-    // Update state
+
     setBalance(newBalance);
     setTransactions(prev => [newTransaction, ...prev]);
     setSuccessMessage(`KES ${amount} added to wallet successfully!`);
-    
+
     setTimeout(() => {
       setShowAddFunds(false);
       setAmount("");
@@ -315,7 +305,7 @@ const BuyerWallet = () => {
     const now = new Date();
     const diffTime = Math.abs(now - date);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays === 0) return 'Today';
     if (diffDays === 1) return 'Yesterday';
     if (diffDays < 7) return `${diffDays} days ago`;
@@ -324,17 +314,10 @@ const BuyerWallet = () => {
 
   return (
     <BuyerLayout>
-      <div className="text-white" style={{ minHeight: '100vh' }}>
-        <div className="mb-4">
-          <h2 className="fw-bold mb-2">
-            <i className="fas fa-wallet me-2 text-warning"></i>
-            My Wallet
-          </h2>
-          <p className="text-white-50">Manage your funds and view transaction history</p>
-        </div>
-
+      <PageHeader title="My Wallet" subtitle="Manage your balance and top-ups" />
+      <div className="mc-page">
         {error && (
-          <div className="alert alert-danger alert-dismissible fade show mb-4" role="alert" style={{ borderRadius: '12px' }}>
+          <div className="alert alert-danger alert-dismissible fade show mb-4" role="alert">
             <i className="fas fa-exclamation-circle me-2"></i>
             {error}
             <button type="button" className="btn-close" onClick={() => setError(null)}></button>
@@ -342,7 +325,7 @@ const BuyerWallet = () => {
         )}
 
         {successMessage && (
-          <div className="alert alert-success alert-dismissible fade show mb-4" role="alert" style={{ borderRadius: '12px' }}>
+          <div className="alert alert-success alert-dismissible fade show mb-4" role="alert">
             <i className="fas fa-check-circle me-2"></i>
             {successMessage}
             <button type="button" className="btn-close" onClick={() => setSuccessMessage(null)}></button>
@@ -350,27 +333,35 @@ const BuyerWallet = () => {
         )}
 
         {loading ? (
-          <div className="text-center py-5">
-            <div className="spinner-border text-warning" style={{ width: '3rem', height: '3rem' }} role="status">
-              <span className="visually-hidden">Loading...</span>
-            </div>
+          <div style={{ padding: "2rem", textAlign: "center" }}>
+            <div className="spinner-border" style={{ color: "var(--mc-accent)" }}></div>
             <p className="mt-3 text-white-50">Loading your wallet data...</p>
           </div>
         ) : (
-          <div className="row g-4">
-            {/* Balance Card */}
-            <div className="col-12 col-lg-5">
-              <div 
-                className="card border-0 h-100"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(107,189,208,0.15) 0%, rgba(107,189,208,0.05) 100%)',
-                  backdropFilter: 'blur(10px)',
-                  borderRadius: '20px',
-                  border: '1px solid rgba(107,189,208,0.3)',
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
-                }}
-              >
-                <div className="card-body p-4">
+          <>
+            {/* Stats row */}
+            <div className="mc-stats-row-sm mb-4">
+              <div className="mc-stat-card">
+                <div className="mc-stat-label">Available Balance</div>
+                <div className="mc-stat-value">KES {balance.toLocaleString()}</div>
+                <div className="mc-stat-trend up">Active</div>
+              </div>
+              <div className="mc-stat-card">
+                <div className="mc-stat-label">Total Transactions</div>
+                <div className="mc-stat-value">{transactions.length}</div>
+              </div>
+              <div className="mc-stat-card">
+                <div className="mc-stat-label">Credits</div>
+                <div className="mc-stat-value">
+                  {transactions.filter(t => t.type === 'credit').length}
+                </div>
+              </div>
+            </div>
+
+            <div className="row g-4">
+              {/* Balance & Top-up Card */}
+              <div className="col-12 col-lg-5">
+                <div className="mc-card h-100">
                   <div className="text-center mb-4">
                     <div className="mb-3">
                       <i className="fas fa-wallet fa-3x text-warning"></i>
@@ -388,21 +379,18 @@ const BuyerWallet = () => {
 
                   {!showAddFunds ? (
                     <button
-                      className="btn btn-warning w-100 py-3 rounded-pill fw-bold"
+                      className="mc-btn mc-btn-primary w-100 py-3 fw-bold"
                       onClick={() => setShowAddFunds(true)}
-                      style={{ fontSize: '1.1rem', transition: 'all 0.3s ease' }}
-                      onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-                      onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                      style={{ fontSize: '1.1rem' }}
                     >
-                      <i className="fas fa-plus-circle me-2"></i>
-                      Add Funds to Wallet
+                      <i className="fas fa-plus-circle me-2"></i>Add Funds to Wallet
                     </button>
                   ) : (
                     <div className="mt-3">
                       <div className="d-flex justify-content-between align-items-center mb-3">
                         <h6 className="fw-bold mb-0">Add Funds</h6>
                         <button
-                          className="btn btn-sm btn-outline-secondary rounded-pill"
+                          className="mc-btn mc-btn-ghost"
                           onClick={() => {
                             setShowAddFunds(false);
                             setAmount("");
@@ -421,12 +409,7 @@ const BuyerWallet = () => {
                             <button
                               key={amt}
                               onClick={() => handleQuickAmount(amt)}
-                              className={`btn rounded-pill px-3 py-2 ${
-                                selectedAmount === amt
-                                  ? 'btn-warning text-dark'
-                                  : 'btn-outline-warning'
-                              }`}
-                              style={{ transition: 'all 0.2s ease' }}
+                              className={`mc-btn ${selectedAmount === amt ? 'mc-btn-primary' : 'mc-btn-ghost'}`}
                             >
                               KES {amt.toLocaleString()}
                             </button>
@@ -473,71 +456,51 @@ const BuyerWallet = () => {
 
                       <div className="d-flex gap-2">
                         <button
-                          className="btn btn-success flex-grow-1 py-2 rounded-pill"
+                          className="mc-btn mc-btn-primary flex-grow-1"
                           onClick={handleMpesaPayment}
                           disabled={processing}
                         >
                           {processing ? (
                             <>
-                              <span className="spinner-border spinner-border-sm me-2"></span>
-                              Processing...
+                              <span className="spinner-border spinner-border-sm me-2"></span>Processing...
                             </>
                           ) : (
                             <>
-                              <i className="fas fa-mobile-alt me-2"></i>
-                              Pay with M-Pesa
+                              <i className="fas fa-mobile-alt me-2"></i>Pay with M-Pesa
                             </>
                           )}
                         </button>
                         <button
-                          className="btn btn-outline-warning flex-grow-1 py-2 rounded-pill"
+                          className="mc-btn mc-btn-ghost flex-grow-1"
                           onClick={handleMockPayment}
                           disabled={processing}
                         >
-                          <i className="fas fa-credit-card me-2"></i>
-                          Mock Payment
+                          <i className="fas fa-credit-card me-2"></i>Mock Payment
                         </button>
                       </div>
                     </div>
                   )}
                 </div>
               </div>
-            </div>
 
-            {/* Transactions Section */}
-            <div className="col-12 col-lg-7">
-              <div 
-                className="card border-0 h-100"
-                style={{
-                  background: 'rgba(255,255,255,0.05)',
-                  backdropFilter: 'blur(10px)',
-                  borderRadius: '20px',
-                  border: '1px solid rgba(255,255,255,0.1)'
-                }}
-              >
-                <div className="card-header bg-transparent border-secondary p-4">
-                  <div className="d-flex justify-content-between align-items-center">
-                    <div>
-                      <h5 className="fw-bold mb-1">
-                        <i className="fas fa-history me-2 text-warning"></i>
-                        Transaction History
-                      </h5>
-                      <small className="text-white-50">Your recent wallet activities</small>
-                    </div>
-                    <span className="badge bg-warning text-dark rounded-pill px-3 py-2">
+              {/* Transactions Section */}
+              <div className="col-12 col-lg-7">
+                <div className="mc-card h-100" style={{ padding: 0 }}>
+                  <div className="mc-card-header" style={{ padding: "1rem 1.5rem" }}>
+                    <span className="mc-card-title">
+                      <i className="fas fa-history me-2"></i>TRANSACTION HISTORY
+                    </span>
+                    <span className="mc-card-badge">
                       {transactions.length} {transactions.length === 1 ? 'Transaction' : 'Transactions'}
                     </span>
                   </div>
-                </div>
-                
-                <div className="card-body p-0">
+
                   {transactions.length === 0 ? (
-                    <div className="text-center py-5">
-                      <i className="fas fa-receipt fa-3x text-white-50 mb-3"></i>
-                      <h6 className="text-white-50">No transactions yet</h6>
-                      <p className="small text-white-50">Your transaction history will appear here</p>
-                      <button 
-                        className="btn btn-outline-warning btn-sm rounded-pill mt-2"
+                    <div className="mc-empty" style={{ padding: "3rem 1rem" }}>
+                      <i className="fas fa-receipt"></i>
+                      <p>No transactions yet</p>
+                      <button
+                        className="mc-btn mc-btn-ghost mt-2"
                         onClick={() => setShowAddFunds(true)}
                       >
                         Add Funds to Get Started
@@ -546,20 +509,17 @@ const BuyerWallet = () => {
                   ) : (
                     <div className="list-group list-group-flush">
                       {transactions.slice(0, 10).map((tx, idx) => (
-                        <div 
-                          key={tx.id || tx._id || idx} 
+                        <div
+                          key={tx.id || tx._id || idx}
                           className="list-group-item bg-transparent text-white border-secondary px-4 py-3"
-                          style={{ transition: 'all 0.2s ease' }}
-                          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                          onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                         >
                           <div className="d-flex justify-content-between align-items-center">
                             <div className="d-flex align-items-center gap-3">
-                              <div 
+                              <div
                                 className="rounded-circle p-2"
                                 style={{
-                                  background: tx.type === 'credit' 
-                                    ? 'rgba(40, 167, 69, 0.1)' 
+                                  background: tx.type === 'credit'
+                                    ? 'rgba(40, 167, 69, 0.1)'
                                     : 'rgba(220, 53, 69, 0.1)',
                                   width: '40px',
                                   height: '40px',
@@ -594,45 +554,30 @@ const BuyerWallet = () => {
                       ))}
                     </div>
                   )}
-                </div>
 
-                {transactions.length > 10 && (
-                  <div className="card-footer bg-transparent border-secondary p-3 text-center">
-                    <button className="btn btn-sm btn-outline-warning rounded-pill px-4">
-                      View All {transactions.length} Transactions
-                      <i className="fas fa-arrow-right ms-2"></i>
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Quick Tips */}
-        {!loading && (
-          <div className="row mt-4">
-            <div className="col-12">
-              <div 
-                className="p-3 rounded-3"
-                style={{
-                  background: 'rgba(107,189,208,0.05)',
-                  border: '1px solid rgba(107,189,208,0.2)',
-                  borderRadius: '12px'
-                }}
-              >
-                <div className="d-flex align-items-center gap-3">
-                  <i className="fas fa-lightbulb text-warning fa-lg"></i>
-                  <div>
-                    <small className="text-white-50 d-block">
-                      <strong className="text-warning">Quick Tip:</strong> Add funds to your wallet to purchase photos instantly. 
-                      M-Pesa payments are processed within seconds. All your purchases and deposits are shown here.
-                    </small>
-                  </div>
+                  {transactions.length > 10 && (
+                    <div className="p-3 text-center" style={{ borderTop: "1px solid var(--mc-border)" }}>
+                      <button className="mc-btn mc-btn-ghost">
+                        View All {transactions.length} Transactions
+                        <i className="fas fa-arrow-right ms-2"></i>
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
-          </div>
+
+            {/* Quick Tips */}
+            <div className="mc-card mt-4">
+              <div className="d-flex align-items-center gap-3">
+                <i className="fas fa-lightbulb text-warning fa-lg"></i>
+                <small className="text-white-50">
+                  <strong className="text-warning">Quick Tip:</strong> Add funds to your wallet to purchase photos instantly.
+                  M-Pesa payments are processed within seconds. All your purchases and deposits are shown here.
+                </small>
+              </div>
+            </div>
+          </>
         )}
       </div>
     </BuyerLayout>

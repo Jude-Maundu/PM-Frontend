@@ -3,12 +3,7 @@ import axios from "axios";
 import AdminLayout from "./AdminLayout";
 import { API_ENDPOINTS } from "../../../api/apiConfig";
 import { toast } from "../../../utils/toast";
-
-const glassStyle = {
-  background: "rgba(255,255,255,0.05)",
-  backdropFilter: "blur(10px)",
-  border: "1px solid rgba(255,255,255,0.1)",
-};
+import PageHeader from "../../PageHeader";
 
 const inputStyle = {
   background: "rgba(255,255,255,0.06)",
@@ -155,17 +150,11 @@ const AdminProfile = () => {
 
   return (
     <AdminLayout>
-      <div className="position-relative" style={{ zIndex: 1 }}>
-        <div className="mb-4">
-          <h2 className="fw-bold mb-1">
-            <i className="fas fa-user-circle me-2 text-warning"></i>
-            My Profile
-          </h2>
-          <p className="text-white-50 small mb-0">Manage your personal information and account security</p>
-        </div>
+      <div className="mc-page">
+        <PageHeader title="Admin Profile" subtitle="Your administrator account" />
 
         {/* Profile header card */}
-        <div className="rounded-4 p-4 mb-4 d-flex align-items-center gap-4" style={glassStyle}>
+        <div className="mc-card mb-4 d-flex align-items-center gap-4">
           <div className="position-relative">
             {profile.profilePicture ? (
               <img
@@ -218,7 +207,7 @@ const AdminProfile = () => {
 
         {/* Profile Tab */}
         {activeTab === "profile" && (
-          <div className="rounded-4 p-4" style={glassStyle}>
+          <div className="mc-card">
             <h6 className="text-white-50 mb-4 text-uppercase" style={{ fontSize: "0.75rem", letterSpacing: "0.1em" }}>Personal Information</h6>
             <form onSubmit={handleSaveProfile}>
               <div className="row g-3">
@@ -257,8 +246,7 @@ const AdminProfile = () => {
                     placeholder="Tell us about yourself..."></textarea>
                 </div>
                 <div className="col-12">
-                  <button type="submit" className="btn rounded-pill px-5 fw-bold"
-                    style={{ background: "#ffc107", color: "#000" }} disabled={saving}>
+                  <button type="submit" className="btn mc-btn mc-btn-primary rounded-pill px-5 fw-bold" disabled={saving}>
                     {saving ? <><span className="spinner-border spinner-border-sm me-2"></span>Saving...</> : <><i className="fas fa-save me-2"></i>Save Changes</>}
                   </button>
                 </div>
@@ -269,7 +257,7 @@ const AdminProfile = () => {
 
         {/* Security Tab */}
         {activeTab === "security" && (
-          <div className="rounded-4 p-4" style={glassStyle}>
+          <div className="mc-card">
             <h6 className="text-white-50 mb-4 text-uppercase" style={{ fontSize: "0.75rem", letterSpacing: "0.1em" }}>Change Password</h6>
             <form onSubmit={handleChangePassword}>
               <div className="row g-3" style={{ maxWidth: 500 }}>
@@ -306,8 +294,7 @@ const AdminProfile = () => {
                   )}
                 </div>
                 <div className="col-12">
-                  <button type="submit" className="btn rounded-pill px-5 fw-bold"
-                    style={{ background: "rgba(107,189,208,0.2)", color: "#6BBDD0", border: "1px solid rgba(107,189,208,0.4)" }}
+                  <button type="submit" className="btn mc-btn mc-btn-primary rounded-pill px-5 fw-bold"
                     disabled={saving}>
                     {saving ? <><span className="spinner-border spinner-border-sm me-2"></span>Changing...</> : <><i className="fas fa-lock me-2"></i>Change Password</>}
                   </button>

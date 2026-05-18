@@ -18,6 +18,8 @@ import ProtectedRoute from './Components/ProtectedRoute';
 
 // Admin Pages
 import AdminDash from './Components/Pages/Admin/AdminDash';
+import AdminAnalytics from './Components/Pages/Admin/AdminAnalytics';
+import AdminModeration from './Components/Pages/Admin/AdminModeration';
 import AdminMedia from './Components/Pages/Admin/AdminMedia';
 import AdminUser from './Components/Pages/Admin/AdminUser';
 import AdminReceipts from './Components/Pages/Admin/AdminReceipts';
@@ -43,6 +45,8 @@ import PhotographerSales from './Components/Pages/Photographer/SalesHistory';
 import PhotographerUpload from './Components/Pages/Photographer/UploadMedia';
 import PhotographerWithdrawals from './Components/Pages/Photographer/Withdrawals';
 import PhotographerSettings from './Components/Pages/Photographer/PhotographerSettings';
+import SalesAnalytics from './Components/Pages/Photographer/SalesAnalytics';
+import ReferralPage from './Components/Pages/Photographer/ReferralPage';
 
 // BuyerPages 
 import BuyerCart from './Components/Pages/Buyer/BuyerCart';
@@ -57,9 +61,13 @@ import BuyerSettings from './Components/Pages/Buyer/BuyerSettings';
 import BuyerAlbumAccess from './Components/Pages/Buyer/BuyerAlbumAccess';
 import MessagingPage from './Components/Pages/Messaging/MessagingPage';
 import BuyerFollowPage from './Components/Pages/Buyer/BuyerFollowPage';
+import BuyerReferralPage from './Components/Pages/Buyer/BuyerReferralPage';
 import PhotographerFollowPage from './Components/Pages/Photographer/PhotographerFollowPage';
 import Explore from './Components/Pages/Explore';
 import HomePage from './Components/Pages/HomePage';
+import ClientProofing from './Components/Pages/Photographer/ClientProofing';
+import ClientProofingView from './Components/Pages/Proofing/ClientProofingView';
+import OnboardingWizard from './Components/OnboardingWizard';
 
 function RouteWithBodyClass({ children }) {
   const location = useLocation();
@@ -81,6 +89,7 @@ function App() {
     <ToastContainer />
     <ConfirmDialog />
     <BrowserRouter>
+      <OnboardingWizard />
       <RouteWithBodyClass>
         <Routes>
           {/* Public Routes - Landing Page */}
@@ -97,7 +106,8 @@ function App() {
           <Route path="/admin/photographers" element={<ProtectedRoute requiredRole="admin"><AdminUser /></ProtectedRoute>} />
           <Route path="/admin/transactions" element={<ProtectedRoute requiredRole="admin"><AdminReceipts /></ProtectedRoute>} />
           <Route path="/admin/reports" element={<ProtectedRoute requiredRole="admin"><AdminAudit /></ProtectedRoute>} />
-          <Route path="/admin/analytics" element={<ProtectedRoute requiredRole="admin"><AdminDash /></ProtectedRoute>} />
+          <Route path="/admin/analytics" element={<ProtectedRoute requiredRole="admin"><AdminAnalytics /></ProtectedRoute>} />
+          <Route path="/admin/moderation" element={<ProtectedRoute requiredRole="admin"><AdminModeration /></ProtectedRoute>} />
           <Route path="/admin/shares" element={<ProtectedRoute requiredRole="admin"><AdminShares /></ProtectedRoute>} />
           <Route path="/admin/receipts" element={<ProtectedRoute requiredRole="admin"><AdminReceipts /></ProtectedRoute>} />
           <Route path="/admin/refunds" element={<ProtectedRoute requiredRole="admin"><AdminRefunds /></ProtectedRoute>} />
@@ -120,6 +130,9 @@ function App() {
           <Route path="/photographer/follow" element={<ProtectedRoute requiredRole="photographer"><PhotographerFollowPage /></ProtectedRoute>} />
           <Route path="/photographer/settings" element={<ProtectedRoute requiredRole="photographer"><PhotographerSettings /></ProtectedRoute>} />
           <Route path="/photographer/portfolio" element={<ProtectedRoute requiredRole="photographer"><PhotographerPortfolio /></ProtectedRoute>} />
+          <Route path="/photographer/analytics" element={<ProtectedRoute requiredRole="photographer"><SalesAnalytics /></ProtectedRoute>} />
+          <Route path="/photographer/referral" element={<ProtectedRoute requiredRole="photographer"><ReferralPage /></ProtectedRoute>} />
+          <Route path="/photographer/proofing" element={<ProtectedRoute requiredRole="photographer"><ClientProofing /></ProtectedRoute>} />
 
           {/* Buyer Routes */}
           <Route path="/buyer/cart" element={<ProtectedRoute requiredRole="buyer"><BuyerCart /></ProtectedRoute>} />
@@ -131,11 +144,15 @@ function App() {
           <Route path="/buyer/wallet" element={<ProtectedRoute requiredRole="buyer"><BuyerWallet /></ProtectedRoute>} />
           <Route path="/buyer/explore" element={<ProtectedRoute requiredRole="buyer"><BuyerExplore /></ProtectedRoute>} />
           <Route path="/buyer/follow" element={<ProtectedRoute requiredRole="buyer"><BuyerFollowPage /></ProtectedRoute>} />
+          <Route path="/buyer/referral" element={<ProtectedRoute requiredRole="buyer"><BuyerReferralPage /></ProtectedRoute>} />
           <Route path="/buyer/settings" element={<ProtectedRoute requiredRole="buyer"><BuyerSettings /></ProtectedRoute>} />
           <Route path="/buyer/messages" element={<ProtectedRoute><MessagingPage /></ProtectedRoute>} />
           <Route path="/messages" element={<ProtectedRoute><MessagingPage /></ProtectedRoute>} />
           <Route path="/album/:albumId/access/:token" element={<ProtectedRoute requiredRole="buyer"><BuyerAlbumAccess /></ProtectedRoute>} />
           <Route path="/share/:token" element={<ShareAccess />} />
+
+          {/* Proofing */}
+          <Route path="/proofing/:token" element={<ClientProofingView />} />
 
           {/* Public Portfolio */}
           <Route path="/portfolio/:username" element={<PublicPortfolio />} />

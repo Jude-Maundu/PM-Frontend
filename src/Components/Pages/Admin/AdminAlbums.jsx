@@ -5,6 +5,7 @@ import { API_ENDPOINTS } from "../../../api/apiConfig";
 import { toast } from "../../../utils/toast";
 import { showConfirm } from "../../../utils/confirm";
 import { placeholderMedium } from "../../../utils/placeholders";
+import PageHeader from "../../PageHeader";
 
 const AdminAlbums = () => {
   const [albums, setAlbums] = useState([]);
@@ -14,12 +15,6 @@ const AdminAlbums = () => {
 
   const token = localStorage.getItem("token");
   const headers = { Authorization: `Bearer ${token}` };
-
-  const glassStyle = {
-    background: "rgba(255,255,255,0.05)",
-    backdropFilter: "blur(10px)",
-    border: "1px solid rgba(255,255,255,0.1)",
-  };
 
   const fetchAlbums = async () => {
     try {
@@ -63,23 +58,32 @@ const AdminAlbums = () => {
 
   return (
     <AdminLayout>
-      <div className="position-relative" style={{ zIndex: 1 }}>
-        {/* Header */}
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <div>
-            <h2 className="fw-bold mb-1">
-              <i className="fas fa-folder-open me-2 text-warning"></i>
-              Albums Management
-            </h2>
-            <p className="text-white-50 small mb-0">{albums.length} albums on the platform</p>
-          </div>
-          <button className="btn btn-outline-warning rounded-pill px-4" onClick={fetchAlbums}>
+      <div className="mc-page">
+        <div className="d-flex justify-content-between align-items-start mb-2">
+          <PageHeader title="Album Management" subtitle="All photographer albums" />
+          <button className="btn btn-outline-warning rounded-pill px-4 mt-1" onClick={fetchAlbums}>
             <i className="fas fa-sync-alt me-2"></i>Refresh
           </button>
         </div>
 
+        {/* Stats */}
+        <div className="mc-stats-row-sm mb-4">
+          <div className="mc-card p-3">
+            <div className="fw-bold fs-4 text-white">{albums.length}</div>
+            <small className="text-white-50">Total Albums</small>
+          </div>
+          <div className="mc-card p-3">
+            <div className="fw-bold fs-4 text-white">{albums.filter(a => !a.isPrivate).length}</div>
+            <small className="text-white-50">Public</small>
+          </div>
+          <div className="mc-card p-3">
+            <div className="fw-bold fs-4 text-white">{albums.filter(a => a.isPrivate).length}</div>
+            <small className="text-white-50">Private</small>
+          </div>
+        </div>
+
         {/* Search */}
-        <div className="mb-4 p-3 rounded-4" style={glassStyle}>
+        <div className="mc-card mb-4">
           <div className="position-relative">
             <i className="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-white-50"></i>
             <input type="text" className="form-control"
@@ -90,12 +94,12 @@ const AdminAlbums = () => {
         </div>
 
         {loading ? (
-          <div className="text-center py-5 rounded-4" style={glassStyle}>
+          <div className="mc-card text-center py-5">
             <div className="spinner-border mb-3" style={{ color: "#6BBDD0" }}></div>
             <p className="text-white-50">Loading albums...</p>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-5 rounded-4" style={glassStyle}>
+          <div className="mc-card text-center py-5">
             <i className="fas fa-folder-open fa-4x text-white-50 mb-3"></i>
             <p className="text-white-50">No albums found</p>
           </div>
@@ -103,7 +107,7 @@ const AdminAlbums = () => {
           <div className="row g-3">
             {filtered.map(album => (
               <div className="col-12 col-md-6 col-lg-4" key={album._id}>
-                <div className="rounded-4 overflow-hidden h-100" style={{ ...glassStyle, borderRadius: 16 }}>
+                <div className="mc-card overflow-hidden h-100" style={{ padding: 0 }}>
                   {/* Cover */}
                   <div style={{ height: 160, position: "relative", overflow: "hidden", background: "#0d1f33" }}>
                     <img
@@ -147,8 +151,7 @@ const AdminAlbums = () => {
                         {album.createdAt ? new Date(album.createdAt).toLocaleDateString() : ""}
                       </small>
                       <button
-                        className="btn btn-sm rounded-3 px-3"
-                        style={{ background: "rgba(220,53,69,0.15)", color: "#dc3545", border: "1px solid rgba(220,53,69,0.3)" }}
+                        className="btn mc-btn mc-btn-danger btn-sm rounded-3 px-3"
                         onClick={() => handleDelete(album)}
                         disabled={deleting === album._id}
                       >

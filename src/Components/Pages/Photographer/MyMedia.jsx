@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import PhotographerLayout from "./PhotographerLayout";
+import PageHeader from "../../PageHeader";
 import { useNavigate } from "react-router-dom";
 import { fetchProtectedUrl, getImageUrl } from "../../../utils/imageUrl";
 import { placeholderMedium } from "../../../utils/placeholders";
@@ -25,6 +26,12 @@ import {
 } from "../../../api/API";
 
 const PhotographerMedia = () => {
+  // Bulk Pricing modal state
+  const [showBulkPricingModal, setShowBulkPricingModal] = useState(false);
+  const [bulkSelectedIds, setBulkSelectedIds] = useState(new Set());
+  const [bulkPrice, setBulkPrice] = useState("");
+  const [bulkApplying, setBulkApplying] = useState(false);
+
   // Watermark state
   const [watermark, setWatermark] = useState("");
   
@@ -593,6 +600,39 @@ const PhotographerMedia = () => {
     }
   };
 
+  // Handle bulk price apply
+  const handleBulkPriceApply = async () => {
+    const price = parseFloat(bulkPrice);
+    if (!bulkPrice || isNaN(price) || price < 0) {
+      toast.warning("Please enter a valid price (0 or more)");
+      return;
+    }
+    if (bulkSelectedIds.size === 0) {
+      toast.warning("Select at least one photo");
+      return;
+    }
+    setBulkApplying(true);
+    let successCount = 0;
+    for (const id of bulkSelectedIds) {
+      try {
+        await updateMediaPrice(id, price);
+        successCount++;
+      } catch (err) {
+        console.error("Failed to update price for", id, err);
+      }
+    }
+    setMedia(prev =>
+      prev.map(item =>
+        bulkSelectedIds.has(item._id) ? { ...item, price } : item
+      )
+    );
+    setBulkApplying(false);
+    setShowBulkPricingModal(false);
+    setBulkSelectedIds(new Set());
+    setBulkPrice("");
+    toast.success(`Updated price for ${successCount} photo${successCount !== 1 ? "s" : ""}`);
+  };
+
   // Check authentication
   useEffect(() => {
     const checkAuth = async () => {
@@ -659,20 +699,22 @@ const PhotographerMedia = () => {
 
   return (
     <PhotographerLayout>
-      <div className="position-relative px-2 px-sm-3">
-        {/* Header */}
-        <div className="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-4 gap-3">
-          <div>
-            <h4 className="fw-bold mb-1">
-              <i className="fas fa-photo-video me-2 text-warning"></i>
-              My Media
-            </h4>
-            <p className="text-white-50 small mb-0">
-              Manage your photos and videos
-            </p>
-          </div>
-          <div className="d-flex flex-wrap gap-2">
-            <button 
+      <div className="mc-page position-relative px-2 px-sm-3">
+        <PageHeader
+          title="My Media"
+          subtitle="Manage your photo library"
+        />
+        {/* Action Buttons */}
+        <div className="d-flex flex-wrap gap-2 mb-4">
+            <button
+              className="btn btn-outline-info rounded-pill px-3 px-sm-4 py-2"
+              style={{ fontSize: isMobile ? "0.85rem" : "0.9rem" }}
+              onClick={() => { setBulkSelectedIds(new Set()); setBulkPrice(""); setShowBulkPricingModal(true); }}
+            >
+              <i className="fas fa-tags me-2"></i>
+              {isMobile ? "Bulk Price" : "Bulk Pricing"}
+            </button>
+            <button
               className="btn btn-outline-success rounded-pill px-3 px-sm-4 py-2"
               style={{ fontSize: isMobile ? "0.85rem" : "0.9rem" }}
               onClick={() => setShowAlbumModal(true)}
@@ -680,7 +722,7 @@ const PhotographerMedia = () => {
               <i className="fas fa-folder-plus me-2"></i>
               {isMobile ? "Album" : "New Album"}
             </button>
-            <button 
+            <button
               className="btn btn-outline-warning rounded-pill px-3 px-sm-4 py-2"
               style={{ fontSize: isMobile ? "0.85rem" : "0.9rem" }}
               onClick={fetchMedia}
@@ -693,7 +735,6 @@ const PhotographerMedia = () => {
               {isMobile ? "Upload" : "Upload"}
             </Link>
           </div>
-        </div>
 
         {/* Tabs */}
         <div className="d-flex gap-2 mb-4 border-bottom border-secondary pb-2 overflow-x-auto">
@@ -1666,6 +1707,129 @@ const PhotographerMedia = () => {
           cursor: pointer;
         }
       `}</style>
+
+      {/* Bulk Pricing Modal */}
+      {showBulkPricingModal && (
+        <div className="modal show d-block" style={{ backgroundColor: "rgba(0,0,0,0.85)", zIndex: 1060 }}>
+          <div className="modal-dialog modal-dialog-centered m-3" style={{ maxWidth: isMobile ? "95%" : "600px" }}>
+            <div className="modal-content bg-dark border-info">
+              <div className="modal-header border-info p-3 p-sm-4">
+                <h5 className="modal-title text-info fs-6">
+                  <i className="fas fa-tags me-2"></i>Bulk Pricing
+                </h5>
+                <button className="btn-close btn-close-white" onClick={() => setShowBulkPricingModal(false)}></button>
+              </div>
+              <div className="modal-body p-3 p-sm-4">
+                {/* Price input */}
+                <div className="mb-4 p-3 rounded-3" style={{ background: "rgba(107,189,208,0.07)", border: "1px solid rgba(107,189,208,0.2)" }}>
+                  <label className="form-label text-white fw-semibold small mb-2">
+                    <i className="fas fa-tag me-1" style={{ color: "var(--pm-teal)" }}></i>
+                    Set price for selected photos (KES)
+                  </label>
+                  <input
+                    type="number"
+                    className="form-control bg-dark text-white border-secondary"
+                    placeholder="Enter price (0 = Free)"
+                    value={bulkPrice}
+                    onChange={(e) => setBulkPrice(e.target.value)}
+                    min="0"
+                    step="50"
+                    style={{ borderColor: "rgba(107,189,208,0.3)" }}
+                  />
+                </div>
+
+                {/* Select All */}
+                <div className="d-flex justify-content-between align-items-center mb-3">
+                  <label className="d-flex align-items-center gap-2" style={{ cursor: "pointer" }}>
+                    <input
+                      type="checkbox"
+                      checked={media.length > 0 && bulkSelectedIds.size === media.length}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setBulkSelectedIds(new Set(media.map(m => m._id)));
+                        } else {
+                          setBulkSelectedIds(new Set());
+                        }
+                      }}
+                      style={{ width: 16, height: 16, accentColor: "var(--pm-teal)" }}
+                    />
+                    <span className="text-white small fw-semibold">Select All ({media.length})</span>
+                  </label>
+                  <span className="badge rounded-pill" style={{ background: "rgba(107,189,208,0.15)", color: "var(--pm-teal)", border: "1px solid rgba(107,189,208,0.3)", fontSize: "0.75rem" }}>
+                    {bulkSelectedIds.size} selected
+                  </span>
+                </div>
+
+                {/* Photo list */}
+                <div style={{ maxHeight: "320px", overflowY: "auto" }}>
+                  {media.length === 0 ? (
+                    <p className="text-white-50 text-center py-3 small">No photos in your library yet.</p>
+                  ) : (
+                    media.map((item) => (
+                      <label
+                        key={item._id}
+                        className="d-flex align-items-center gap-3 p-2 rounded-3 mb-2"
+                        style={{
+                          cursor: "pointer",
+                          background: bulkSelectedIds.has(item._id) ? "rgba(107,189,208,0.1)" : "rgba(255,255,255,0.03)",
+                          border: `1px solid ${bulkSelectedIds.has(item._id) ? "rgba(107,189,208,0.3)" : "rgba(255,255,255,0.07)"}`,
+                          transition: "all 0.15s ease",
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={bulkSelectedIds.has(item._id)}
+                          onChange={(e) => {
+                            setBulkSelectedIds(prev => {
+                              const next = new Set(prev);
+                              if (e.target.checked) next.add(item._id);
+                              else next.delete(item._id);
+                              return next;
+                            });
+                          }}
+                          style={{ width: 16, height: 16, accentColor: "var(--pm-teal)", flexShrink: 0 }}
+                        />
+                        <img
+                          src={mediaUrls[item._id] || ""}
+                          alt={item.title}
+                          style={{ width: 40, height: 40, objectFit: "cover", borderRadius: 6, flexShrink: 0, background: "rgba(255,255,255,0.06)" }}
+                          onError={(e) => { e.target.style.display = "none"; }}
+                        />
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          <p className="mb-0 text-white text-truncate small fw-semibold">{item.title || "Untitled"}</p>
+                          <small style={{ color: "rgba(255,255,255,0.4)" }}>
+                            Current: KES {item.price || 0}
+                          </small>
+                        </div>
+                      </label>
+                    ))
+                  )}
+                </div>
+              </div>
+              <div className="modal-footer border-info p-3">
+                <button
+                  className="btn btn-outline-secondary rounded-pill px-4"
+                  onClick={() => setShowBulkPricingModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="btn rounded-pill px-5 fw-semibold"
+                  style={{ background: "var(--pm-teal)", color: "#fff" }}
+                  onClick={handleBulkPriceApply}
+                  disabled={bulkApplying || bulkSelectedIds.size === 0 || bulkPrice === ""}
+                >
+                  {bulkApplying ? (
+                    <><span className="spinner-border spinner-border-sm me-2"></span>Applying...</>
+                  ) : (
+                    <><i className="fas fa-check me-2"></i>Apply to {bulkSelectedIds.size} Photo{bulkSelectedIds.size !== 1 ? "s" : ""}</>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </PhotographerLayout>
   );
 };

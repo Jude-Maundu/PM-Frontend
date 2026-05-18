@@ -2,6 +2,7 @@ import { toast } from "../../../utils/toast";
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import axios from "axios";
 import PhotographerLayout from "./PhotographerLayout";
+import PageHeader from "../../PageHeader";
 import { API_ENDPOINTS } from "../../../api/apiConfig";
 import { getCurrentUserId, getAuthHeaders } from "../../../utils/auth";
 
@@ -81,11 +82,11 @@ const PhotographerProfile = () => {
   // Load saved images from localStorage
   useEffect(() => {
     if (!photographerId) return;
-    
+
     try {
       const savedProfileImage = localStorage.getItem(`photographer_profile_${photographerId}`);
       const savedCoverImage = localStorage.getItem(`photographer_cover_${photographerId}`);
-      
+
       if (savedProfileImage) {
         setProfile(prev => ({ ...prev, profileImage: savedProfileImage }));
       }
@@ -117,22 +118,22 @@ const PhotographerProfile = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       console.log("📡 Fetching profile for photographer ID:", photographerId);
-      
+
       // Get user details from backend
       let userData = user;
       try {
-        const userRes = await axios.get(API_ENDPOINTS.AUTH.GET_USER(photographerId), { 
+        const userRes = await axios.get(API_ENDPOINTS.AUTH.GET_USER(photographerId), {
           headers,
-          timeout: 10000 
+          timeout: 10000
         });
         userData = userRes.data;
         console.log("✅ Profile fetched successfully:", userData);
       } catch (err) {
         console.error("⚠️ Error fetching from backend:", err.message);
         console.log("Using cached user data from localStorage");
-        
+
         // If no cached user data, show error
         if (!user.name && !user.username) {
           setError("Unable to load profile. Please check your connection and try again.");
@@ -181,7 +182,7 @@ const PhotographerProfile = () => {
   const handleSave = async () => {
     setSaving(true);
     setError(null);
-    
+
     try {
       const updatePayload = {
         username: profile.name || user.username,
@@ -202,9 +203,9 @@ const PhotographerProfile = () => {
 
       // Try to save to backend
       try {
-        await axios.put(API_ENDPOINTS.AUTH.UPDATE_USER(photographerId), updatePayload, { 
+        await axios.put(API_ENDPOINTS.AUTH.UPDATE_USER(photographerId), updatePayload, {
           headers,
-          timeout: 10000 
+          timeout: 10000
         });
         console.log("✅ Profile saved to backend");
       } catch (err) {
@@ -242,7 +243,7 @@ const PhotographerProfile = () => {
       reader.readAsDataURL(file);
       reader.onload = () => {
         const base64Image = reader.result;
-        
+
         if (type === 'profile') {
           setProfile(prev => ({ ...prev, profileImage: base64Image }));
           localStorage.setItem(`photographer_profile_${photographerId}`, base64Image);
@@ -251,9 +252,9 @@ const PhotographerProfile = () => {
           localStorage.setItem(`photographer_cover_${photographerId}`, base64Image);
         }
 
-        const updatedUser = { 
-          ...user, 
-          ...(type === 'profile' ? { profileImage: base64Image } : { coverImage: base64Image }) 
+        const updatedUser = {
+          ...user,
+          ...(type === 'profile' ? { profileImage: base64Image } : { coverImage: base64Image })
         };
         localStorage.setItem("user", JSON.stringify(updatedUser));
 
@@ -274,11 +275,8 @@ const PhotographerProfile = () => {
   if (loading) {
     return (
       <PhotographerLayout>
-        <div className="text-center py-5">
-          <div className="spinner-border text-warning mb-3" role="status">
-            <span className="visually-hidden">Loading...</span>
-          </div>
-          <p className="text-white-50">Loading profile...</p>
+        <div style={{ padding: "2rem", textAlign: "center" }}>
+          <div className="spinner-border" style={{ color: "var(--mc-accent)" }}></div>
         </div>
       </PhotographerLayout>
     );
@@ -288,18 +286,21 @@ const PhotographerProfile = () => {
   if (error) {
     return (
       <PhotographerLayout>
-        <div className="text-center py-5">
-          <div className="alert alert-danger mb-4">
-            <i className="fas fa-exclamation-circle me-2"></i>
-            {error}
+        <PageHeader title="My Profile" subtitle="Manage your account details" />
+        <div className="mc-page">
+          <div className="mc-card text-center" style={{ padding: "2.5rem" }}>
+            <div className="alert alert-danger mb-4">
+              <i className="fas fa-exclamation-circle me-2"></i>
+              {error}
+            </div>
+            <button
+              className="mc-btn mc-btn-primary"
+              onClick={() => window.location.reload()}
+            >
+              <i className="fas fa-sync-alt me-2"></i>
+              Retry
+            </button>
           </div>
-          <button 
-            className="btn btn-warning"
-            onClick={() => window.location.reload()}
-          >
-            <i className="fas fa-sync-alt me-2"></i>
-            Retry
-          </button>
         </div>
       </PhotographerLayout>
     );
@@ -309,17 +310,20 @@ const PhotographerProfile = () => {
   if (!photographerId) {
     return (
       <PhotographerLayout>
-        <div className="text-center py-5">
-          <i className="fas fa-user-lock text-warning fa-4x mb-3"></i>
-          <h4 className="text-white mb-3">Authentication Required</h4>
-          <p className="text-white-50 mb-4">Please login to view your profile</p>
-          <button 
-            className="btn btn-warning"
-            onClick={() => window.location.href = "/login"}
-          >
-            <i className="fas fa-sign-in-alt me-2"></i>
-            Go to Login
-          </button>
+        <PageHeader title="My Profile" subtitle="Manage your account details" />
+        <div className="mc-page">
+          <div className="mc-card text-center" style={{ padding: "2.5rem" }}>
+            <i className="fas fa-user-lock fa-4x mb-3" style={{ color: "var(--mc-accent-gold)" }}></i>
+            <h4 className="text-white mb-3">Authentication Required</h4>
+            <p className="text-white-50 mb-4">Please login to view your profile</p>
+            <button
+              className="mc-btn mc-btn-primary"
+              onClick={() => window.location.href = "/login"}
+            >
+              <i className="fas fa-sign-in-alt me-2"></i>
+              Go to Login
+            </button>
+          </div>
         </div>
       </PhotographerLayout>
     );
@@ -327,127 +331,128 @@ const PhotographerProfile = () => {
 
   return (
     <PhotographerLayout>
-      {/* Cover Image */}
-      <div className="position-relative mb-5">
-        <div
-          className="rounded-3"
-          style={{
-            height: "300px",
-            backgroundImage: `url(${getImageUrl('cover')})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            position: "relative",
-          }}
-        >
+      <PageHeader title="My Profile" subtitle="Manage your account details" />
+      <div className="mc-page">
+        {/* Cover Image */}
+        <div className="position-relative mb-5">
           <div
-            className="position-absolute top-0 start-0 w-100 h-100 rounded-3"
+            className="rounded-3"
             style={{
-              background: "linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.7) 100%)",
+              height: "300px",
+              backgroundImage: `url(${getImageUrl('cover')})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              position: "relative",
             }}
-          ></div>
+          >
+            <div
+              className="position-absolute top-0 start-0 w-100 h-100 rounded-3"
+              style={{
+                background: "linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.7) 100%)",
+              }}
+            ></div>
 
-          {editing && (
-            <div className="position-absolute bottom-0 end-0 m-3">
-              <label className="btn btn-sm btn-warning">
-                {uploadingImage ? (
-                  <span className="spinner-border spinner-border-sm me-2"></span>
-                ) : (
-                  <i className="fas fa-camera me-2"></i>
-                )}
-                Change Cover
-                <input
-                  type="file"
-                  className="d-none"
-                  accept="image/*"
-                  onChange={(e) => handleImageUpload('cover', e.target.files[0])}
-                  disabled={uploadingImage}
-                />
-              </label>
-            </div>
-          )}
-        </div>
-
-        {/* Profile Image */}
-        <div className="position-absolute bottom-0 start-0 translate-middle-y ms-4">
-          <div className="position-relative">
-            <img
-              src={getImageUrl('profile')}
-              alt={profile.name}
-              className="rounded-circle border border-4 border-warning"
-              style={{ width: "150px", height: "150px", objectFit: "cover" }}
-              onError={() => handleImageError('profile')}
-            />
             {editing && (
-              <label className="position-absolute bottom-0 end-0 btn btn-sm btn-warning rounded-circle p-2"
-                     style={{ transform: "translate(10%, 10%)" }}>
-                {uploadingImage ? (
-                  <span className="spinner-border spinner-border-sm"></span>
-                ) : (
-                  <i className="fas fa-camera"></i>
-                )}
-                <input
-                  type="file"
-                  className="d-none"
-                  accept="image/*"
-                  onChange={(e) => handleImageUpload('profile', e.target.files[0])}
-                  disabled={uploadingImage}
-                />
-              </label>
+              <div className="position-absolute bottom-0 end-0 m-3">
+                <label className="mc-btn mc-btn-ghost">
+                  {uploadingImage ? (
+                    <span className="spinner-border spinner-border-sm me-2"></span>
+                  ) : (
+                    <i className="fas fa-camera me-2"></i>
+                  )}
+                  Change Cover
+                  <input
+                    type="file"
+                    className="d-none"
+                    accept="image/*"
+                    onChange={(e) => handleImageUpload('cover', e.target.files[0])}
+                    disabled={uploadingImage}
+                  />
+                </label>
+              </div>
+            )}
+          </div>
+
+          {/* Profile Image */}
+          <div className="position-absolute bottom-0 start-0 translate-middle-y ms-4">
+            <div className="position-relative">
+              <img
+                src={getImageUrl('profile')}
+                alt={profile.name}
+                className="rounded-circle border border-4 border-warning"
+                style={{ width: "150px", height: "150px", objectFit: "cover" }}
+                onError={() => handleImageError('profile')}
+              />
+              {editing && (
+                <label className="position-absolute bottom-0 end-0 btn btn-sm btn-warning rounded-circle p-2"
+                       style={{ transform: "translate(10%, 10%)" }}>
+                  {uploadingImage ? (
+                    <span className="spinner-border spinner-border-sm"></span>
+                  ) : (
+                    <i className="fas fa-camera"></i>
+                  )}
+                  <input
+                    type="file"
+                    className="d-none"
+                    accept="image/*"
+                    onChange={(e) => handleImageUpload('profile', e.target.files[0])}
+                    disabled={uploadingImage}
+                  />
+                </label>
+              )}
+            </div>
+          </div>
+
+          {/* Edit Button */}
+          <div className="position-absolute top-0 end-0 m-3">
+            {!editing ? (
+              <button
+                className="mc-btn mc-btn-primary"
+                onClick={() => setEditing(true)}
+              >
+                <i className="fas fa-edit me-2"></i>
+                Edit Profile
+              </button>
+            ) : (
+              <div className="d-flex gap-2">
+                <button
+                  className="mc-btn mc-btn-primary"
+                  onClick={handleSave}
+                  disabled={saving || uploadingImage}
+                >
+                  {saving ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2"></span>
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <i className="fas fa-check me-2"></i>
+                      Save
+                    </>
+                  )}
+                </button>
+                <button
+                  className="mc-btn mc-btn-ghost"
+                  onClick={() => {
+                    setEditing(false);
+                    fetchProfile();
+                  }}
+                >
+                  <i className="fas fa-times"></i>
+                </button>
+              </div>
             )}
           </div>
         </div>
 
-        {/* Edit Button */}
-        <div className="position-absolute top-0 end-0 m-3">
-          {!editing ? (
-            <button
-              className="btn btn-warning"
-              onClick={() => setEditing(true)}
-            >
-              <i className="fas fa-edit me-2"></i>
-              Edit Profile
-            </button>
-          ) : (
-            <div className="btn-group">
-              <button
-                className="btn btn-success"
-                onClick={handleSave}
-                disabled={saving || uploadingImage}
-              >
-                {saving ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm me-2"></span>
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <i className="fas fa-check me-2"></i>
-                    Save
-                  </>
-                )}
-              </button>
-              <button
-                className="btn btn-secondary"
-                onClick={() => {
-                  setEditing(false);
-                  fetchProfile();
-                }}
-              >
-                <i className="fas fa-times"></i>
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Rest of your profile content */}
-      <div className="row">
-        <div className="col-md-4">
-          {/* Basic Info Card */}
-          <div className="card bg-dark border-secondary mb-4">
-            <div className="card-body">
+        {/* Profile Content */}
+        <div className="row">
+          <div className="col-md-4">
+            {/* Basic Info Card */}
+            <div className="mc-card" style={{ marginBottom: "1.25rem" }}>
               <h4 className="fw-bold mb-0">{profile.name}</h4>
-              <p className="text-warning mb-2">
+              <p style={{ color: "var(--mc-accent-gold)", marginBottom: "0.5rem" }}>
                 <i className="fas fa-camera me-2"></i>
                 Photographer
               </p>
@@ -512,12 +517,12 @@ const PhotographerProfile = () => {
                 </>
               )}
             </div>
-          </div>
 
-          {/* Social Links */}
-          <div className="card bg-dark border-secondary mb-4">
-            <div className="card-body">
-              <h6 className="text-warning mb-3">Social Links</h6>
+            {/* Social Links Card */}
+            <div className="mc-card" style={{ marginBottom: "1.25rem" }}>
+              <div className="mc-card-header">
+                <span className="mc-card-title">SOCIAL LINKS</span>
+              </div>
               {editing ? (
                 <>
                   <div className="mb-3">
@@ -526,9 +531,9 @@ const PhotographerProfile = () => {
                       type="text"
                       className="form-control form-control-sm bg-dark text-white border-secondary"
                       value={profile.social.instagram}
-                      onChange={(e) => setProfile({ 
-                        ...profile, 
-                        social: { ...profile.social, instagram: e.target.value } 
+                      onChange={(e) => setProfile({
+                        ...profile,
+                        social: { ...profile.social, instagram: e.target.value }
                       })}
                     />
                   </div>
@@ -538,9 +543,9 @@ const PhotographerProfile = () => {
                       type="text"
                       className="form-control form-control-sm bg-dark text-white border-secondary"
                       value={profile.social.twitter}
-                      onChange={(e) => setProfile({ 
-                        ...profile, 
-                        social: { ...profile.social, twitter: e.target.value } 
+                      onChange={(e) => setProfile({
+                        ...profile,
+                        social: { ...profile.social, twitter: e.target.value }
                       })}
                     />
                   </div>
@@ -550,9 +555,9 @@ const PhotographerProfile = () => {
                       type="text"
                       className="form-control form-control-sm bg-dark text-white border-secondary"
                       value={profile.social.facebook}
-                      onChange={(e) => setProfile({ 
-                        ...profile, 
-                        social: { ...profile.social, facebook: e.target.value } 
+                      onChange={(e) => setProfile({
+                        ...profile,
+                        social: { ...profile.social, facebook: e.target.value }
                       })}
                     />
                   </div>
@@ -561,19 +566,19 @@ const PhotographerProfile = () => {
                 <div className="d-flex gap-3">
                   {profile.social.instagram && (
                     <a href={`https://instagram.com/${profile.social.instagram.replace('@', '')}`} target="_blank" rel="noreferrer"
-                       className="text-white-50 hover-warning">
+                       className="text-white-50">
                       <i className="fab fa-instagram fa-lg"></i>
                     </a>
                   )}
                   {profile.social.twitter && (
                     <a href={`https://twitter.com/${profile.social.twitter.replace('@', '')}`} target="_blank" rel="noreferrer"
-                       className="text-white-50 hover-warning">
+                       className="text-white-50">
                       <i className="fab fa-twitter fa-lg"></i>
                     </a>
                   )}
                   {profile.social.facebook && (
                     <a href={`https://facebook.com/${profile.social.facebook}`} target="_blank" rel="noreferrer"
-                       className="text-white-50 hover-warning">
+                       className="text-white-50">
                       <i className="fab fa-facebook fa-lg"></i>
                     </a>
                   )}
@@ -581,14 +586,14 @@ const PhotographerProfile = () => {
               )}
             </div>
           </div>
-        </div>
 
-        <div className="col-md-8">
-          <div className="card bg-dark border-secondary">
-            <div className="card-body">
+          <div className="col-md-8">
+            <div className="mc-card">
               {/* Bio */}
               <div className="mb-4">
-                <h6 className="text-warning mb-3">Bio</h6>
+                <div className="mc-card-header">
+                  <span className="mc-card-title">BIO</span>
+                </div>
                 {editing ? (
                   <textarea
                     className="form-control bg-dark text-white border-secondary"
@@ -603,7 +608,9 @@ const PhotographerProfile = () => {
 
               {/* Skills */}
               <div className="mb-4">
-                <h6 className="text-warning mb-3">Skills & Specialties</h6>
+                <div className="mc-card-header">
+                  <span className="mc-card-title">SKILLS &amp; SPECIALTIES</span>
+                </div>
                 {editing ? (
                   <input
                     type="text"
@@ -624,8 +631,10 @@ const PhotographerProfile = () => {
               </div>
 
               {/* Equipment */}
-              <div className="mb-4">
-                <h6 className="text-warning mb-3">Equipment</h6>
+              <div className="mb-2">
+                <div className="mc-card-header">
+                  <span className="mc-card-title">EQUIPMENT</span>
+                </div>
                 {editing ? (
                   <input
                     type="text"
@@ -635,7 +644,7 @@ const PhotographerProfile = () => {
                     placeholder="Separate with commas"
                   />
                 ) : (
-                  <ul className="list-unstyled">
+                  <ul className="list-unstyled mb-0">
                     {profile.equipment.map((item, idx) => (
                       <li key={idx} className="mb-2">
                         <i className="fas fa-camera text-warning me-2"></i>
@@ -645,6 +654,28 @@ const PhotographerProfile = () => {
                   </ul>
                 )}
               </div>
+
+              {editing && (
+                <div className="mt-4">
+                  <button
+                    className="mc-btn mc-btn-primary"
+                    onClick={handleSave}
+                    disabled={saving || uploadingImage}
+                  >
+                    {saving ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2"></span>
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <i className="fas fa-save me-2"></i>
+                        Save Profile
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

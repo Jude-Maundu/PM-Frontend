@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import BuyerLayout from "./BuyerLayout";
+import PageHeader from "../../PageHeader";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { API_BASE_URL, API_ENDPOINTS } from "../../../api/apiConfig";
@@ -538,31 +539,16 @@ const BuyerCart = () => {
 
   return (
     <BuyerLayout>
-      <div className="container-fluid px-2 px-sm-3 px-md-4 py-3 py-md-4">
-        {/* Header */}
-        <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-3 mb-md-4 gap-3">
-          <div className="flex-grow-1">
-            <h1 className="fw-bold text-white mb-1 fs-3 fs-md-2">
-              <i className="fas fa-shopping-cart me-2 me-md-3 text-warning"></i>
-              Shopping Cart
-            </h1>
-            <p className="text-white-50 mb-0 small">
-              {cartItems.length} {cartItems.length === 1 ? 'item' : 'items'} in your cart
-            </p>
-          </div>
-          {cartItems.length > 0 && (
-            <button
-              className="btn btn-outline-danger btn-sm btn-md-lg flex-shrink-0"
-              onClick={clearCart}
-              disabled={updating}
-              style={glassStyle}
-            >
-              <i className="fas fa-trash me-1 me-md-2"></i>
-              <span className="d-none d-sm-inline">Clear Cart</span>
-              <span className="d-inline d-sm-none">Clear</span>
+      <div className="mc-page container-fluid px-2 px-sm-3 px-md-4 py-3 py-md-4">
+        <PageHeader
+          title="Shopping Cart"
+          subtitle={`${cartItems.length} ${cartItems.length === 1 ? 'item' : 'items'} in your cart`}
+          action={cartItems.length > 0 && (
+            <button className="btn mc-btn mc-btn-danger btn-sm flex-shrink-0" onClick={clearCart} disabled={updating}>
+              <i className="fas fa-trash me-1 me-md-2"></i>Clear Cart
             </button>
           )}
-        </div>
+        />
 
         {/* Checkout Preview */}
         {(checkoutStep === 'processing' || checkoutStep === 'success') && checkoutPreviewItems.length > 0 && (
@@ -645,7 +631,7 @@ const BuyerCart = () => {
                   const mediaEntity = getMediaFromCartItem(item);
                   return (
                     <div key={item._id || index} className="col-12">
-                      <div className="card bg-dark border-secondary h-100" style={glassStyle}>
+                      <div className="mc-card h-100">
                         <div className="card-body p-3 p-md-4">
                           <div className="row align-items-center g-3">
                             <div className="col-4 col-sm-3 col-md-3 col-lg-3">
@@ -686,7 +672,7 @@ const BuyerCart = () => {
                                 </div>
                               </div>
                               <button
-                                className="btn btn-outline-danger btn-sm w-100 w-sm-auto"
+                                className="btn mc-btn mc-btn-danger btn-sm w-100 w-sm-auto"
                                 onClick={() => removeFromCart(getMediaIdFromItem(item))}
                                 disabled={updating}
                               >
@@ -707,8 +693,8 @@ const BuyerCart = () => {
             {/* Checkout Sidebar */}
             <div className="col-12 col-lg-4 order-first order-lg-last">
               <div className="sticky-top" style={{ top: '20px' }}>
-                <div className="card bg-dark border-warning mb-3 mb-md-4" style={glassStyle}>
-                  <div className="card-header bg-warning text-dark py-2 py-md-3">
+                <div className="mc-card mb-3 mb-md-4">
+                  <div className="card-header bg-transparent border-0 py-2 py-md-3">
                     <h5 className="mb-0 fw-bold fs-6 fs-md-5">
                       <i className="fas fa-receipt me-2"></i>
                       Order Summary
@@ -733,8 +719,8 @@ const BuyerCart = () => {
                   </div>
                 </div>
 
-                <div className="card bg-dark border-secondary mb-3 mb-md-4" style={glassStyle}>
-                  <div className="card-header py-2 py-md-3">
+                <div className="mc-card mb-3 mb-md-4">
+                  <div className="card-header bg-transparent border-0 py-2 py-md-3">
                     <h6 className="mb-0 text-white fw-bold fs-6 fs-md-6">
                       <i className="fas fa-credit-card me-2"></i>
                       Payment Method
@@ -808,7 +794,7 @@ const BuyerCart = () => {
                     )}
 
                     <button
-                      className={`btn w-100 ${paymentMethod === 'mpesa' ? 'btn-success' : 'btn-warning'} py-2 py-md-3`}
+                      className="btn mc-btn mc-btn-primary w-100 py-2 py-md-3"
                       style={{ fontSize: '0.9rem', fontWeight: '600' }}
                       onClick={paymentMethod === 'mpesa' ? handleMpesaCheckout : handleWalletCheckout}
                       disabled={

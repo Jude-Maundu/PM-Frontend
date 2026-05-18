@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import { API_ENDPOINTS } from '../../../api/apiConfig';
+import ReviewsSection from '../../ReviewsSection';
 
 /* ──────────────── shared helpers ──────────────── */
 
@@ -247,6 +248,11 @@ function NoirTemplate({ portfolio }) {
           <SocialLinks social={social} accentColor={accent} />
         </section>
       )}
+
+      {/* Reviews */}
+      <section style={{ padding: '40px 40px 80px', maxWidth: '900px', margin: '0 auto', color: '#fff' }}>
+        <ReviewsSection photographerId={portfolio.photographer?._id} showForm={false} />
+      </section>
     </div>
   );
 }
@@ -402,6 +408,11 @@ function StudioTemplate({ portfolio }) {
           <SocialLinks social={social} accentColor={accent} />
         </section>
       )}
+
+      {/* Reviews */}
+      <section style={{ padding: '40px 40px 80px', maxWidth: '900px', margin: '0 auto', color: '#1a1a1a', background: '#f7f4f0' }}>
+        <ReviewsSection photographerId={portfolio.photographer?._id} showForm={false} />
+      </section>
     </div>
   );
 }
@@ -563,6 +574,11 @@ function BoldTemplate({ portfolio }) {
           <SocialLinks social={social} accentColor={accent} />
         </section>
       )}
+
+      {/* Reviews */}
+      <section style={{ padding: '40px 48px 80px', maxWidth: '900px', margin: '0 auto', color: '#fff' }}>
+        <ReviewsSection photographerId={portfolio.photographer?._id} showForm={false} />
+      </section>
     </div>
   );
 }
@@ -707,6 +723,11 @@ function LensTemplate({ portfolio }) {
           </div>
         </section>
       )}
+
+      {/* Reviews */}
+      <section style={{ padding: '40px 40px 80px', maxWidth: '900px', margin: '0 auto', color: '#fff' }}>
+        <ReviewsSection photographerId={portfolio.photographer?._id} showForm={false} />
+      </section>
     </div>
   );
 }

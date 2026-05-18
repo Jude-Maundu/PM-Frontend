@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import PhotographerLayout from './PhotographerLayout';
+import PageHeader from '../../PageHeader';
 import { API_ENDPOINTS, SITE_URL } from '../../../api/apiConfig';
 import { toast } from '../../../utils/toast';
 import { getAuthHeaders, getStoredUser } from '../../../utils/auth';
@@ -225,42 +226,23 @@ const PhotographerPortfolio = () => {
 
   return (
     <PhotographerLayout>
-      <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-        {/* Header */}
-        <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-          <div>
-            <h2 style={{ color: '#fff', fontWeight: 700, marginBottom: 0 }}>
-              <i className="fas fa-globe me-2" style={{ color: '#6BBDD0' }}></i>
-              Portfolio Builder
-            </h2>
-            <small style={{ color: 'rgba(255,255,255,0.5)' }}>
-              Build and publish your photographer mini-website
-            </small>
-          </div>
-          <div className="d-flex gap-2">
-            {username && (
-              <a
-                href={`/portfolio/${username}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-outline-info btn-sm"
-              >
-                <i className="fas fa-external-link-alt me-1"></i>Preview
-              </a>
-            )}
-            <button
-              className="btn btn-warning btn-sm"
-              onClick={handleSave}
-              disabled={saving}
-            >
-              {saving ? (
-                <><span className="spinner-border spinner-border-sm me-1" role="status"></span>Saving...</>
-              ) : (
-                <><i className="fas fa-save me-1"></i>Save</>
+      <div className="mc-page" style={{ maxWidth: '900px', margin: '0 auto' }}>
+        <PageHeader
+          title="My Portfolio"
+          subtitle="Build and publish your portfolio website"
+          action={
+            <div className="d-flex gap-2">
+              {username && (
+                <a href={`/portfolio/${username}`} target="_blank" rel="noopener noreferrer" className="btn mc-btn mc-btn-ghost btn-sm">
+                  <i className="fas fa-external-link-alt me-1"></i>Preview
+                </a>
               )}
-            </button>
-          </div>
-        </div>
+              <button className="btn mc-btn mc-btn-primary btn-sm" onClick={handleSave} disabled={saving}>
+                {saving ? <><span className="spinner-border spinner-border-sm me-1"></span>Saving...</> : <><i className="fas fa-save me-1"></i>Save</>}
+              </button>
+            </div>
+          }
+        />
 
         {/* Tabs */}
         <div className="d-flex gap-1 flex-wrap mb-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '4px' }}>
@@ -294,12 +276,10 @@ const PhotographerPortfolio = () => {
                 <div
                   key={t.id}
                   onClick={() => setField('template', t.id)}
+                  className={`mc-card`}
                   style={{
-                    ...glassCard,
                     cursor: 'pointer',
-                    border: portfolio.template === t.id
-                      ? `2px solid #6BBDD0`
-                      : '1px solid rgba(255,255,255,0.1)',
+                    border: portfolio.template === t.id ? `2px solid var(--mc-accent)` : undefined,
                     transition: 'all 0.2s',
                     padding: '12px',
                     marginBottom: 0,
@@ -333,7 +313,7 @@ const PhotographerPortfolio = () => {
             </div>
 
             {/* Accent color */}
-            <div style={glassCard}>
+            <div className="mc-card">
               <label style={labelStyle}>Accent Color</label>
               <div className="d-flex align-items-center gap-3">
                 <input
@@ -352,7 +332,7 @@ const PhotographerPortfolio = () => {
 
         {/* Hero Tab */}
         {activeTab === 'hero' && (
-          <div style={glassCard}>
+          <div className="mc-card">
             <h5 style={{ color: '#6BBDD0', marginBottom: '16px' }}>Hero Section</h5>
             <label style={labelStyle}>Main Headline</label>
             <input
@@ -399,7 +379,7 @@ const PhotographerPortfolio = () => {
 
         {/* About Tab */}
         {activeTab === 'about' && (
-          <div style={glassCard}>
+          <div className="mc-card">
             <h5 style={{ color: '#6BBDD0', marginBottom: '16px' }}>About Me</h5>
             <label style={labelStyle}>About Me Text</label>
             <textarea
@@ -430,7 +410,7 @@ const PhotographerPortfolio = () => {
         {/* Gallery Tab */}
         {activeTab === 'gallery' && (
           <div>
-            <div style={glassCard}>
+            <div className="mc-card">
               <h5 style={{ color: '#6BBDD0', marginBottom: '4px' }}>Featured Photos</h5>
               <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.82rem', marginBottom: '14px' }}>
                 Click thumbnails to feature them on your portfolio
@@ -485,7 +465,7 @@ const PhotographerPortfolio = () => {
               )}
             </div>
 
-            <div style={glassCard}>
+            <div className="mc-card">
               <h5 style={{ color: '#6BBDD0', marginBottom: '4px' }}>Featured Albums</h5>
               <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.82rem', marginBottom: '14px' }}>
                 Select albums to display on your portfolio
@@ -549,7 +529,7 @@ const PhotographerPortfolio = () => {
 
         {/* Contact Tab */}
         {activeTab === 'contact' && (
-          <div style={glassCard}>
+          <div className="mc-card">
             <h5 style={{ color: '#6BBDD0', marginBottom: '16px' }}>Contact & Social</h5>
 
             <h6 style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '10px' }}>
@@ -583,7 +563,7 @@ const PhotographerPortfolio = () => {
         {/* Publish Tab */}
         {activeTab === 'publish' && (
           <div>
-            <div style={glassCard}>
+            <div className="mc-card">
               <h5 style={{ color: '#6BBDD0', marginBottom: '16px' }}>Publish Settings</h5>
 
               {/* Toggle */}

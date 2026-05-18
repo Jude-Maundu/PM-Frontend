@@ -32,8 +32,14 @@ const AdminSidebar = ({ isOpen, onToggle, onNav }) => {
     },
     {
       path: "/admin/analytics",
-      icon: "fa-chart-line",
+      icon: "fa-chart-bar",
       label: "Analytics",
+      badge: null,
+    },
+    {
+      path: "/admin/moderation",
+      icon: "fa-shield-alt",
+      label: "Moderation",
       badge: null,
     },
     {

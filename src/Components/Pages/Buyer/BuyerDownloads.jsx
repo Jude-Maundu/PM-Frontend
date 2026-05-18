@@ -7,6 +7,8 @@ import { API_BASE_URL, API_ENDPOINTS } from "../../../api/apiConfig";
 import { placeholderMedium } from "../../../utils/placeholders";
 import { getImageUrl, fetchProtectedUrl } from "../../../utils/imageUrl";
 import { getLocalPurchases, setLocalPurchases, disableApi, isApiAvailable } from "../../../utils/localStore";
+import { generateLicenseCertificate } from "../../../utils/generateCertificate";
+import PageHeader from "../../PageHeader";
 
 const API = API_BASE_URL;
 
@@ -30,45 +32,35 @@ const BuyerDownloads = () => {
   // Extract Cloudinary URL from the item
   const getCloudinaryUrl = useCallback((item) => {
     const mediaObj = item.mediaDetails || item.media || item;
-    
-    // Check for fileUrl
+
     if (mediaObj.fileUrl && mediaObj.fileUrl.includes('cloudinary')) {
       return mediaObj.fileUrl;
     }
-    
-    // Check for url
     if (mediaObj.url && mediaObj.url.includes('cloudinary')) {
       return mediaObj.url;
     }
-    
-    // Check for imageUrl
     if (mediaObj.imageUrl && mediaObj.imageUrl.includes('cloudinary')) {
       return mediaObj.imageUrl;
     }
-    
-    // Check from thumbnail
     if (mediaObj.thumbnail && mediaObj.thumbnail.includes('cloudinary')) {
       return mediaObj.thumbnail;
     }
-    
     return null;
   }, []);
 
   // Get media image URL
   const getMediaImageUrl = useCallback((item) => {
     const mediaId = item.mediaId || item.mediaDetails?._id || item._id;
-    
+
     if (mediaId && imageUrls[mediaId]) {
       return imageUrls[mediaId];
     }
-    
-    // Try Cloudinary URL
+
     const cloudinaryUrl = getCloudinaryUrl(item);
     if (cloudinaryUrl) {
       return cloudinaryUrl;
     }
-    
-    // Try direct URL from media object
+
     const mediaObj = item.mediaDetails || item.media || item;
     if (mediaObj) {
       const url = getImageUrl(mediaObj, null);
@@ -76,7 +68,7 @@ const BuyerDownloads = () => {
         return url;
       }
     }
-    
+
     return placeholderMedium;
   }, [imageUrls, getCloudinaryUrl]);
 
@@ -88,23 +80,20 @@ const BuyerDownloads = () => {
   // Resolve image URL
   const resolveImageUrl = useCallback(async (item, mediaId) => {
     console.log(`🔍 Resolving image URL for media ${mediaId}`);
-    
-    // Try Cloudinary URL first
+
     const cloudinaryUrl = getCloudinaryUrl(item);
     if (cloudinaryUrl) {
       console.log(`✅ Using Cloudinary URL for ${mediaId}`);
       return cloudinaryUrl;
     }
-    
+
     let mediaObj = item.mediaDetails || item.media || item;
-    
-    // Try direct file URL
+
     if (mediaObj?.fileUrl && mediaObj.fileUrl.startsWith('http')) {
       console.log(`✅ Using direct URL for ${mediaId}`);
       return mediaObj.fileUrl;
     }
 
-    // Try protected URL API (may fail with 403)
     try {
       const protectedUrl = await fetchProtectedUrl(mediaId, { userId, token });
       if (protectedUrl && protectedUrl.startsWith('http')) {
@@ -115,35 +104,34 @@ const BuyerDownloads = () => {
       console.warn(`⚠️ Failed to fetch protected URL for ${mediaId}:`, err.message);
     }
 
-    // Fallback to placeholder
     return placeholderMedium;
   }, [userId, token, getCloudinaryUrl]);
 
   // Preload all image URLs
   const preloadImageUrls = useCallback(async (downloadsList) => {
     const urlMap = {};
-    
+
     for (const item of downloadsList) {
       let mediaId = item.mediaId || item.mediaDetails?._id || item._id;
-      
+
       if (!mediaId && item.mediaDetails?._id) mediaId = item.mediaDetails._id;
       if (!mediaId && item.media?._id) mediaId = item.media._id;
       if (!mediaId && item._id) mediaId = item._id;
-      
+
       if (!mediaId) {
         console.warn("⚠️ No media ID found for item:", item);
         continue;
       }
-      
+
       console.log(`📸 Preloading image for media ${mediaId}`);
       setLoadingImages(prev => ({ ...prev, [mediaId]: true }));
-      
+
       const url = await resolveImageUrl(item, mediaId);
       urlMap[mediaId] = url;
-      
+
       setLoadingImages(prev => ({ ...prev, [mediaId]: false }));
     }
-    
+
     setImageUrls(urlMap);
     console.log(`✅ Preloaded ${Object.keys(urlMap).length} image URLs`);
   }, [resolveImageUrl]);
@@ -207,10 +195,10 @@ const BuyerDownloads = () => {
 
       setDownloads(normalizedDownloads);
       setCurrentPage(1);
-      
+
       setLocalPurchases(normalizedDownloads);
       await preloadImageUrls(normalizedDownloads);
-      
+
     } catch (err) {
       console.error("❌ Error fetching downloads:", err);
 
@@ -254,7 +242,7 @@ const BuyerDownloads = () => {
   const handleDownload = useCallback(async (item) => {
     const mediaId = item.mediaId;
     const title = item.title;
-    
+
     if (!mediaId) {
       toast.error("Cannot download: Media ID not found");
       return;
@@ -264,12 +252,12 @@ const BuyerDownloads = () => {
 
     try {
       console.log(`📥 Downloading media: ${mediaId}`);
-      
+
       // Method 1: Try Cloudinary URL directly
       const cloudinaryUrl = getCloudinaryUrl(item);
       if (cloudinaryUrl) {
         console.log(`🌐 Using Cloudinary URL for download: ${cloudinaryUrl}`);
-        
+
         const response = await fetch(cloudinaryUrl);
         if (response.ok) {
           const blob = await response.blob();
@@ -286,12 +274,12 @@ const BuyerDownloads = () => {
           return;
         }
       }
-      
+
       // Method 2: Try stored image URL
       const imageUrl = getMediaImageUrl(item);
       if (imageUrl && imageUrl !== placeholderMedium && imageUrl.startsWith('http') && !imageUrl.includes('placeholder')) {
         console.log(`🌐 Using stored image URL for download: ${imageUrl}`);
-        
+
         const response = await fetch(imageUrl);
         if (response.ok) {
           const blob = await response.blob();
@@ -308,11 +296,11 @@ const BuyerDownloads = () => {
           return;
         }
       }
-      
+
       // Method 3: Try API with token
       console.log("🔄 Trying API download with token...");
       const downloadUrl = `${API}/media/${mediaId}/download`;
-      
+
       const response = await fetch(downloadUrl, {
         method: 'GET',
         headers: {
@@ -334,7 +322,7 @@ const BuyerDownloads = () => {
         setDownloadingId(null);
         return;
       }
-      
+
       // Method 4: Open in new tab as last resort
       if (imageUrl && imageUrl !== placeholderMedium) {
         console.log(`🌐 Opening image in new tab: ${imageUrl}`);
@@ -343,9 +331,9 @@ const BuyerDownloads = () => {
         setDownloadingId(null);
         return;
       }
-      
+
       throw new Error("No downloadable URL found");
-      
+
     } catch (err) {
       console.error("❌ Download error:", err);
       toast.error("Unable to download this file. Please try again later.");
@@ -367,9 +355,8 @@ const BuyerDownloads = () => {
           <i className="fas fa-lock text-warning fa-4x mb-3"></i>
           <h4 className="text-white mb-3">Authentication Required</h4>
           <p className="text-white-50 mb-4">Please login to view your downloads</p>
-          <Link to="/login" className="btn btn-warning">
-            <i className="fas fa-sign-in-alt me-2"></i>
-            Go to Login
+          <Link to="/login" className="mc-btn mc-btn-primary">
+            <i className="fas fa-sign-in-alt me-2"></i>Go to Login
           </Link>
         </div>
       </BuyerLayout>
@@ -378,23 +365,20 @@ const BuyerDownloads = () => {
 
   return (
     <BuyerLayout>
-      <div className="text-white">
-        {/* Header */}
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <h2 className="fw-bold">
-            <i className="fas fa-download me-2 text-warning"></i>
-            My Downloads
-          </h2>
-          <button 
-            className="btn btn-outline-warning btn-sm rounded-pill px-4"
+      <PageHeader
+        title="My Downloads"
+        subtitle="Access your purchased media"
+        actions={
+          <button
+            className="mc-btn mc-btn-ghost"
             onClick={refreshDownloads}
             disabled={loading}
           >
-            <i className="fas fa-sync-alt me-2"></i>
-            Refresh
+            <i className="fas fa-sync-alt me-2"></i>Refresh
           </button>
-        </div>
-
+        }
+      />
+      <div className="mc-page">
         {/* Error Alert */}
         {error && (
           <div className="alert alert-warning alert-dismissible fade show mb-4" role="alert">
@@ -406,20 +390,16 @@ const BuyerDownloads = () => {
 
         {/* Loading State */}
         {loading ? (
-          <div className="text-center py-5">
-            <div className="spinner-border text-warning mb-3" role="status">
-              <span className="visually-hidden">Loading...</span>
-            </div>
-            <p className="text-white-50">Loading your downloads...</p>
+          <div style={{ padding: "2rem", textAlign: "center" }}>
+            <div className="spinner-border" style={{ color: "var(--mc-accent)" }}></div>
+            <p className="text-white-50 mt-3">Loading your downloads...</p>
           </div>
         ) : downloads.length === 0 ? (
-          <div className="text-center py-5">
-            <i className="fas fa-cloud-download-alt fa-4x text-white-50 mb-3"></i>
-            <h5 className="mb-3">No downloads yet</h5>
-            <p className="text-white-50 mb-4">Purchase your first photo to start downloading!</p>
-            <Link to="/buyer/explore" className="btn btn-warning btn-lg rounded-pill px-5">
-              <i className="fas fa-compass me-2"></i>
-              Explore Photos
+          <div className="mc-empty">
+            <i className="fas fa-cloud-download-alt"></i>
+            <p>No downloads yet</p>
+            <Link to="/buyer/explore" className="mc-btn mc-btn-primary mt-3">
+              <i className="fas fa-compass me-2"></i>Explore Photos
             </Link>
           </div>
         ) : (
@@ -434,19 +414,18 @@ const BuyerDownloads = () => {
                 const isDownloading = downloadingId === mediaId;
                 const imageUrl = getMediaImageUrl(item);
                 const isLoadingImage = isImageLoading(item);
-                
+
                 return (
                   <div className="col-lg-4 col-md-6" key={item._id || idx}>
-                    <div className="card bg-dark border-secondary h-100" style={{ borderRadius: "16px", overflow: "hidden" }}>
+                    <div className="mc-card h-100" style={{ overflow: "hidden", padding: 0 }}>
                       <div className="position-relative" style={{ height: "200px", backgroundColor: "#1a1a1a" }}>
                         {isLoadingImage ? (
                           <div className="d-flex align-items-center justify-content-center h-100">
-                            <div className="spinner-border text-warning" style={{ width: "1.5rem", height: "1.5rem" }}></div>
+                            <div className="spinner-border" style={{ color: "var(--mc-accent)", width: "1.5rem", height: "1.5rem" }}></div>
                           </div>
                         ) : (
                           <img
                             src={imageUrl}
-                            className="card-img-top"
                             style={{ height: "200px", objectFit: "contain", width: "100%", backgroundColor: "#1a1a1a" }}
                             alt={title}
                             onError={(e) => {
@@ -457,15 +436,13 @@ const BuyerDownloads = () => {
                           />
                         )}
                         <span className="position-absolute top-0 end-0 m-2 badge bg-success rounded-pill px-3 py-2">
-                          <i className="fas fa-check-circle me-1"></i>
-                          Purchased
+                          <i className="fas fa-check-circle me-1"></i>Purchased
                         </span>
                       </div>
-                      <div className="card-body d-flex flex-column p-3">
+                      <div style={{ padding: "1rem" }} className="d-flex flex-column h-100">
                         <h5 className="fw-bold mb-1 text-truncate text-white">{title}</h5>
                         <p className="text-white-50 small mb-2">
-                          <i className="fas fa-camera me-1"></i>
-                          {photographer}
+                          <i className="fas fa-camera me-1"></i>{photographer}
                         </p>
                         <div className="mt-auto">
                           <div className="d-flex justify-content-between align-items-center mb-3">
@@ -474,28 +451,61 @@ const BuyerDownloads = () => {
                               {new Date(purchaseDate).toLocaleDateString()}
                             </small>
                             <small className="text-white-50">
-                              <i className="fas fa-receipt me-1"></i>
-                              {receiptId}
+                              <i className="fas fa-receipt me-1"></i>{receiptId}
                             </small>
                           </div>
-                          <button
-                            className="btn btn-warning w-100 py-2 fw-semibold"
-                            onClick={() => handleDownload(item)}
-                            disabled={isDownloading}
-                            style={{ borderRadius: "12px" }}
-                          >
-                            {isDownloading ? (
-                              <>
-                                <span className="spinner-border spinner-border-sm me-2"></span>
-                                Preparing...
-                              </>
-                            ) : (
-                              <>
-                                <i className="fas fa-download me-2"></i>
-                                Download
-                              </>
-                            )}
-                          </button>
+                          {/* Download Again button */}
+                          {(() => {
+                            const mediaObj = item.mediaDetails || item.media || item;
+                            const fileUrl = mediaObj?.fileUrl || mediaObj?.url || mediaObj?.imageUrl || getCloudinaryUrl(item);
+                            if (!fileUrl) return null;
+                            return (
+                              <a
+                                href={fileUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="mc-btn mc-btn-ghost w-100 mb-2 d-flex align-items-center justify-content-center gap-2"
+                                style={{ textDecoration: "none" }}
+                              >
+                                <i className="fas fa-cloud-download-alt"></i>Download Again
+                              </a>
+                            );
+                          })()}
+
+                          <div className="d-flex gap-2">
+                            <button
+                              className="mc-btn mc-btn-primary flex-grow-1"
+                              onClick={() => handleDownload(item)}
+                              disabled={isDownloading}
+                            >
+                              {isDownloading ? (
+                                <>
+                                  <span className="spinner-border spinner-border-sm me-2"></span>Preparing...
+                                </>
+                              ) : (
+                                <>
+                                  <i className="fas fa-download me-2"></i>Download
+                                </>
+                              )}
+                            </button>
+                            <button
+                              className="mc-btn mc-btn-ghost"
+                              title="Download License Certificate"
+                              onClick={() =>
+                                generateLicenseCertificate({
+                                  buyerName: user?.username || user?.name || "Buyer",
+                                  photoTitle: title,
+                                  photographer: photographer,
+                                  licenseType: item.licenseType || item.mediaDetails?.licenseType || "personal",
+                                  purchaseDate: purchaseDate,
+                                  amount: item.amount || item.price || item.mediaDetails?.price || 0,
+                                  transactionId: receiptId,
+                                })
+                              }
+                            >
+                              <i className="fas fa-certificate me-1"></i>License
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -525,29 +535,6 @@ const BuyerDownloads = () => {
           </>
         )}
       </div>
-
-      <style>{`
-        .page-link {
-          background-color: #2a2a2e;
-          border-color: #3a3a3e;
-          color: #6BBDD0;
-        }
-        .page-link:hover {
-          background-color: #3a3a3e;
-          border-color: #6BBDD0;
-          color: #6BBDD0;
-        }
-        .page-item.active .page-link {
-          background-color: #6BBDD0;
-          border-color: #6BBDD0;
-          color: #1a1a2e;
-        }
-        .page-item.disabled .page-link {
-          background-color: #1a1a2e;
-          border-color: #2a2a2e;
-          color: #6c757d;
-        }
-      `}</style>
     </BuyerLayout>
   );
 };

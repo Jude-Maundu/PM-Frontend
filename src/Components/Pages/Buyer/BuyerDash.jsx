@@ -12,6 +12,8 @@ import {
 import { placeholderMedium, placeholderSmall } from "../../../utils/placeholders";
 import { getImageUrl, fetchProtectedUrl } from "../../../utils/imageUrl";
 import { getDisplayName } from "../../../utils/auth";
+import ThemeToggle from "../../ThemeToggle";
+import NotificationBell from "../../NotificationBell";
 
 const BuyerDashboard = () => {
   const [featuredMedia, setFeaturedMedia] = useState([]);
@@ -29,6 +31,7 @@ const BuyerDashboard = () => {
   const [, setLikedItems] = useState(new Set());
   const [, setFollowingUsers] = useState(new Set());
   const [imageUrls, setImageUrls] = useState({});
+  const [searchQuery, setSearchQuery] = useState("");
 
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
@@ -251,17 +254,89 @@ const BuyerDashboard = () => {
     return getImageUrl(media, placeholderSmall);
   };
 
+  // ── Shared helper components ──────────────────────────────────────────────
+
+  const Sparkline = ({ values = [], color = "#5B7FE5" }) => {
+    if (!values.length) return null;
+    const max = Math.max(...values, 1);
+    const min = Math.min(...values);
+    const range = max - min || 1;
+    const W = 80, H = 32;
+    const pts = values.map((v, i) => ({
+      x: (i / Math.max(values.length - 1, 1)) * W,
+      y: H - ((v - min) / range) * H * 0.85 + 2,
+    }));
+    const d = pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ");
+    return (
+      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ overflow: "visible" }}>
+        <path d={d} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  };
+
+  const MiniCalendar = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const today = now.getDate();
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const days = [];
+    for (let i = 0; i < firstDay; i++) days.push({ day: "", other: true });
+    for (let d = 1; d <= daysInMonth; d++) days.push({ day: d, isToday: d === today });
+    const dayNames = ["Su","Mo","Tu","We","Th","Fr","Sa"];
+    const monthName = now.toLocaleString("default", { month: "long" });
+    return (
+      <div>
+        <div className="mc-cal-header">
+          <span className="mc-cal-month">{monthName}</span>
+          <span style={{ fontSize: "0.72rem", color: "var(--mc-text-muted)" }}>{year}</span>
+        </div>
+        <div className="mc-cal-grid">
+          {dayNames.map(d => <div key={d} className="mc-cal-dayname">{d}</div>)}
+          {days.map((item, idx) => (
+            <div
+              key={idx}
+              className={`mc-cal-day${item.isToday ? " mc-today" : ""}${item.other ? " mc-other" : ""}`}
+            >
+              {item.day || ""}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  // ── Derived values ────────────────────────────────────────────────────────
+
+  const sparkValues = [3, 5, 2, 8, 6, 9, 4];
+  const busynessPct = Math.min(99, Math.round((stats.purchases / Math.max(stats.favorites + 1, 1)) * 100)) || 35;
+  const budgetUsedPct = Math.min(99, Math.round(stats.totalSpent / 5000 * 100));
+  const downloadsPct = Math.min(99, Math.round(stats.downloads * 10));
+  const collectionPct = Math.min(99, Math.round(stats.favorites * 5));
+  const avatarLetter = (displayName || "B").charAt(0).toUpperCase();
+
+  const eventList = [
+    { count: stats.purchases, label: "Purchases", color: "#F06B8D" },
+    { count: stats.downloads, label: "Downloads", color: "#4CC9A6" },
+    { count: stats.favorites, label: "Favorites", color: "#9D7FEB" },
+  ];
+
+  if (loading) {
+    return (
+      <BuyerLayout>
+        <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "60vh" }}>
+          <div className="spinner-border" style={{ color: "var(--mc-accent)" }}></div>
+        </div>
+      </BuyerLayout>
+    );
+  }
+
   if (error) {
     return (
       <BuyerLayout>
-        <div className="text-center py-5">
-          <i className="fas fa-exclamation-triangle text-warning fa-4x mb-3"></i>
-          <h4 className="text-white mb-3">Oops! Something went wrong</h4>
-          <p className="text-white-50 mb-4">{error}</p>
-          <button className="btn btn-warning" onClick={() => window.location.reload()}>
-            <i className="fas fa-sync-alt me-2"></i>
-            Refresh Page
-          </button>
+        <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "60vh" }}>
+          <div className="spinner-border" style={{ color: "var(--mc-accent)" }}></div>
         </div>
       </BuyerLayout>
     );
@@ -269,347 +344,217 @@ const BuyerDashboard = () => {
 
   return (
     <BuyerLayout>
-      {/* Welcome Banner - Original Color */}
-      <div className="card bg-warning bg-opacity-10 border-warning border-opacity-25 mb-4">
-        <div className="card-body">
-          <div className="row align-items-center">
-            <div className="col-md-8">
-              <h4 className="fw-bold text-white mb-2">
-                Welcome back, {displayName}! 👋
-              </h4>
-              <p className="text-white-50 mb-md-0">
-                Discover stunning photos from talented photographers worldwide.
-              </p>
-            </div>
-            <div className="col-md-4 text-md-end">
-              <Link to="/buyer/explore" className="btn btn-warning">
-                <i className="fas fa-compass me-2"></i>
-                Explore Now
-              </Link>
-            </div>
+      {/* Top Bar */}
+      <div className="mc-topbar">
+        <div className="mc-search-wrap">
+          <i className="fas fa-search mc-search-icon"></i>
+          <input
+            className="mc-search"
+            placeholder="Search..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <div className="mc-topbar-actions">
+          <div className="mc-icon-btn"><ThemeToggle /></div>
+          <NotificationBell />
+        </div>
+      </div>
+
+      {/* Hero Banner */}
+      <div className="mc-hero">
+        <div>
+          <div className="mc-hero-date">
+            <i className="fas fa-calendar-alt"></i>
+            {new Date().toLocaleDateString("en-US", {
+              weekday: "long", month: "long", day: "numeric", year: "numeric",
+            })}
+          </div>
+          <h2>Good Day, {displayName}!</h2>
+          <p>Have a productive {new Date().toLocaleDateString("en-US", { weekday: "long" })}.</p>
+        </div>
+        <div className="mc-hero-art">🛒</div>
+      </div>
+
+      {/* Stat Cards */}
+      <div className="mc-stats-row">
+        {/* Card 1: My Purchases */}
+        <div className="mc-stat-card">
+          <div className="mc-stat-header">
+            <span className="mc-stat-label">My Purchases</span>
+            <span className="mc-stat-dots">···</span>
+          </div>
+          <div className="mc-stat-value">{stats.purchases}</div>
+          <div className="mc-stat-sub">images bought</div>
+          <div className="mc-stat-trend up">
+            <Sparkline values={sparkValues} color="#F06B8D" />
+          </div>
+        </div>
+
+        {/* Card 2: Downloads */}
+        <div className="mc-stat-card">
+          <div className="mc-stat-header">
+            <span className="mc-stat-label">Downloads</span>
+            <span className="mc-stat-dots">···</span>
+          </div>
+          <div className="mc-stat-value">{stats.downloads}</div>
+          <div className="mc-stat-sub">files downloaded</div>
+          <div className="mc-stat-trend up">
+            <Sparkline values={sparkValues} color="#4CC9A6" />
+          </div>
+        </div>
+
+        {/* Card 3: Wallet */}
+        <div className="mc-stat-card">
+          <div className="mc-stat-header">
+            <span className="mc-stat-label">Wallet</span>
+            <span className="mc-stat-dots">···</span>
+          </div>
+          <div className="mc-stat-value">{"KES " + stats.wallet.toLocaleString()}</div>
+          <div className="mc-stat-sub">current balance</div>
+          <div className="mc-stat-trend neu">
+            <Sparkline values={sparkValues} color="#5B7FE5" />
           </div>
         </div>
       </div>
 
-      {/* Quick Stats */}
-      <div className="row g-3 mb-4">
-        <div className="col-md-3 col-6">
-          <div className="card bg-dark border-secondary">
-            <div className="card-body">
-              <div className="d-flex align-items-center gap-3">
-                <div className="rounded-circle p-3" style={{ background: "rgba(107,189,208,0.1)" }}>
-                  <i className="fas fa-shopping-cart text-warning"></i>
-                </div>
-                <div>
-                  <h5 className="fw-bold mb-0">{stats.purchases}</h5>
-                  <small className="text-white-50">Purchases</small>
-                </div>
-              </div>
+      {/* Bottom Grid */}
+      <div className="mc-bottom-grid">
+        {/* Left: Donut + event list */}
+        <div className="mc-card">
+          <div className="mc-card-header">
+            <span className="mc-card-title">MY ACTIVITY</span>
+          </div>
+          <div className="mc-donut-wrap">
+            <div
+              className="mc-donut"
+              style={{
+                background: `conic-gradient(var(--mc-accent) 0% ${busynessPct}%, var(--mc-border) ${busynessPct}% 100%)`,
+              }}
+            >
+              <span className="mc-donut-pct">{busynessPct}%</span>
+            </div>
+            <div className="mc-donut-info">
+              <h4>Activity</h4>
+              <p>purchases / collection</p>
             </div>
           </div>
-        </div>
-        <div className="col-md-3 col-6">
-          <div className="card bg-dark border-secondary">
-            <div className="card-body">
-              <div className="d-flex align-items-center gap-3">
-                <div className="rounded-circle p-3" style={{ background: "rgba(40,167,69,0.1)" }}>
-                  <i className="fas fa-download text-success"></i>
-                </div>
-                <div>
-                  <h5 className="fw-bold mb-0">{stats.downloads}</h5>
-                  <small className="text-white-50">Downloads</small>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-3 col-6">
-          <div className="card bg-dark border-secondary">
-            <div className="card-body">
-              <div className="d-flex align-items-center gap-3">
-                <div className="rounded-circle p-3" style={{ background: "rgba(23,162,184,0.1)" }}>
-                  <i className="fas fa-heart text-info"></i>
-                </div>
-                <div>
-                  <h5 className="fw-bold mb-0">{stats.favorites}</h5>
-                  <small className="text-white-50">Favorites</small>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-3 col-6">
-          <div className="card bg-dark border-secondary">
-            <div className="card-body">
-              <div className="d-flex align-items-center gap-3">
-                <div className="rounded-circle p-3" style={{ background: "rgba(107,189,208,0.1)" }}>
-                  <i className="fas fa-wallet text-warning"></i>
-                </div>
-                <div>
-                  <h5 className="fw-bold mb-0">KES {stats.wallet.toLocaleString()}</h5>
-                  <small className="text-white-50">Wallet</small>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Quick Action Cards */}
-      <div className="row g-3 mb-4">
-        <div className="col-md-3 col-6">
-          <div className="card bg-dark border-secondary h-100 text-center p-3" style={{ cursor: "pointer" }} onClick={() => navigate("/buyer/explore")}>
-            <i className="fas fa-compass text-warning fa-2x mb-2"></i>
-            <h6 className="fw-bold mb-1">Explore</h6>
-            <small className="text-white-50">Discover new photos</small>
-          </div>
-        </div>
-        <div className="col-md-3 col-6">
-          <div className="card bg-dark border-secondary h-100 text-center p-3" style={{ cursor: "pointer" }} onClick={() => navigate("/buyer/favorites")}>
-            <i className="fas fa-heart text-danger fa-2x mb-2"></i>
-            <h6 className="fw-bold mb-1">Favorites</h6>
-            <small className="text-white-50">{stats.favorites} saved items</small>
-          </div>
-        </div>
-        <div className="col-md-3 col-6">
-          <div className="card bg-dark border-secondary h-100 text-center p-3" style={{ cursor: "pointer" }} onClick={() => navigate("/buyer/wallet")}>
-            <i className="fas fa-wallet text-warning fa-2x mb-2"></i>
-            <h6 className="fw-bold mb-1">Wallet</h6>
-            <small className="text-white-50">KES {stats.wallet.toLocaleString()}</small>
-          </div>
-        </div>
-        <div className="col-md-3 col-6">
-          <div className="card bg-dark border-secondary h-100 text-center p-3" style={{ cursor: "pointer" }} onClick={() => navigate("/buyer/downloads")}>
-            <i className="fas fa-download text-success fa-2x mb-2"></i>
-            <h6 className="fw-bold mb-1">Downloads</h6>
-            <small className="text-white-50">{stats.downloads} items</small>
-          </div>
-        </div>
-      </div>
-
-      {/* Featured Media - Gallery View */}
-      <div className="mb-5">
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <h5 className="fw-bold">
-            <i className="fas fa-star me-2 text-warning"></i>
-            Featured Photos
-          </h5>
-          <Link to="/buyer/explore" className="text-warning text-decoration-none small">
-            View All <i className="fas fa-arrow-right ms-1"></i>
-          </Link>
-        </div>
-
-        {loading ? (
-          <div className="text-center py-4">
-            <div className="spinner-border text-warning" role="status">
-              <span className="visually-hidden">Loading...</span>
-            </div>
-          </div>
-        ) : featuredMedia.length === 0 ? (
-          <div className="text-center py-4">
-            <i className="fas fa-images fa-3x text-white-50 mb-3"></i>
-            <p className="text-white-50">No photos available yet</p>
-          </div>
-        ) : (
-          <div className="row g-3">
-            {featuredMedia.map((item) => (
-              <div className="col-lg-3 col-md-4 col-6" key={item._id}>
-                <div className="card bg-dark border-secondary h-100 overflow-hidden">
-                  <div className="position-relative">
-                    <img
-                      src={resolveImage(item)}
-                      alt={item.title}
-                      className="card-img-top"
-                      style={{ height: "160px", objectFit: "cover", backgroundColor: "#1a1a1a" }}
-                      loading="lazy"
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = placeholderMedium;
-                      }}
-                    />
-                    <div className="position-absolute bottom-0 start-0 end-0 p-2 bg-gradient-to-t from-black">
-                      <h6 className="text-white mb-0 small fw-bold text-truncate">{item.title || "Untitled"}</h6>
-                      <div className="d-flex justify-content-between align-items-center">
-                        <small className="text-white-50">
-                          <i className="fas fa-camera me-1"></i>
-                          {item.photographer?.username || "Anonymous"}
-                        </small>
-                        <small className="text-warning fw-bold">KES {item.price || 0}</small>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+          <div className="mc-event-list">
+            {eventList.map((ev) => (
+              <div className="mc-event-item" key={ev.label}>
+                <span className="mc-event-dot" style={{ background: ev.color }}></span>
+                <span className="mc-event-count">{ev.count}</span>
+                <span className="mc-event-label">{ev.label}</span>
               </div>
             ))}
           </div>
-        )}
-      </div>
+        </div>
 
-      {/* Recent Purchases & Recommended */}
-      <div className="row g-4">
-        {/* Recent Purchases Section - FIXED IMAGES */}
-        <div className="col-md-6">
-          <div className="card bg-dark border-secondary h-100">
-            <div className="card-header bg-transparent border-secondary">
-              <h6 className="mb-0 text-warning">
-                <i className="fas fa-history me-2"></i>
-                Recent Purchases
-              </h6>
+        {/* Middle: Progress bars */}
+        <div className="mc-card">
+          <div className="mc-card-header">
+            <span className="mc-card-title">MY GOALS</span>
+            <span className="mc-card-badge">Today</span>
+          </div>
+
+          <div className="mc-prog-row">
+            <span className="mc-prog-label">Budget Used</span>
+            <span className="mc-prog-pct">{budgetUsedPct}%</span>
+            <div className="mc-prog-track">
+              <div className="mc-prog-fill" style={{ width: `${budgetUsedPct}%`, background: "#5B7FE5" }}></div>
             </div>
-            <div className="card-body p-0">
-              {recentPurchases.length > 0 ? (
-                <div className="list-group list-group-flush bg-dark">
-                  {recentPurchases.map((purchase, index) => {
-                    const mediaItem = purchase.media || purchase;
-                    const imageUrl = getPurchaseImageUrl(purchase);
-                    const title = mediaItem.title || purchase.title || "Photo";
-                    const date = purchase.date || purchase.createdAt || Date.now();
-                    
-                    return (
-                      <div key={purchase._id || index} className="list-group-item bg-transparent text-white border-secondary">
-                        <div className="d-flex align-items-center gap-3">
-                          <img
-                            src={imageUrl}
-                            alt={title}
-                            width="50"
-                            height="50"
-                            className="rounded"
-                            style={{ objectFit: "cover", backgroundColor: "#1a1a1a" }}
-                            onError={(e) => {
-                              console.log(`Image failed to load for purchase: ${title}`);
-                              e.target.onerror = null;
-                              e.target.src = placeholderSmall;
-                            }}
-                          />
-                          <div className="flex-grow-1">
-                            <h6 className="small fw-bold mb-0 text-truncate">{title}</h6>
-                            <small className="text-white-50">
-                              Purchased on {new Date(date).toLocaleDateString()}
-                            </small>
-                          </div>
-                          <button className="btn btn-sm btn-outline-warning" onClick={() => navigate("/buyer/downloads")}>
-                            <i className="fas fa-download"></i>
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-center py-5">
-                  <i className="fas fa-shopping-bag fa-3x text-white-50 mb-3"></i>
-                  <p className="text-white-50 mb-2">No purchases yet</p>
-                  <Link to="/buyer/explore" className="btn btn-sm btn-warning">
-                    Start Exploring
-                  </Link>
+          </div>
+
+          <div className="mc-prog-row">
+            <span className="mc-prog-label">Downloads</span>
+            <span className="mc-prog-pct">{downloadsPct}%</span>
+            <div className="mc-prog-track">
+              <div className="mc-prog-fill" style={{ width: `${downloadsPct}%`, background: "#F06B8D" }}></div>
+            </div>
+          </div>
+
+          <div className="mc-prog-row">
+            <span className="mc-prog-label">Collection</span>
+            <span className="mc-prog-pct">{collectionPct}%</span>
+            <div className="mc-prog-track">
+              <div className="mc-prog-fill" style={{ width: `${collectionPct}%`, background: "#4CC9A6" }}></div>
+            </div>
+          </div>
+
+          <span style={{ color: "var(--mc-accent)", fontSize: "0.8rem", cursor: "pointer" }}>+ Add goal</span>
+        </div>
+
+        {/* Right panel */}
+        <div className="mc-right-panel">
+          {/* Profile mini */}
+          <div className="mc-card">
+            <div className="mc-profile-mini">
+              <div className="mc-profile-avatar">
+                {user?.profileImage ? (
+                  <img src={user.profileImage} alt="avatar" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
+                ) : (
+                  <div className="mc-avatar-placeholder">{avatarLetter}</div>
+                )}
+              </div>
+              <div className="mc-profile-name">{displayName}</div>
+              <div className="mc-profile-role">Buyer</div>
+              {user?.location && (
+                <div className="mc-profile-loc">
+                  <i className="fas fa-map-marker-alt" style={{ marginRight: 4 }}></i>
+                  {user.location}
                 </div>
               )}
-              <div className="card-footer bg-transparent border-secondary text-center">
-                <Link to="/buyer/transactions" className="text-warning text-decoration-none small">
-                  View All Transactions <i className="fas fa-arrow-right ms-1"></i>
-                </Link>
+            </div>
+            <div className="mc-profile-stats">
+              <div className="mc-pstat">
+                <div className="mc-pstat-val">{stats.purchases}</div>
+                <div className="mc-pstat-lbl">Bought</div>
+              </div>
+              <div className="mc-pstat">
+                <div className="mc-pstat-val">{stats.downloads}</div>
+                <div className="mc-pstat-lbl">DL</div>
+              </div>
+              <div className="mc-pstat">
+                <div className="mc-pstat-val">{stats.favorites}</div>
+                <div className="mc-pstat-lbl">Favs</div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Recommended for You Section */}
-        <div className="col-md-6">
-          <div className="card bg-dark border-secondary h-100">
-            <div className="card-header bg-transparent border-secondary">
-              <h6 className="mb-0 text-warning">
-                <i className="fas fa-thumbs-up me-2"></i>
-                Recommended for You
-              </h6>
+          {/* Mini calendar */}
+          <div className="mc-card">
+            <MiniCalendar />
+          </div>
+
+          {/* Recent purchases schedule */}
+          <div className="mc-card">
+            <div className="mc-card-header">
+              <span className="mc-card-title">RECENT PURCHASES</span>
             </div>
-            <div className="card-body">
-              <div className="row g-2">
-                {recommended.slice(0, 4).map((item) => (
-                  <div className="col-6" key={item._id}>
-                    <div className="card bg-dark border-secondary h-100">
-                      <img
-                        src={resolveImage(item)}
-                        alt=""
-                        className="card-img-top"
-                        style={{ height: "110px", objectFit: "cover", backgroundColor: "#1a1a1a" }}
-                        loading="lazy"
-                        onError={(e) => {
-                          e.target.onerror = null;
-                          e.target.src = placeholderMedium;
-                        }}
-                      />
-                      <div className="card-body p-2">
-                        <small className="fw-bold d-block text-truncate">{item.title || "Untitled"}</small>
-                        <small className="text-warning">KES {item.price || 0}</small>
-                      </div>
+            <div className="mc-schedule">
+              {recentPurchases.slice(0, 4).map((purchase, idx) => {
+                const mediaItem = purchase.media || purchase;
+                const title = mediaItem.title || purchase.title || "Photo";
+                const date = purchase.date || purchase.createdAt || Date.now();
+                return (
+                  <div className="mc-sched-item" key={idx}>
+                    <span className="mc-sched-dot" style={{ background: "#F06B8D" }}></span>
+                    <div className="mc-sched-body">
+                      <div className="mc-sched-time">{new Date(date).toLocaleDateString()}</div>
+                      <div className="mc-sched-text">{title}</div>
                     </div>
                   </div>
-                ))}
-              </div>
-              <div className="text-center mt-3">
-                <Link to="/buyer/explore" className="btn btn-outline-warning btn-sm">
-                  Explore More <i className="fas fa-arrow-right ms-1"></i>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Activity Summary Card */}
-      <div className="mt-4">
-        <div className="card bg-dark border-secondary">
-          <div className="card-body">
-            <div className="row align-items-center">
-              <div className="col-md-6">
-                <h6 className="text-warning mb-2">
-                  <i className="fas fa-chart-line me-2"></i>
-                  Your Activity Summary
-                </h6>
-                <div className="d-flex gap-4 flex-wrap">
-                  <div>
-                    <small className="text-white-50">Total Spent</small>
-                    <p className="text-white fw-bold mb-0">KES {stats.totalSpent.toLocaleString()}</p>
-                  </div>
-                  <div>
-                    <small className="text-white-50">Average per Purchase</small>
-                    <p className="text-white fw-bold mb-0">
-                      KES {stats.purchases ? Math.round(stats.totalSpent / stats.purchases).toLocaleString() : 0}
-                    </p>
-                  </div>
-                  <div>
-                    <small className="text-white-50">Collection Size</small>
-                    <p className="text-white fw-bold mb-0">{stats.purchases} photos</p>
-                  </div>
+                );
+              })}
+              {recentPurchases.length === 0 && (
+                <div style={{ color: "var(--mc-text-muted)", fontSize: "0.8rem", textAlign: "center", padding: "0.75rem 0" }}>
+                  No recent purchases
                 </div>
-              </div>
-              <div className="col-md-6 text-md-end mt-3 mt-md-0">
-                <Link to="/buyer/wallet" className="btn btn-outline-warning btn-sm me-2">
-                  <i className="fas fa-wallet me-1"></i>
-                  Add Funds
-                </Link>
-                <Link to="/buyer/explore" className="btn btn-warning btn-sm">
-                  <i className="fas fa-shopping-cart me-1"></i>
-                  Shop Now
-                </Link>
-              </div>
+              )}
             </div>
           </div>
         </div>
       </div>
-
-      <style>{`
-        .bg-gradient-to-t {
-          background: linear-gradient(to top, rgba(0,0,0,0.9), rgba(0,0,0,0));
-        }
-        .card {
-          transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .card:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-        }
-      `}</style>
     </BuyerLayout>
   );
 };

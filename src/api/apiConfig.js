@@ -67,6 +67,10 @@ const API_ENDPOINTS = {
     DELETE_ALBUM: (albumId) => `${API_BASE_URL}/media/album/${albumId}`,
     BULK_UPLOAD: `${API_BASE_URL}/media/album/bulk-upload`,
     BULK_UPLOAD_FALLBACK: `${API_BASE_URL}/media/bulk-upload`,
+    TRENDING: `${API_BASE_URL}/media/trending`,
+    FILTER: `${API_BASE_URL}/media/filter`,
+    FILTER_CATEGORY: (cat) => `${API_BASE_URL}/media/filter/${cat}`,
+    GET_SIMILAR: (id) => `${API_BASE_URL}/media/${id}/similar`,
   },
 
   // ==================== PAYMENTS ====================
@@ -143,6 +147,16 @@ const API_ENDPOINTS = {
     // Wallets
     GET_WALLETS: `${API_BASE_URL}/admin/wallets`,
     ADJUST_WALLET: (userId) => `${API_BASE_URL}/admin/wallets/${userId}/adjust`,
+    // Analytics
+    ANALYTICS_OVERVIEW: `${API_BASE_URL}/admin/analytics/overview`,
+    ANALYTICS_REVENUE: `${API_BASE_URL}/admin/analytics/revenue`,
+    ANALYTICS_SIGNUPS: `${API_BASE_URL}/admin/analytics/signups`,
+    ANALYTICS_TOP_PHOTOGRAPHERS: `${API_BASE_URL}/admin/analytics/top-photographers`,
+    EXPORT_USERS: `${API_BASE_URL}/admin/export/users`,
+    EXPORT_TRANSACTIONS: `${API_BASE_URL}/admin/export/transactions`,
+    MODERATION_LIST: `${API_BASE_URL}/admin/moderation`,
+    MODERATION_APPROVE: (id) => `${API_BASE_URL}/admin/moderation/${id}/approve`,
+    MODERATION_REJECT: (id) => `${API_BASE_URL}/admin/moderation/${id}/reject`,
   },
 
   // ==================== SHARE ====================
@@ -202,6 +216,29 @@ const API_ENDPOINTS = {
     GET_MY: `${API_BASE_URL}/withdrawals/my`,
     GET_ALL: `${API_BASE_URL}/withdrawals/all`,
     PROCESS: (id) => `${API_BASE_URL}/withdrawals/${id}/process`,
+  },
+
+  // ==================== REVIEWS ====================
+  REVIEWS: {
+    CREATE: `${API_BASE_URL}/reviews`,
+    BY_PHOTOGRAPHER: (id) => `${API_BASE_URL}/reviews/photographer/${id}`,
+    BY_MEDIA: (id) => `${API_BASE_URL}/reviews/media/${id}`,
+    DELETE: (id) => `${API_BASE_URL}/reviews/${id}`,
+  },
+
+  // ==================== REFERRAL ====================
+  REFERRAL: {
+    MY_CODE: `${API_BASE_URL}/referral/my-code`,
+    STATS: `${API_BASE_URL}/referral/stats`,
+  },
+
+  // ==================== PROOFING ====================
+  PROOFING: {
+    CREATE: `${API_BASE_URL}/proofing`,
+    MY_GALLERIES: `${API_BASE_URL}/proofing/my`,
+    GET: (token) => `${API_BASE_URL}/proofing/${token}`,
+    APPROVE_PHOTO: (token, mediaId) => `${API_BASE_URL}/proofing/${token}/approve/${mediaId}`,
+    DELETE: (id) => `${API_BASE_URL}/proofing/${id}`,
   },
 };
 

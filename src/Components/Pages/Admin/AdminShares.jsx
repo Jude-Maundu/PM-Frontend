@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import AdminLayout from "./AdminLayout";
+import PageHeader from "../../PageHeader";
 import { adminGetAllShares } from "../../../api/API";
 import { API_ENDPOINTS } from "../../../api/apiConfig";
 import { toast } from "../../../utils/toast";
@@ -75,86 +76,81 @@ const AdminShares = () => {
 
   return (
     <AdminLayout>
-      <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
-        <div>
-          <h2 className="fw-bold mb-1">
-            <i className="fas fa-link me-2 text-warning"></i>
-            Share Monitoring
-          </h2>
-          <p className="text-white-50 small mb-0">
-            Review active share links, usage, and download activity across the platform.
-          </p>
-        </div>
-      </div>
-
-      {loading ? (
-        <div className="text-center py-5">
-          <div className="spinner-border text-warning" style={{ width: "3rem", height: "3rem" }}></div>
-          <p className="text-white-50 mt-3">Loading share monitoring data...</p>
-        </div>
-      ) : (
-        <>
-          {error && (
-            <div className="alert alert-danger" role="alert">
-              {error}
-            </div>
-          )}
-
-          <div className="row g-3 mb-4">
-            {[
-              { title: "Total Shares", value: summary.totalShares, icon: "fa-link", color: "warning" },
-              { title: "Active", value: summary.activeShares, icon: "fa-check", color: "success" },
-              { title: "Expired", value: summary.expiredShares, icon: "fa-clock", color: "secondary" },
-              { title: "Total Accesses", value: summary.totalAccesses, icon: "fa-eye", color: "info" },
-              { title: "Total Downloads", value: summary.totalDownloads, icon: "fa-download", color: "primary" },
-            ].map((card) => (
-              <div className="col-lg-2 col-md-4" key={card.title}>
-                <div className="card bg-dark border-secondary h-100 p-3">
-                  <div className="d-flex align-items-center justify-content-between mb-2">
-                    <span className={`badge bg-${card.color} text-dark`}>
-                      <i className={`fas ${card.icon}`}></i>
-                    </span>
-                    <small className="text-white-50">{card.title}</small>
-                  </div>
-                  <h4 className="fw-bold text-white">{card.value}</h4>
-                </div>
-              </div>
-            ))}
+      <PageHeader
+        title="Share Links"
+        subtitle="Manage active share tokens"
+        actions={
+          <button className="mc-btn mc-btn-ghost" onClick={fetchShares}>
+            <i className="fas fa-sync-alt me-1"></i>Refresh
+          </button>
+        }
+      />
+      <div className="mc-page">
+        {loading ? (
+          <div style={{ padding: "2rem", textAlign: "center" }}>
+            <div className="spinner-border" style={{ color: "var(--mc-accent)" }}></div>
           </div>
+        ) : (
+          <>
+            {error && (
+              <div className="alert alert-danger" role="alert">{error}</div>
+            )}
 
-          <div className="card border-0" style={{
-            background: "rgba(0, 0, 0, 0.3)",
-            backdropFilter: "blur(10px)",
-            border: "1px solid rgba(255, 255, 255, 0.05)",
-          }}>
-            <div className="card-body p-0">
+            {/* Stats */}
+            <div className="mc-stats-row-sm" style={{ marginBottom: "1.25rem" }}>
+              <div className="mc-stat-card">
+                <div className="mc-stat-label">TOTAL SHARES</div>
+                <div className="mc-stat-value">{summary.totalShares}</div>
+              </div>
+              <div className="mc-stat-card">
+                <div className="mc-stat-label">ACTIVE</div>
+                <div className="mc-stat-value" style={{ color: "var(--mc-accent-teal)" }}>{summary.activeShares}</div>
+              </div>
+              <div className="mc-stat-card">
+                <div className="mc-stat-label">EXPIRED</div>
+                <div className="mc-stat-value">{summary.expiredShares}</div>
+              </div>
+              <div className="mc-stat-card">
+                <div className="mc-stat-label">TOTAL ACCESSES</div>
+                <div className="mc-stat-value" style={{ color: "var(--mc-accent)" }}>{summary.totalAccesses}</div>
+              </div>
+              <div className="mc-stat-card">
+                <div className="mc-stat-label">TOTAL DOWNLOADS</div>
+                <div className="mc-stat-value" style={{ color: "var(--mc-accent-pink)" }}>{summary.totalDownloads}</div>
+              </div>
+            </div>
+
+            <div className="mc-table-card">
               <div className="table-responsive">
-                <table className="table table-dark table-hover mb-0">
+                <table className="table table-borderless mb-0">
                   <thead>
                     <tr>
-                      <th>Token</th>
-                      <th>Type</th>
-                      <th>Owner</th>
-                      <th>Accesses</th>
-                      <th>Downloads</th>
-                      <th>Remaining</th>
-                      <th>Expires</th>
-                      <th>Status</th>
-                      <th>Actions</th>
+                      <th className="ps-3 py-3">Token</th>
+                      <th className="py-3">Type</th>
+                      <th className="py-3">Owner</th>
+                      <th className="py-3">Accesses</th>
+                      <th className="py-3">Downloads</th>
+                      <th className="py-3">Remaining</th>
+                      <th className="py-3">Expires</th>
+                      <th className="py-3">Status</th>
+                      <th className="pe-3 py-3">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {shares.length === 0 ? (
                       <tr>
-                        <td colSpan="9" className="text-center text-white-50 py-4">
-                          No share data available.
+                        <td colSpan="9">
+                          <div className="mc-empty">
+                            <i className="fas fa-link"></i>
+                            <p>No share data available.</p>
+                          </div>
                         </td>
                       </tr>
                     ) : (
                       shares.map((share, idx) => (
                         <tr key={idx}>
-                          <td style={{ maxWidth: "180px" }} className="text-truncate">
-                            <small>{share.token}</small>
+                          <td className="ps-3" style={{ maxWidth: "180px" }}>
+                            <small className="text-truncate d-block">{share.token}</small>
                           </td>
                           <td>{share.media ? "Media" : "Album"}</td>
                           <td>{share.createdBy?.name || share.createdBy?.email || "Unknown"}</td>
@@ -163,15 +159,15 @@ const AdminShares = () => {
                           <td>{share.remainingDownloads}</td>
                           <td>{share.expiresAt ? new Date(share.expiresAt).toLocaleDateString() : "Never"}</td>
                           <td>
-                            <span className={`badge bg-${share.isActive ? "success" : "secondary"}`}>
+                            <span className="badge rounded-pill px-3 py-1"
+                              style={{ background: share.isActive ? "rgba(76,201,166,0.15)" : "rgba(255,255,255,0.08)", color: share.isActive ? "var(--mc-accent-teal)" : "inherit" }}>
                               {share.isActive ? "Active" : "Revoked"}
                             </span>
                           </td>
-                          <td>
+                          <td className="pe-3">
                             {share.isActive && (
                               <button
-                                className="btn btn-sm rounded-3 px-2"
-                                style={{ background: "rgba(220,53,69,0.15)", color: "#dc3545", border: "1px solid rgba(220,53,69,0.3)" }}
+                                className="mc-btn mc-btn-danger btn-sm px-2"
                                 onClick={() => handleRevoke(share)}
                                 disabled={revoking === share.token}
                                 title="Revoke"
@@ -190,9 +186,9 @@ const AdminShares = () => {
                 </table>
               </div>
             </div>
-          </div>
-        </>
-      )}
+          </>
+        )}
+      </div>
     </AdminLayout>
   );
 };

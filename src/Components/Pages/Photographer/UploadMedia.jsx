@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import PhotographerLayout from "./PhotographerLayout";
+import PageHeader from "../../PageHeader";
 import { useNavigate } from "react-router-dom";
 import { uploadMedia, getAllMedia } from "../../../api/API";
 import { API_BASE_URL } from "../../../api/apiConfig";
@@ -278,38 +279,21 @@ const PhotographerUpload = () => {
       ></div>
 
       {/* Content */}
-      <div className="position-relative" style={{ zIndex: 1 }}>
-        {/* Header */}
-        <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
-          <div>
-            <h4 className="fw-bold mb-1">
-              <i className="fas fa-cloud-upload-alt me-2 text-warning"></i>
-              Upload Media
-            </h4>
-            <p className="text-white-50 small mb-0">
-              <i className="fas fa-info-circle me-2"></i>
-              Share your creativity with the world
-            </p>
-          </div>
-          <div className="d-flex gap-2 mt-3 mt-md-0">
-            <button 
-              className="btn btn-outline-info rounded-pill px-4"
-              onClick={testConnection}
-              type="button"
-            >
-              <i className="fas fa-plug me-2"></i>
-              Test Connection
-            </button>
-            <button 
-              className="btn btn-outline-warning rounded-pill px-4"
-              onClick={() => navigate("/photographer/media")}
-              type="button"
-            >
-              <i className="fas fa-arrow-left me-2"></i>
-              Back to Media
-            </button>
-          </div>
-        </div>
+      <div className="mc-page position-relative" style={{ zIndex: 1 }}>
+        <PageHeader
+          title="Upload Media"
+          subtitle="Add photos and videos to your library"
+          action={
+            <div className="d-flex gap-2">
+              <button className="btn mc-btn mc-btn-ghost rounded-pill px-4" onClick={testConnection} type="button">
+                <i className="fas fa-plug me-2"></i>Test Connection
+              </button>
+              <button className="btn mc-btn mc-btn-ghost rounded-pill px-4" onClick={() => navigate("/photographer/media")} type="button">
+                <i className="fas fa-arrow-left me-2"></i>Back to Media
+              </button>
+            </div>
+          }
+        />
 
         {/* Debug Info */}
         <div 
@@ -342,13 +326,7 @@ const PhotographerUpload = () => {
           
           {/* Main Form Area */}
           <div className={`${!isMobile ? 'col-lg-8' : 'col-12'}`}>
-            <div 
-              className="card border-0 h-100"
-              style={{
-                ...glassStyle,
-                borderRadius: "24px",
-              }}
-            >
+            <div className="mc-card h-100">
               <div className="card-body p-4">
                 {error && (
                   <div 
@@ -575,13 +553,7 @@ const PhotographerUpload = () => {
               <div className="position-sticky" style={{ top: "100px" }}>
                 
                 {/* Preview Panel */}
-                <div 
-                  className="card border-0 mb-4"
-                  style={{
-                    ...glassStyle,
-                    borderRadius: "24px",
-                  }}
-                >
+                <div className="mc-card mb-4">
                   <div className="card-header bg-transparent border-warning border-opacity-25 p-4">
                     <h5 className="mb-0">
                       <i className="fas fa-eye me-2 text-warning"></i>
@@ -713,13 +685,7 @@ const PhotographerUpload = () => {
                 </div>
 
                 {/* Tips Card */}
-                <div 
-                  className="card border-0"
-                  style={{
-                    ...glassStyle,
-                    borderRadius: "24px",
-                  }}
-                >
+                <div className="mc-card">
                   <div className="card-body p-4">
                     <div className="d-flex align-items-center gap-2 mb-3">
                       <i className="fas fa-chart-line text-warning fa-lg"></i>
@@ -755,15 +721,15 @@ const PhotographerUpload = () => {
         .cursor-pointer {
           cursor: pointer;
         }
-        
+
         .transition-all {
           transition: all 0.3s ease;
         }
-        
+
         .border-dashed {
           border-style: dashed;
         }
-        
+
         .tracking-wide {
           letter-spacing: 0.5px;
         }

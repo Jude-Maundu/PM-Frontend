@@ -4,6 +4,7 @@ import AdminLayout from "./AdminLayout";
 import { Link } from "react-router-dom";
 import { API_BASE_URL } from "../../../api/apiConfig";
 import { placeholderMedium } from "../../../utils/placeholders";
+import ThemeToggle from "../../ThemeToggle";
 
 const API = API_BASE_URL;
 
@@ -30,6 +31,7 @@ const AdminDash = () => {
   const [popularMedia, setPopularMedia] = useState([]);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState("week");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const fetchDashboardData = useCallback(async () => {
     const token = localStorage.getItem("token");
@@ -113,373 +115,289 @@ const AdminDash = () => {
     return `KES ${amount?.toLocaleString() || 0}`;
   };
 
-  const statsCards = [
-    { title: "Total Revenue", value: formatKES(stats.totalRevenue), icon: "fa-dollar-sign", color: "warning", change: "+12.5%", bg: "rgba(107, 189, 208, 0.1)" },
-    { title: "Photographers", value: formatKES(stats.photographerEarnings), icon: "fa-camera", color: "info", change: "70% share", bg: "rgba(23, 162, 184, 0.1)" },
-    { title: "Platform Fees", value: formatKES(stats.platformFees), icon: "fa-percent", color: "success", change: "30% share", bg: "rgba(40, 167, 69, 0.1)" },
-    { title: "Total Media", value: stats.totalMedia, icon: "fa-photo-video", color: "primary", change: `${stats.totalMedia} items`, bg: "rgba(0, 123, 255, 0.1)" },
-    { title: "Total Users", value: stats.totalUsers, icon: "fa-users", color: "purple", change: "active users", bg: "rgba(128, 0, 128, 0.1)" },
-    { title: "Active Shares", value: shareSummary.activeShares, icon: "fa-link", color: "info", change: `${shareSummary.totalShares} total`, bg: "rgba(23, 162, 184, 0.1)" },
-    { title: "Share Accesses", value: shareSummary.totalAccesses, icon: "fa-eye", color: "warning", change: `${shareSummary.totalDownloads} downloads`, bg: "rgba(107, 189, 208, 0.1)" },
-    { title: "Pending Refunds", value: stats.pendingRefunds, icon: "fa-undo", color: "danger", change: "awaiting review", bg: "rgba(220, 53, 69, 0.1)" },
-  ];
+  // ── Shared helper components ──────────────────────────────────────────────
 
-  return (
-    <AdminLayout>
-      {/* Header */}
-      <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
-        <div>
-          <h4 className="fw-bold mb-1">
-            <i className="fas fa-chart-pie me-2 text-warning"></i>
-            Admin Dashboard
-          </h4>
-          <p className="text-white-50 small mb-0">
-            <i className="fas fa-calendar-alt me-2"></i>
-            {new Date().toLocaleDateString("en-US", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
-          </p>
+  const Sparkline = ({ values = [], color = "#5B7FE5" }) => {
+    if (!values.length) return null;
+    const max = Math.max(...values, 1);
+    const min = Math.min(...values);
+    const range = max - min || 1;
+    const W = 80, H = 32;
+    const pts = values.map((v, i) => ({
+      x: (i / Math.max(values.length - 1, 1)) * W,
+      y: H - ((v - min) / range) * H * 0.85 + 2,
+    }));
+    const d = pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ");
+    return (
+      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ overflow: "visible" }}>
+        <path d={d} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  };
+
+  const MiniCalendar = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const today = now.getDate();
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const days = [];
+    for (let i = 0; i < firstDay; i++) days.push({ day: "", other: true });
+    for (let d = 1; d <= daysInMonth; d++) days.push({ day: d, isToday: d === today });
+    const dayNames = ["Su","Mo","Tu","We","Th","Fr","Sa"];
+    const monthName = now.toLocaleString("default", { month: "long" });
+    return (
+      <div>
+        <div className="mc-cal-header">
+          <span className="mc-cal-month">{monthName}</span>
+          <span style={{ fontSize: "0.72rem", color: "var(--mc-text-muted)" }}>{year}</span>
         </div>
-        
-        <div className="btn-group mt-3 mt-md-0">
-          {["day", "week", "month", "year"].map((range) => (
-            <button
-              key={range}
-              className={`btn btn-sm ${timeRange === range ? "btn-warning" : "btn-outline-warning"}`}
-              onClick={() => setTimeRange(range)}
+        <div className="mc-cal-grid">
+          {dayNames.map(d => <div key={d} className="mc-cal-dayname">{d}</div>)}
+          {days.map((item, idx) => (
+            <div
+              key={idx}
+              className={`mc-cal-day${item.isToday ? " mc-today" : ""}${item.other ? " mc-other" : ""}`}
             >
-              {range.charAt(0).toUpperCase() + range.slice(1)}
-            </button>
+              {item.day || ""}
+            </div>
           ))}
         </div>
       </div>
+    );
+  };
 
-      {loading && (
-        <div className="text-center py-5">
-          <div className="spinner-border text-warning mb-3" style={{ width: "3rem", height: "3rem" }}></div>
-          <p className="text-white-50">Loading dashboard...</p>
+  // ── Derived values ────────────────────────────────────────────────────────
+
+  const sparkValues = [3, 5, 2, 8, 6, 9, 4];
+  const activityPct = Math.min(99, Math.round(stats.totalTransactions / Math.max(stats.totalMedia, 1) * 10)) || 75;
+  const revenueTargetPct = Math.min(99, Math.round(stats.totalRevenue / 50000 * 100));
+  const userGrowthPct = Math.min(99, Math.round(stats.totalUsers / 100 * 100));
+  const contentApprovedPct = Math.min(99, Math.round(stats.totalMedia / 200 * 100));
+
+  const adminUserStr = localStorage.getItem("user");
+  const adminUser = adminUserStr ? JSON.parse(adminUserStr) : {};
+  const adminName = adminUser?.name || adminUser?.username || adminUser?.email || "Administrator";
+  const adminAvatarLetter = adminName.charAt(0).toUpperCase();
+
+  const eventList = [
+    { count: stats.totalTransactions, label: "Transactions", color: "#F06B8D" },
+    { count: stats.pendingRefunds, label: "Refunds (pending)", color: "#4CC9A6" },
+    { count: stats.totalUsers, label: "Users", color: "#9D7FEB" },
+  ];
+
+  if (loading) {
+    return (
+      <AdminLayout>
+        <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "60vh" }}>
+          <div className="spinner-border" style={{ color: "var(--mc-accent)" }}></div>
         </div>
-      )}
+      </AdminLayout>
+    );
+  }
 
-      {!loading && (
-        <>
-          {/* Stats Cards */}
-          <div className="row g-3 mb-4">
-            {statsCards.map((stat, idx) => (
-              <div className="col-xl-3 col-lg-4 col-md-6" key={idx}>
-                <div
-                  className="card border-0 h-100"
-                  style={{
-                    background: stat.bg,
-                    backdropFilter: "blur(10px)",
-                    border: "1px solid rgba(255, 255, 255, 0.05)",
-                  }}
-                >
-                  <div className="card-body">
-                    <div className="d-flex justify-content-between align-items-start">
-                      <div>
-                        <p className="text-white-50 small mb-1">{stat.title}</p>
-                        <h3 className="fw-bold mb-0">{stat.value}</h3>
-                        <small className={`text-${stat.color} d-block mt-2`}>
-                          <i className="fas fa-arrow-up me-1"></i>
-                          {stat.change}
-                        </small>
-                      </div>
-                      <div
-                        className="rounded-circle p-3"
-                        style={{
-                          background: `rgba(255, 255, 255, 0.1)`,
-                          border: `1px solid rgba(107, 189, 208, 0.2)`,
-                        }}
-                      >
-                        <i className={`fas ${stat.icon} text-${stat.color}`}></i>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+  return (
+    <AdminLayout>
+      {/* Top Bar */}
+      <div className="mc-topbar">
+        <div className="mc-search-wrap">
+          <i className="fas fa-search mc-search-icon"></i>
+          <input
+            className="mc-search"
+            placeholder="Search..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <div className="mc-topbar-actions">
+          <div className="mc-icon-btn"><ThemeToggle /></div>
+        </div>
+      </div>
+
+      {/* Hero Banner */}
+      <div className="mc-hero">
+        <div>
+          <div className="mc-hero-date">
+            <i className="fas fa-calendar-alt"></i>
+            {new Date().toLocaleDateString("en-US", {
+              weekday: "long", month: "long", day: "numeric", year: "numeric",
+            })}
+          </div>
+          <h2>Good Day, {adminName}!</h2>
+          <p>Have a productive {new Date().toLocaleDateString("en-US", { weekday: "long" })}.</p>
+        </div>
+        <div className="mc-hero-art">🛡️</div>
+      </div>
+
+      {/* Stat Cards */}
+      <div className="mc-stats-row">
+        {/* Card 1: Total Users */}
+        <div className="mc-stat-card">
+          <div className="mc-stat-header">
+            <span className="mc-stat-label">Total Users</span>
+            <span className="mc-stat-dots">···</span>
+          </div>
+          <div className="mc-stat-value">{stats.totalUsers}</div>
+          <div className="mc-stat-sub">registered users</div>
+          <div className="mc-stat-trend up">
+            <Sparkline values={sparkValues} color="#F06B8D" />
+          </div>
+        </div>
+
+        {/* Card 2: Total Revenue */}
+        <div className="mc-stat-card">
+          <div className="mc-stat-header">
+            <span className="mc-stat-label">Total Revenue</span>
+            <span className="mc-stat-dots">···</span>
+          </div>
+          <div className="mc-stat-value">{"KES " + stats.totalRevenue.toLocaleString()}</div>
+          <div className="mc-stat-sub">platform earnings</div>
+          <div className="mc-stat-trend up">
+            <Sparkline values={sparkValues} color="#4CC9A6" />
+          </div>
+        </div>
+
+        {/* Card 3: Media */}
+        <div className="mc-stat-card">
+          <div className="mc-stat-header">
+            <span className="mc-stat-label">Media</span>
+            <span className="mc-stat-dots">···</span>
+          </div>
+          <div className="mc-stat-value">{stats.totalMedia}</div>
+          <div className="mc-stat-sub">published items</div>
+          <div className="mc-stat-trend neu">
+            <Sparkline values={sparkValues} color="#9D7FEB" />
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Grid */}
+      <div className="mc-bottom-grid">
+        {/* Left: Donut + event list */}
+        <div className="mc-card">
+          <div className="mc-card-header">
+            <span className="mc-card-title">PLATFORM ACTIVITY</span>
+          </div>
+          <div className="mc-donut-wrap">
+            <div
+              className="mc-donut"
+              style={{
+                background: `conic-gradient(var(--mc-accent) 0% ${activityPct}%, var(--mc-border) ${activityPct}% 100%)`,
+              }}
+            >
+              <span className="mc-donut-pct">{activityPct}%</span>
+            </div>
+            <div className="mc-donut-info">
+              <h4>Activity</h4>
+              <p>transactions / media</p>
+            </div>
+          </div>
+          <div className="mc-event-list">
+            {eventList.map((ev) => (
+              <div className="mc-event-item" key={ev.label}>
+                <span className="mc-event-dot" style={{ background: ev.color }}></span>
+                <span className="mc-event-count">{ev.count}</span>
+                <span className="mc-event-label">{ev.label}</span>
               </div>
             ))}
           </div>
+        </div>
 
-          {/* Revenue Chart */}
-          <div className="row g-3 mb-4">
-            <div className="col-12">
-              <div
-                className="card border-0"
-                style={{
-                  background: "rgba(0, 0, 0, 0.3)",
-                  backdropFilter: "blur(10px)",
-                  border: "1px solid rgba(255, 255, 255, 0.05)",
-                }}
-              >
-                <div className="card-header bg-transparent border-warning border-opacity-25 py-3">
-                  <h6 className="fw-bold mb-0">
-                    <i className="fas fa-chart-line me-2 text-warning"></i>
-                    Revenue Overview ({timeRange})
-                  </h6>
-                </div>
-                <div className="card-body">
-                  <div className="d-flex justify-content-between align-items-end" style={{ height: "200px" }}>
-                    {[65, 45, 75, 55, 85, 70, 60].map((height, idx) => (
-                      <div key={idx} className="text-center" style={{ width: "12%" }}>
-                        <div
-                          className="bg-warning rounded-3 mb-2"
-                          style={{
-                            height: `${height}px`,
-                            width: "100%",
-                            opacity: 0.7 + (height / 200),
-                          }}
-                        ></div>
-                        <small className="text-white-50" style={{ fontSize: "0.6rem" }}>
-                          {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][idx]}
-                        </small>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+        {/* Middle: Progress bars */}
+        <div className="mc-card">
+          <div className="mc-card-header">
+            <span className="mc-card-title">PLATFORM GOALS</span>
+            <span className="mc-card-badge">Today</span>
+          </div>
+
+          <div className="mc-prog-row">
+            <span className="mc-prog-label">Revenue Target</span>
+            <span className="mc-prog-pct">{revenueTargetPct}%</span>
+            <div className="mc-prog-track">
+              <div className="mc-prog-fill" style={{ width: `${revenueTargetPct}%`, background: "#5B7FE5" }}></div>
+            </div>
+          </div>
+
+          <div className="mc-prog-row">
+            <span className="mc-prog-label">User Growth</span>
+            <span className="mc-prog-pct">{userGrowthPct}%</span>
+            <div className="mc-prog-track">
+              <div className="mc-prog-fill" style={{ width: `${userGrowthPct}%`, background: "#4CC9A6" }}></div>
+            </div>
+          </div>
+
+          <div className="mc-prog-row">
+            <span className="mc-prog-label">Content Approved</span>
+            <span className="mc-prog-pct">{contentApprovedPct}%</span>
+            <div className="mc-prog-track">
+              <div className="mc-prog-fill" style={{ width: `${contentApprovedPct}%`, background: "#F06B8D" }}></div>
+            </div>
+          </div>
+
+          <span style={{ color: "var(--mc-accent)", fontSize: "0.8rem", cursor: "pointer" }}>+ Add goal</span>
+        </div>
+
+        {/* Right panel */}
+        <div className="mc-right-panel">
+          {/* Profile mini */}
+          <div className="mc-card">
+            <div className="mc-profile-mini">
+              <div className="mc-profile-avatar">
+                {adminUser?.profileImage ? (
+                  <img src={adminUser.profileImage} alt="avatar" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
+                ) : (
+                  <div className="mc-avatar-placeholder">{adminAvatarLetter}</div>
+                )}
+              </div>
+              <div className="mc-profile-name">{adminName}</div>
+              <div className="mc-profile-role">Administrator</div>
+            </div>
+            <div className="mc-profile-stats">
+              <div className="mc-pstat">
+                <div className="mc-pstat-val">{stats.totalUsers}</div>
+                <div className="mc-pstat-lbl">Users</div>
+              </div>
+              <div className="mc-pstat">
+                <div className="mc-pstat-val">{stats.totalMedia}</div>
+                <div className="mc-pstat-lbl">Media</div>
+              </div>
+              <div className="mc-pstat">
+                <div className="mc-pstat-val">{stats.totalTransactions}</div>
+                <div className="mc-pstat-lbl">Txns</div>
               </div>
             </div>
           </div>
 
-          {/* Popular Media */}
-          <div className="row g-3 mb-4">
-            <div className="col-12">
-              <div
-                className="card border-0"
-                style={{
-                  background: "rgba(0, 0, 0, 0.3)",
-                  backdropFilter: "blur(10px)",
-                  border: "1px solid rgba(255, 255, 255, 0.05)",
-                }}
-              >
-                <div className="card-header bg-transparent border-warning border-opacity-25 py-3">
-                  <h6 className="fw-bold mb-0">
-                    <i className="fas fa-fire me-2 text-warning"></i>
-                    Popular Media
-                  </h6>
-                </div>
-                <div className="card-body">
-                  <div className="row g-3">
-                    {popularMedia.map((item, idx) => (
-                      <div className="col-md-2 col-4" key={item.id || item._id || idx}>
-                        <div className="position-relative">
-                          <img
-                            src={item.thumbnail || item.image || placeholderMedium}
-                            alt={item.title}
-                            className="img-fluid rounded-3 w-100"
-                            style={{ height: "100px", objectFit: "cover" }}
-                            onError={(e) => { e.target.src = placeholderMedium; }}
-                          />
-                          <span className="position-absolute top-0 end-0 m-1 badge bg-warning text-dark">
-                            <i className="fas fa-heart me-1"></i>
-                            {item.likes || 0}
-                          </span>
-                        </div>
-                        <small className="d-block text-truncate mt-1 text-white-50">{item.title}</small>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
+          {/* Mini calendar */}
+          <div className="mc-card">
+            <MiniCalendar />
           </div>
 
-          {/* Share Monitoring */}
-          <div className="row g-3 mb-4">
-            <div className="col-12">
-              <div className="card border-0" style={{
-                background: "rgba(0, 0, 0, 0.3)",
-                backdropFilter: "blur(10px)",
-                border: "1px solid rgba(255, 255, 255, 0.05)",
-              }}>
-                <div className="card-header bg-transparent border-warning border-opacity-25 py-3 d-flex justify-content-between align-items-center">
-                  <div>
-                    <h6 className="fw-bold mb-1">
-                      <i className="fas fa-link me-2 text-warning"></i>
-                      Share Monitoring
-                    </h6>
-                    <p className="text-white-50 small mb-0">Track active share links, access count, and recent share activity.</p>
-                  </div>
-                  <Link to="/admin/shares" className="btn btn-sm btn-outline-warning">
-                    View All Shares
-                  </Link>
-                </div>
-                <div className="card-body">
-                  <div className="row g-3 mb-3">
-                    {[
-                      { title: "Total Shares", value: shareSummary.totalShares, icon: "fa-link", color: "warning" },
-                      { title: "Active Shares", value: shareSummary.activeShares, icon: "fa-eye", color: "info" },
-                      { title: "Expired Shares", value: shareSummary.expiredShares, icon: "fa-clock", color: "secondary" },
-                      { title: "Total Accesses", value: shareSummary.totalAccesses, icon: "fa-chart-line", color: "success" },
-                      { title: "Total Downloads", value: shareSummary.totalDownloads, icon: "fa-download", color: "primary" },
-                    ].map((card) => (
-                      <div className="col-md-4 col-lg-2" key={card.title}>
-                        <div className="card bg-dark border-secondary h-100 p-3">
-                          <div className="d-flex align-items-center justify-content-between mb-2">
-                            <span className={`badge bg-${card.color} text-dark`}>
-                              <i className={`fas ${card.icon}`}></i>
-                            </span>
-                            <small className="text-white-50">{card.title}</small>
-                          </div>
-                          <h4 className="fw-bold mb-0 text-white">{card.value}</h4>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="table-responsive">
-                    <table className="table table-dark table-hover mb-0">
-                      <thead>
-                        <tr>
-                          <th>Share Token</th>
-                          <th>Type</th>
-                          <th>Owner</th>
-                          <th>Accesses</th>
-                          <th>Downloads</th>
-                          <th>Remaining</th>
-                          <th>Expires</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {recentShares.length === 0 && (
-                          <tr>
-                            <td colSpan="7" className="text-center text-white-50 py-4">
-                              No share activity available.
-                            </td>
-                          </tr>
-                        )}
-                        {recentShares.map((share, idx) => (
-                          <tr key={idx}>
-                            <td className="text-truncate" style={{ maxWidth: '180px' }}>
-                              <small>{share.token}</small>
-                            </td>
-                            <td>{share.media ? "Media" : "Album"}</td>
-                            <td>{share.createdBy?.name || share.createdBy?.email || "Unknown"}</td>
-                            <td>{share.accessCount || 0}</td>
-                            <td>{share.downloadCount || 0}</td>
-                            <td>{share.remainingDownloads}</td>
-                            <td>{share.expiresAt ? new Date(share.expiresAt).toLocaleDateString() : "Never"}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+          {/* Recent transactions schedule */}
+          <div className="mc-card">
+            <div className="mc-card-header">
+              <span className="mc-card-title">RECENT TRANSACTIONS</span>
+            </div>
+            <div className="mc-schedule">
+              {recentReceipts.slice(0, 4).map((r, idx) => (
+                <div className="mc-sched-item" key={idx}>
+                  <span className="mc-sched-dot" style={{ background: "#4CC9A6" }}></span>
+                  <div className="mc-sched-body">
+                    <div className="mc-sched-time">{new Date(r.createdAt).toLocaleDateString()}</div>
+                    <div className="mc-sched-text">{r.user?.email || r.description || "Transaction"}</div>
                   </div>
                 </div>
-              </div>
+              ))}
+              {recentReceipts.length === 0 && (
+                <div style={{ color: "var(--mc-text-muted)", fontSize: "0.8rem", textAlign: "center", padding: "0.75rem 0" }}>
+                  No recent transactions
+                </div>
+              )}
             </div>
           </div>
-
-          {/* Recent Activity */}
-          <div className="row g-3">
-            <div className="col-lg-6">
-              <div
-                className="card border-0"
-                style={{
-                  background: "rgba(0, 0, 0, 0.3)",
-                  backdropFilter: "blur(10px)",
-                  border: "1px solid rgba(255, 255, 255, 0.05)",
-                }}
-              >
-                <div className="card-header bg-transparent border-warning border-opacity-25 d-flex justify-content-between align-items-center py-3">
-                  <h6 className="fw-bold mb-0">
-                    <i className="fas fa-receipt me-2 text-warning"></i>
-                    Recent Receipts
-                  </h6>
-                  <Link to="/admin/receipts" className="btn btn-sm btn-outline-warning">
-                    View All
-                  </Link>
-                </div>
-                <div className="card-body p-0">
-                  <div className="table-responsive">
-                    <table className="table table-dark table-hover mb-0">
-                      <tbody>
-                        {recentReceipts.map((r, idx) => (
-                          <tr key={idx}>
-                            <td className="ps-3">
-                              <small>{r.user?.email || "N/A"}</small>
-                            </td>
-                            <td>
-                              <span className="badge bg-warning text-dark">
-                                {formatKES(r.amount)}
-                              </span>
-                            </td>
-                            <td className="text-end pe-3">
-                              <small className="text-white-50">
-                                {new Date(r.createdAt).toLocaleDateString()}
-                              </small>
-                            </td>
-                          </tr>
-                        ))}
-                        {recentReceipts.length === 0 && (
-                          <tr>
-                            <td colSpan="3" className="text-center text-white-50 py-4">
-                              No recent receipts
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="col-lg-6">
-              <div
-                className="card border-0"
-                style={{
-                  background: "rgba(0, 0, 0, 0.3)",
-                  backdropFilter: "blur(10px)",
-                  border: "1px solid rgba(255, 255, 255, 0.05)",
-                }}
-              >
-                <div className="card-header bg-transparent border-warning border-opacity-25 d-flex justify-content-between align-items-center py-3">
-                  <h6 className="fw-bold mb-0">
-                    <i className="fas fa-undo me-2 text-warning"></i>
-                    Pending Refunds
-                  </h6>
-                  <Link to="/admin/refunds" className="btn btn-sm btn-outline-warning">
-                    Manage
-                  </Link>
-                </div>
-                <div className="card-body p-0">
-                  <div className="table-responsive">
-                    <table className="table table-dark table-hover mb-0">
-                      <tbody>
-                        {recentRefunds.map((r, idx) => (
-                          <tr key={idx}>
-                            <td className="ps-3">
-                              <small>{r.user?.email || "N/A"}</small>
-                            </td>
-                            <td>
-                              <span className="badge bg-danger">
-                                {formatKES(r.amount)}
-                              </span>
-                            </td>
-                            <td className="text-end pe-3">
-                              <small className="text-white-50">
-                                {r.reason?.substring(0, 20)}...
-                              </small>
-                            </td>
-                          </tr>
-                        ))}
-                        {recentRefunds.length === 0 && (
-                          <tr>
-                            <td colSpan="3" className="text-center text-white-50 py-4">
-                              No pending refunds
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
+        </div>
+      </div>
     </AdminLayout>
   );
 };

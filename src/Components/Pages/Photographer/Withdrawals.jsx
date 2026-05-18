@@ -2,10 +2,15 @@ import { toast } from "../../../utils/toast";
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import PhotographerLayout from "./PhotographerLayout";
+import PageHeader from "../../PageHeader";
 import { API_BASE_URL, API_ENDPOINTS } from "../../../api/apiConfig";
 import { getAuthHeaders, getCurrentUserId } from "../../../utils/auth";
 
 const API = API_BASE_URL;
+
+const PAYOUT_SCHEDULE_KEY = "photographer_payout_schedule";
+
+const defaultSchedule = { enabled: false, dayOfMonth: 1, minBalance: 1000 };
 
 const PhotographerWithdrawals = () => {
   const [withdrawals, setWithdrawals] = useState([]);
@@ -21,21 +26,42 @@ const PhotographerWithdrawals = () => {
   });
   const [submitting, setSubmitting] = useState(false);
 
+  // Auto withdrawal schedule state
+  const [schedule, setSchedule] = useState(() => {
+    try {
+      const stored = localStorage.getItem(PAYOUT_SCHEDULE_KEY);
+      return stored ? JSON.parse(stored) : defaultSchedule;
+    } catch {
+      return defaultSchedule;
+    }
+  });
+  const [scheduleSaved, setScheduleSaved] = useState(false);
+
+  const saveSchedule = () => {
+    try {
+      localStorage.setItem(PAYOUT_SCHEDULE_KEY, JSON.stringify(schedule));
+      setScheduleSaved(true);
+      setTimeout(() => setScheduleSaved(false), 2500);
+    } catch (e) {
+      console.error("Failed to save schedule:", e);
+    }
+  };
+
   const photographerId = getCurrentUserId();
   const headers = getAuthHeaders();
 
   const fetchWithdrawals = useCallback(async () => {
     try {
       setLoading(true);
-      
+
       // Fetch withdrawals
       const withdrawalsRes = await axios.get(`${API}/withdrawals/my`, { headers });
       setWithdrawals(withdrawalsRes.data || []);
-      
+
       // Fetch available balance from earnings
       const earningsRes = await axios.get(API_ENDPOINTS.PAYMENTS.EARNINGS_SUMMARY(photographerId), { headers });
       setAvailableBalance(earningsRes.data?.available || 0);
-      
+
     } catch (error) {
       console.error("Error fetching withdrawals:", error);
     } finally {
@@ -49,7 +75,7 @@ const PhotographerWithdrawals = () => {
 
   const handleRequest = async (e) => {
     e.preventDefault();
-    
+
     if (!requestData.amount || Number(requestData.amount) < 1000) {
       toast.warning("Minimum withdrawal amount is KES 1,000");
       return;
@@ -62,7 +88,7 @@ const PhotographerWithdrawals = () => {
 
     try {
       setSubmitting(true);
-      
+
       const payload = {
         amount: Number(requestData.amount),
         method: requestData.method,
@@ -72,7 +98,7 @@ const PhotographerWithdrawals = () => {
       };
 
       await axios.post(`${API}/withdrawals/request`, payload, { headers });
-      
+
       toast.success("Withdrawal request submitted successfully!");
       setShowRequestForm(false);
       setRequestData({
@@ -82,10 +108,10 @@ const PhotographerWithdrawals = () => {
         accountName: "",
         accountNumber: "",
       });
-      
+
       // Refresh data
       fetchWithdrawals();
-      
+
     } catch (error) {
       console.error("Error submitting withdrawal request:", error);
       toast.error(error.response?.data?.message || "Failed to submit withdrawal request");
@@ -96,128 +122,226 @@ const PhotographerWithdrawals = () => {
 
   return (
     <PhotographerLayout>
-      <h4 className="fw-bold mb-4">
-        <i className="fas fa-money-bill-wave me-2 text-warning"></i>
-        Withdrawals
-      </h4>
+      <PageHeader title="Withdrawals" subtitle="Request and track payouts" />
+      <div className="mc-page">
 
-      {/* Balance Card */}
-      <div className="card bg-dark border-warning mb-4">
-        <div className="card-body">
-          <div className="row align-items-center">
-            <div className="col-md-6">
-              <small className="text-white-50">Available Balance</small>
-              <h2 className="text-warning fw-bold">KES {availableBalance.toLocaleString()}</h2>
-              <p className="text-white-50 small mb-md-0">Minimum withdrawal: KES 1,000</p>
+        {/* Auto Withdrawal Card */}
+        <div className="mc-card" style={{ marginBottom: "1.25rem" }}>
+          <div className="mc-card-header">
+            <span className="mc-card-title">
+              <i className="fas fa-robot me-2"></i>AUTO WITHDRAWAL
+            </span>
+          </div>
+          {/* Toggle */}
+          <div className="d-flex justify-content-between align-items-center mb-4">
+            <div>
+              <p className="mb-0 text-white fw-semibold">Enable automatic monthly withdrawal</p>
+              <small style={{ color: "rgba(255,255,255,0.45)" }}>
+                Funds will be transferred automatically on your chosen day each month
+              </small>
             </div>
-            <div className="col-md-6 text-end">
-              <button
-                className="btn btn-warning px-4"
-                onClick={() => setShowRequestForm(true)}
-                disabled={availableBalance < 1000}
-              >
-                <i className="fas fa-plus-circle me-2"></i>
-                Request Withdrawal
-              </button>
+            <div className="form-check form-switch ms-3">
+              <input
+                className="form-check-input"
+                type="checkbox"
+                role="switch"
+                id="autoWithdrawToggle"
+                checked={schedule.enabled}
+                onChange={(e) => setSchedule((prev) => ({ ...prev, enabled: e.target.checked }))}
+                style={{ width: "3em", height: "1.6em", cursor: "pointer" }}
+              />
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Request Form Modal */}
-      {showRequestForm && (
-        <div className="modal show d-block" style={{ background: "rgba(0,0,0,0.8)" }}>
-          <div className="modal-dialog">
-            <div className="modal-content bg-dark border-warning">
-              <div className="modal-header border-warning">
-                <h5 className="modal-title text-warning">Request Withdrawal</h5>
-                <button className="btn-close btn-close-white" onClick={() => setShowRequestForm(false)}></button>
+          {/* Settings (shown when enabled) */}
+          <div
+            style={{
+              opacity: schedule.enabled ? 1 : 0.4,
+              pointerEvents: schedule.enabled ? "auto" : "none",
+              transition: "opacity 0.25s",
+            }}
+          >
+            <div className="row g-3 mb-3">
+              <div className="col-md-6">
+                <label className="form-label text-white-50 small">
+                  <i className="fas fa-calendar-day me-1"></i>
+                  Withdraw on day of month
+                </label>
+                <select
+                  className="form-select bg-dark text-white border-secondary"
+                  value={schedule.dayOfMonth}
+                  onChange={(e) => setSchedule((prev) => ({ ...prev, dayOfMonth: parseInt(e.target.value) }))}
+                >
+                  {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
+                    <option key={d} value={d} style={{ background: "#1a2e3b" }}>
+                      {d === 1 ? "1st" : d === 2 ? "2nd" : d === 3 ? "3rd" : `${d}th`}
+                    </option>
+                  ))}
+                </select>
               </div>
-              <div className="modal-body">
-                <form onSubmit={handleRequest}>
-                  <div className="mb-3">
-                    <label className="form-label text-white-50">Amount (KES)</label>
-                    <input
-                      type="number"
-                      className="form-control bg-dark text-white border-secondary"
-                      value={requestData.amount}
-                      onChange={(e) => setRequestData({...requestData, amount: e.target.value})}
-                      required
-                      min="1000"
-                    />
-                  </div>
 
-                  <div className="mb-3">
-                    <label className="form-label text-white-50">Withdrawal Method</label>
-                    <select
-                      className="form-select bg-dark text-white border-secondary"
-                      value={requestData.method}
-                      onChange={(e) => setRequestData({...requestData, method: e.target.value})}
-                    >
-                      <option value="mpesa">M-Pesa</option>
-                      <option value="bank">Bank Transfer</option>
-                    </select>
-                  </div>
+              <div className="col-md-6">
+                <label className="form-label text-white-50 small">
+                  <i className="fas fa-coins me-1"></i>
+                  Only withdraw if balance is above (KES)
+                </label>
+                <input
+                  type="number"
+                  className="form-control bg-dark text-white border-secondary"
+                  placeholder="e.g. 5000"
+                  value={schedule.minBalance}
+                  onChange={(e) => setSchedule((prev) => ({ ...prev, minBalance: parseInt(e.target.value) || 0 }))}
+                  min="0"
+                  step="500"
+                />
+              </div>
+            </div>
 
-                  {requestData.method === "mpesa" ? (
+            {/* Info note */}
+            <div
+              className="d-flex gap-2 p-3 rounded-3 mb-3"
+              style={{ background: "rgba(107,189,208,0.07)", border: "1px solid rgba(107,189,208,0.18)" }}
+            >
+              <i className="fas fa-info-circle mt-1 flex-shrink-0" style={{ color: "var(--mc-accent-teal)" }}></i>
+              <small style={{ color: "rgba(255,255,255,0.55)", lineHeight: 1.5 }}>
+                Automatic withdrawals will be processed on{" "}
+                <span style={{ color: "var(--mc-accent-teal)", fontWeight: 600 }}>day {schedule.dayOfMonth}</span> of each month
+                when your available balance exceeds{" "}
+                <span style={{ color: "var(--mc-accent-teal)", fontWeight: 600 }}>
+                  KES {(schedule.minBalance || 0).toLocaleString()}
+                </span>
+                . Withdrawals are subject to bank processing times.
+              </small>
+            </div>
+          </div>
+
+          {/* Save button */}
+          <div className="d-flex align-items-center gap-3">
+            <button className="mc-btn mc-btn-primary" onClick={saveSchedule}>
+              <i className="fas fa-save me-2"></i>Save Settings
+            </button>
+            {scheduleSaved && (
+              <span style={{ color: "var(--mc-accent-teal)", fontSize: "0.85rem" }}>
+                <i className="fas fa-check-circle me-1"></i>Saved!
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Balance Card */}
+        <div className="mc-card" style={{ marginBottom: "1.25rem" }}>
+          <div className="mc-card-header">
+            <span className="mc-card-title">AVAILABLE BALANCE</span>
+            <span className="mc-card-badge">Min KES 1,000</span>
+          </div>
+          <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+              <div style={{ fontSize: "2rem", fontWeight: 700, color: "var(--mc-accent-gold)" }}>
+                KES {availableBalance.toLocaleString()}
+              </div>
+              <small style={{ opacity: 0.55 }}>Minimum withdrawal: KES 1,000</small>
+            </div>
+            <button
+              className="mc-btn mc-btn-primary"
+              onClick={() => setShowRequestForm(true)}
+              disabled={availableBalance < 1000}
+            >
+              <i className="fas fa-plus-circle me-2"></i>
+              Request Withdrawal
+            </button>
+          </div>
+        </div>
+
+        {/* Request Form Modal */}
+        {showRequestForm && (
+          <div className="modal show d-block" style={{ background: "rgba(0,0,0,0.8)" }}>
+            <div className="modal-dialog">
+              <div className="modal-content bg-dark border-warning">
+                <div className="modal-header border-warning">
+                  <h5 className="modal-title text-warning">Request Withdrawal</h5>
+                  <button className="btn-close btn-close-white" onClick={() => setShowRequestForm(false)}></button>
+                </div>
+                <div className="modal-body">
+                  <form onSubmit={handleRequest}>
                     <div className="mb-3">
-                      <label className="form-label text-white-50">M-Pesa Phone Number</label>
+                      <label className="form-label text-white-50">Amount (KES)</label>
                       <input
-                        type="tel"
+                        type="number"
                         className="form-control bg-dark text-white border-secondary"
-                        placeholder="254712345678"
-                        value={requestData.phone}
-                        onChange={(e) => setRequestData({...requestData, phone: e.target.value})}
+                        value={requestData.amount}
+                        onChange={(e) => setRequestData({...requestData, amount: e.target.value})}
                         required
+                        min="1000"
                       />
                     </div>
-                  ) : (
-                    <>
-                      <div className="mb-3">
-                        <label className="form-label text-white-50">Account Name</label>
-                        <input
-                          type="text"
-                          className="form-control bg-dark text-white border-secondary"
-                          value={requestData.accountName}
-                          onChange={(e) => setRequestData({...requestData, accountName: e.target.value})}
-                          required
-                        />
-                      </div>
-                      <div className="mb-3">
-                        <label className="form-label text-white-50">Account Number</label>
-                        <input
-                          type="text"
-                          className="form-control bg-dark text-white border-secondary"
-                          value={requestData.accountNumber}
-                          onChange={(e) => setRequestData({...requestData, accountNumber: e.target.value})}
-                          required
-                        />
-                      </div>
-                    </>
-                  )}
 
-                  <button type="submit" className="btn btn-warning w-100" disabled={submitting}>
-                    {submitting ? 'Submitting...' : 'Submit Request'}
-                  </button>
-                </form>
+                    <div className="mb-3">
+                      <label className="form-label text-white-50">Withdrawal Method</label>
+                      <select
+                        className="form-select bg-dark text-white border-secondary"
+                        value={requestData.method}
+                        onChange={(e) => setRequestData({...requestData, method: e.target.value})}
+                      >
+                        <option value="mpesa">M-Pesa</option>
+                        <option value="bank">Bank Transfer</option>
+                      </select>
+                    </div>
+
+                    {requestData.method === "mpesa" ? (
+                      <div className="mb-3">
+                        <label className="form-label text-white-50">M-Pesa Phone Number</label>
+                        <input
+                          type="tel"
+                          className="form-control bg-dark text-white border-secondary"
+                          placeholder="254712345678"
+                          value={requestData.phone}
+                          onChange={(e) => setRequestData({...requestData, phone: e.target.value})}
+                          required
+                        />
+                      </div>
+                    ) : (
+                      <>
+                        <div className="mb-3">
+                          <label className="form-label text-white-50">Account Name</label>
+                          <input
+                            type="text"
+                            className="form-control bg-dark text-white border-secondary"
+                            value={requestData.accountName}
+                            onChange={(e) => setRequestData({...requestData, accountName: e.target.value})}
+                            required
+                          />
+                        </div>
+                        <div className="mb-3">
+                          <label className="form-label text-white-50">Account Number</label>
+                          <input
+                            type="text"
+                            className="form-control bg-dark text-white border-secondary"
+                            value={requestData.accountNumber}
+                            onChange={(e) => setRequestData({...requestData, accountNumber: e.target.value})}
+                            required
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    <button type="submit" className="mc-btn mc-btn-primary w-100" disabled={submitting}>
+                      {submitting ? 'Submitting...' : 'Submit Request'}
+                    </button>
+                  </form>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Withdrawals History */}
-      <div className="card bg-dark border-secondary">
-        <div className="card-header bg-transparent border-secondary">
-          <h6 className="mb-0 text-warning">
-            <i className="fas fa-history me-2"></i>
-            Withdrawal History
-          </h6>
-        </div>
-        <div className="card-body p-0">
+        {/* Withdrawals History */}
+        <div className="mc-table-card">
+          <div className="mc-card-header" style={{ padding: "1rem 1.25rem 0" }}>
+            <span className="mc-card-title">WITHDRAWAL HISTORY</span>
+          </div>
           {loading ? (
-            <div className="text-center py-4">
-              <div className="spinner-border text-warning"></div>
+            <div style={{ padding: "2rem", textAlign: "center" }}>
+              <div className="spinner-border" style={{ color: "var(--mc-accent)" }}></div>
             </div>
           ) : (
             <div className="table-responsive">
@@ -252,8 +376,8 @@ const PhotographerWithdrawals = () => {
                       </td>
                       <td className="pe-3">
                         <span className={`badge bg-${
-                          w.status === 'completed' ? 'success' : 
-                          w.status === 'pending' ? 'warning' : 
+                          w.status === 'completed' ? 'success' :
+                          w.status === 'pending' ? 'warning' :
                           w.status === 'processing' ? 'info' : 'danger'
                         }`}>
                           {w.status.charAt(0).toUpperCase() + w.status.slice(1)}
@@ -263,8 +387,11 @@ const PhotographerWithdrawals = () => {
                   ))}
                   {withdrawals.length === 0 && (
                     <tr>
-                      <td colSpan="5" className="text-center text-white-50 py-4">
-                        No withdrawal requests yet
+                      <td colSpan="5">
+                        <div className="mc-empty">
+                          <i className="fas fa-money-bill-wave"></i>
+                          <p>No withdrawal requests yet</p>
+                        </div>
                       </td>
                     </tr>
                   )}

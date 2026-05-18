@@ -6,6 +6,8 @@ import { API_BASE_URL, API_ENDPOINTS } from "../../../api/apiConfig";
 import { placeholderSmall } from "../../../utils/placeholders";
 import { getImageUrl, fetchProtectedUrl } from "../../../utils/imageUrl";
 import { getAuthHeaders, getCurrentUserId, getDisplayName, getStoredUser } from "../../../utils/auth";
+import ThemeToggle from "../../ThemeToggle";
+import NotificationBell from "../../NotificationBell";
 
 const API = API_BASE_URL;
 
@@ -97,10 +99,11 @@ const PhotographerDashboard = () => {
   const [imageUrls, setImageUrls] = useState({});
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState("week");
-  const [error, setError] = useState(null);
+  const [, setError] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [chartLabels, setChartLabels] = useState([]);
   const [chartSeries, setChartSeries] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const photographerId = getCurrentUserId();
   const user = getStoredUser();
@@ -212,286 +215,297 @@ const PhotographerDashboard = () => {
     setChartSeries(chartData.values);
   }, [transactions, timeRange]);
 
-  const statsCards = [
-    {
-      title: "Total Media",
-      value: stats.totalMedia,
-      icon: "fa-photo-video",
-      color: "warning",
-      link: "/photographer/media",
-    },
-    {
-      title: "Total Sales",
-      value: stats.totalSales,
-      icon: "fa-shopping-cart",
-      color: "success",
-      link: "/photographer/sales",
-    },
-    {
-      title: "Total Earnings",
-      value: `KES ${stats.totalEarnings.toLocaleString()}`,
-      icon: "fa-dollar-sign",
-      color: "info",
-      link: "/photographer/earnings",
-    },
-    {
-      title: "Pending",
-      value: `KES ${stats.pendingEarnings.toLocaleString()}`,
-      icon: "fa-clock",
-      color: "warning",
-      link: "/photographer/withdrawals",
-    },
-    {
-      title: "Total Views",
-      value: stats.totalViews,
-      icon: "fa-eye",
-      color: "primary",
-      link: "#",
-    },
-    {
-      title: "Total Likes",
-      value: stats.totalLikes,
-      icon: "fa-heart",
-      color: "danger",
-      link: "#",
-    },
-  ];
+  const chartData = buildChartData(transactions, timeRange);
 
-  const chartPoints = chartSeries.length === 7 ? chartSeries : [0, 0, 0, 0, 0, 0, 0];
-  const chartLabelsToShow = chartLabels.length === 7
-    ? chartLabels
-    : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  const chartMaxValue = Math.max(...chartPoints, 1);
+  // ── Shared helper components ──────────────────────────────────────────────
 
-  return (
-    <PhotographerLayout>
-      {/* Header */}
-      <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
-        <div>
-          <h4 className="fw-bold mb-1" style={{ fontFamily: "var(--font-serif)", color: "#fff" }}>
-            <i className="fas fa-camera me-2" style={{ color: "var(--pm-teal)" }}></i>
-            Photographer Dashboard
-          </h4>
-          <p className="small mb-0" style={{ color: "rgba(255,255,255,0.5)" }}>
-            Welcome back, {displayName}!
-          </p>
+  const Sparkline = ({ values = [], color = "#5B7FE5" }) => {
+    if (!values.length) return null;
+    const max = Math.max(...values, 1);
+    const min = Math.min(...values);
+    const range = max - min || 1;
+    const W = 80, H = 32;
+    const pts = values.map((v, i) => ({
+      x: (i / Math.max(values.length - 1, 1)) * W,
+      y: H - ((v - min) / range) * H * 0.85 + 2,
+    }));
+    const d = pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ");
+    return (
+      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ overflow: "visible" }}>
+        <path d={d} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  };
+
+  const MiniCalendar = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const today = now.getDate();
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const days = [];
+    for (let i = 0; i < firstDay; i++) days.push({ day: "", other: true });
+    for (let d = 1; d <= daysInMonth; d++) days.push({ day: d, isToday: d === today });
+    const dayNames = ["Su","Mo","Tu","We","Th","Fr","Sa"];
+    const monthName = now.toLocaleString("default", { month: "long" });
+    return (
+      <div>
+        <div className="mc-cal-header">
+          <span className="mc-cal-month">{monthName}</span>
+          <span style={{ fontSize: "0.72rem", color: "var(--mc-text-muted)" }}>{year}</span>
         </div>
-
-        {/* Time Range */}
-        <div className="btn-group mt-3 mt-md-0">
-          {["week", "month", "year"].map((range) => (
-            <button
-              key={range}
-              className="btn btn-sm"
-              onClick={() => setTimeRange(range)}
-              style={{
-                background: timeRange === range ? "var(--pm-teal)" : "rgba(107,189,208,0.1)",
-                color: timeRange === range ? "#fff" : "var(--pm-teal)",
-                border: "1px solid rgba(107,189,208,0.3)",
-                transition: "var(--ease)",
-              }}
+        <div className="mc-cal-grid">
+          {dayNames.map(d => <div key={d} className="mc-cal-dayname">{d}</div>)}
+          {days.map((item, idx) => (
+            <div
+              key={idx}
+              className={`mc-cal-day${item.isToday ? " mc-today" : ""}${item.other ? " mc-other" : ""}`}
             >
-              {range.charAt(0).toUpperCase() + range.slice(1)}
-            </button>
+              {item.day || ""}
+            </div>
           ))}
         </div>
       </div>
+    );
+  };
 
-      {/* Loading */}
-      {loading && (
-        <div className="text-center py-5">
-          <div className="spinner-border mb-3" style={{ color: "var(--pm-teal)" }}></div>
-          <p style={{ color: "rgba(255,255,255,0.5)" }}>Loading dashboard...</p>
+  // ── Derived values ────────────────────────────────────────────────────────
+
+  const sparkValues = chartData?.values?.length ? chartData.values : [3, 5, 2, 8, 6, 9, 4];
+  const busynessPct = Math.min(99, Math.round((stats.totalSales / Math.max(stats.totalMedia, 1)) * 100)) || 42;
+  const salesRatioPct = Math.min(99, Math.round(stats.totalSales / Math.max(stats.totalMedia, 1) * 100));
+  const mediaUploadedPct = Math.min(99, Math.min(stats.totalMedia * 5, 99));
+  const earningsGoalPct = Math.min(99, Math.round(Math.min(stats.totalEarnings / 10000, 1) * 100));
+  const storedUser = getStoredUser();
+  const avatarLetter = (displayName || "P").charAt(0).toUpperCase();
+
+  const eventList = [
+    { count: stats.totalSales, label: "Sales", color: "#F06B8D" },
+    { count: stats.totalMedia, label: "Media", color: "#4CC9A6" },
+    { count: stats.totalViews || 0, label: "Views", color: "#9D7FEB" },
+  ];
+
+  if (loading) {
+    return (
+      <PhotographerLayout>
+        <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "60vh" }}>
+          <div className="spinner-border" style={{ color: "var(--mc-accent)" }}></div>
         </div>
-      )}
+      </PhotographerLayout>
+    );
+  }
 
-      {/* Error Alert */}
-      {error && (
-        <div className="alert alert-danger alert-dismissible fade show" role="alert">
-          <i className="fas fa-exclamation-circle me-2"></i>
-          <strong>Error:</strong> {error}
-          <button type="button" className="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  return (
+    <PhotographerLayout>
+      {/* Top Bar */}
+      <div className="mc-topbar">
+        <div className="mc-search-wrap">
+          <i className="fas fa-search mc-search-icon"></i>
+          <input
+            className="mc-search"
+            placeholder="Search..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+          />
         </div>
-      )}
+        <div className="mc-topbar-actions">
+          <div className="mc-icon-btn"><ThemeToggle /></div>
+          <NotificationBell />
+        </div>
+      </div>
 
-      {!loading && !error && (
-        <>
-          {/* Stats Cards */}
-          <div className="row g-3 mb-4">
-            {statsCards.map((stat, idx) => (
-              <div className="col-xl-2 col-lg-4 col-md-6" key={idx}>
-                <Link to={stat.link} className="text-decoration-none">
-                  <div className="glass-stat h-100 p-3" style={{ borderRadius: "var(--radius-lg)", cursor: "pointer" }}>
-                    <div className="d-flex justify-content-between align-items-start">
-                      <div>
-                        <p className="small mb-1" style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.06em" }}>{stat.title}</p>
-                        <h5 className="fw-bold mb-0 text-white" style={{ fontFamily: "var(--font-serif)" }}>{stat.value}</h5>
-                      </div>
-                      <div className="rounded-circle d-flex align-items-center justify-content-center"
-                           style={{ width: 40, height: 40, background: "rgba(107,189,208,0.15)", border: "1px solid rgba(107,189,208,0.25)", flexShrink: 0 }}>
-                        <i className={`fas ${stat.icon}`} style={{ color: "var(--pm-teal)", fontSize: "1rem" }}></i>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
+      {/* Hero Banner */}
+      <div className="mc-hero">
+        <div>
+          <div className="mc-hero-date">
+            <i className="fas fa-calendar-alt"></i>
+            {new Date().toLocaleDateString("en-US", {
+              weekday: "long", month: "long", day: "numeric", year: "numeric",
+            })}
+          </div>
+          <h2>Good Day, {displayName}!</h2>
+          <p>Have a productive {new Date().toLocaleDateString("en-US", { weekday: "long" })}.</p>
+        </div>
+        <div className="mc-hero-art">📸</div>
+      </div>
+
+      {/* Stat Cards */}
+      <div className="mc-stats-row">
+        {/* Card 1: My Media */}
+        <div className="mc-stat-card">
+          <div className="mc-stat-header">
+            <span className="mc-stat-label">My Media</span>
+            <span className="mc-stat-dots">···</span>
+          </div>
+          <div className="mc-stat-value">{stats.totalMedia}</div>
+          <div className="mc-stat-sub">photos uploaded</div>
+          <div className="mc-stat-trend up">
+            <Sparkline values={sparkValues} color="#F06B8D" />
+          </div>
+        </div>
+
+        {/* Card 2: Total Sales */}
+        <div className="mc-stat-card">
+          <div className="mc-stat-header">
+            <span className="mc-stat-label">Total Sales</span>
+            <span className="mc-stat-dots">···</span>
+          </div>
+          <div className="mc-stat-value">{stats.totalSales}</div>
+          <div className="mc-stat-sub">images sold</div>
+          <div className="mc-stat-trend up">
+            <Sparkline values={sparkValues} color="#4CC9A6" />
+          </div>
+        </div>
+
+        {/* Card 3: Earnings */}
+        <div className="mc-stat-card">
+          <div className="mc-stat-header">
+            <span className="mc-stat-label">Earnings</span>
+            <span className="mc-stat-dots">···</span>
+          </div>
+          <div className="mc-stat-value">{"KES " + stats.totalEarnings.toLocaleString()}</div>
+          <div className="mc-stat-sub">total earned</div>
+          <div className="mc-stat-trend neu">
+            <Sparkline values={sparkValues} color="#9D7FEB" />
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Grid */}
+      <div className="mc-bottom-grid">
+        {/* Left: Donut + event list */}
+        <div className="mc-card">
+          <div className="mc-card-header">
+            <span className="mc-card-title">MY SCHEDULED EVENTS</span>
+          </div>
+          <div className="mc-donut-wrap">
+            <div
+              className="mc-donut"
+              style={{
+                background: `conic-gradient(var(--mc-accent) 0% ${busynessPct}%, var(--mc-border) ${busynessPct}% 100%)`,
+              }}
+            >
+              <span className="mc-donut-pct">{busynessPct}%</span>
+            </div>
+            <div className="mc-donut-info">
+              <h4>Busyness</h4>
+              <p>sales / media ratio</p>
+            </div>
+          </div>
+          <div className="mc-event-list">
+            {eventList.map((ev) => (
+              <div className="mc-event-item" key={ev.label}>
+                <span className="mc-event-dot" style={{ background: ev.color }}></span>
+                <span className="mc-event-count">{ev.count}</span>
+                <span className="mc-event-label">{ev.label}</span>
               </div>
             ))}
           </div>
+        </div>
 
-          {/* Charts and Popular Media */}
-          <div className="row g-3 mb-4">
-            {/* Earnings Chart */}
-            <div className="col-lg-8">
-              <div className="glass-card p-0 overflow-hidden">
-                <div className="px-4 py-3" style={{ borderBottom: "1px solid rgba(107,189,208,0.15)" }}>
-                  <h6 className="mb-0" style={{ color: "var(--pm-teal)", fontFamily: "var(--font-sans)", fontSize: "0.88rem", fontWeight: 600 }}>
-                    <i className="fas fa-chart-line me-2"></i>
-                    Earnings Overview — {timeRange}
-                  </h6>
+        {/* Middle: Progress bars */}
+        <div className="mc-card">
+          <div className="mc-card-header">
+            <span className="mc-card-title">MY PERFORMANCE</span>
+            <span className="mc-card-badge">Today</span>
+          </div>
+
+          <div className="mc-prog-row">
+            <span className="mc-prog-label">Sales Ratio</span>
+            <span className="mc-prog-pct">{salesRatioPct}%</span>
+            <div className="mc-prog-track">
+              <div className="mc-prog-fill" style={{ width: `${salesRatioPct}%`, background: "#5B7FE5" }}></div>
+            </div>
+          </div>
+
+          <div className="mc-prog-row">
+            <span className="mc-prog-label">Media Uploaded</span>
+            <span className="mc-prog-pct">{mediaUploadedPct}%</span>
+            <div className="mc-prog-track">
+              <div className="mc-prog-fill" style={{ width: `${mediaUploadedPct}%`, background: "#F06B8D" }}></div>
+            </div>
+          </div>
+
+          <div className="mc-prog-row">
+            <span className="mc-prog-label">Earnings Goal</span>
+            <span className="mc-prog-pct">{earningsGoalPct}%</span>
+            <div className="mc-prog-track">
+              <div className="mc-prog-fill" style={{ width: `${earningsGoalPct}%`, background: "#4CC9A6" }}></div>
+            </div>
+          </div>
+
+          <span style={{ color: "var(--mc-accent)", fontSize: "0.8rem", cursor: "pointer" }}>+ Add goal</span>
+        </div>
+
+        {/* Right panel */}
+        <div className="mc-right-panel">
+          {/* Profile mini */}
+          <div className="mc-card">
+            <div className="mc-profile-mini">
+              <div className="mc-profile-avatar">
+                {storedUser?.profileImage ? (
+                  <img src={storedUser.profileImage} alt="avatar" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
+                ) : (
+                  <div className="mc-avatar-placeholder">{avatarLetter}</div>
+                )}
+              </div>
+              <div className="mc-profile-name">{displayName}</div>
+              <div className="mc-profile-role">Photographer</div>
+              {storedUser?.location && (
+                <div className="mc-profile-loc">
+                  <i className="fas fa-map-marker-alt" style={{ marginRight: 4 }}></i>
+                  {storedUser.location}
                 </div>
-                <div className="p-4">
-                  <div className="d-flex justify-content-between align-items-end" style={{ height: "200px" }}>
-                    {chartPoints.map((value, idx) => {
-                      const barHeight = chartMaxValue > 0 ? Math.max(8, (value / chartMaxValue) * 160) : 8;
-                      return (
-                        <div key={idx} className="text-center d-flex flex-column align-items-center justify-content-end" style={{ width: "12%", height: "100%" }}>
-                          <div
-                            style={{
-                              height: `${barHeight}px`,
-                              width: "100%",
-                              background: value > 0
-                                ? "linear-gradient(180deg, var(--pm-teal) 0%, rgba(107,189,208,0.4) 100%)"
-                                : "rgba(255,255,255,0.06)",
-                              borderRadius: "6px 6px 0 0",
-                              marginBottom: "6px",
-                              transition: "height 0.4s ease",
-                              boxShadow: value > 0 ? "0 0 12px rgba(107,189,208,0.3)" : "none",
-                            }}
-                          ></div>
-                          <small style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.58rem", display: "block" }}>
-                            {chartLabelsToShow[idx]}
-                          </small>
-                          <small style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.55rem", display: "block" }}>
-                            {value > 0 ? `${value.toLocaleString()}` : "—"}
-                          </small>
-                        </div>
-                      );
-                    })}
+              )}
+            </div>
+            <div className="mc-profile-stats">
+              <div className="mc-pstat">
+                <div className="mc-pstat-val">{stats.totalMedia}</div>
+                <div className="mc-pstat-lbl">Media</div>
+              </div>
+              <div className="mc-pstat">
+                <div className="mc-pstat-val">{stats.totalSales}</div>
+                <div className="mc-pstat-lbl">Sales</div>
+              </div>
+              <div className="mc-pstat">
+                <div className="mc-pstat-val">{stats.totalViews || 0}</div>
+                <div className="mc-pstat-lbl">Views</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Mini calendar */}
+          <div className="mc-card">
+            <MiniCalendar />
+          </div>
+
+          {/* Recent sales schedule */}
+          <div className="mc-card">
+            <div className="mc-card-header">
+              <span className="mc-card-title">RECENT SALES</span>
+            </div>
+            <div className="mc-schedule">
+              {recentSales.slice(0, 4).map((sale, idx) => (
+                <div className="mc-sched-item" key={idx}>
+                  <span className="mc-sched-dot" style={{ background: "#4CC9A6" }}></span>
+                  <div className="mc-sched-body">
+                    <div className="mc-sched-time">
+                      {new Date(sale.date || sale.createdAt || sale.transactionDate).toLocaleDateString()}
+                    </div>
+                    <div className="mc-sched-text">{sale.mediaTitle || sale.description || "Media sale"}</div>
                   </div>
                 </div>
-              </div>
-            </div>
-
-            {/* Popular Media */}
-            <div className="col-lg-4">
-              <div className="glass-card h-100 p-0 overflow-hidden">
-                <div className="px-4 py-3" style={{ borderBottom: "1px solid rgba(107,189,208,0.15)" }}>
-                  <h6 className="mb-0" style={{ color: "var(--pm-teal)", fontFamily: "var(--font-sans)", fontSize: "0.88rem", fontWeight: 600 }}>
-                    <i className="fas fa-fire me-2"></i>
-                    Popular Media
-                  </h6>
+              ))}
+              {recentSales.length === 0 && (
+                <div style={{ color: "var(--mc-text-muted)", fontSize: "0.8rem", textAlign: "center", padding: "0.75rem 0" }}>
+                  No recent sales
                 </div>
-                <div className="p-3">
-                  {popularMedia.length === 0 && (
-                    <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.82rem", textAlign: "center", padding: "1.5rem 0" }}>No media yet</p>
-                  )}
-                  {popularMedia.map((item, idx) => (
-                    <div key={idx} className="d-flex align-items-center gap-3 mb-3">
-                      <img
-                        src={
-                          imageUrls[item._id] ||
-                          imageUrls[item.mediaId] ||
-                          getImageUrl(item, placeholderSmall) ||
-                          getImageUrl({ fileUrl: item.thumbnail }, placeholderSmall) ||
-                          placeholderSmall
-                        }
-                        alt=""
-                        width="44"
-                        height="44"
-                        style={{ objectFit: "cover", borderRadius: "var(--radius-sm)", border: "1px solid rgba(107,189,208,0.2)", flexShrink: 0 }}
-                        onError={async (e) => {
-                          e.target.onerror = null;
-                          const mediaId = item._id || item.mediaId;
-                          const protectedUrl = await fetchProtectedUrl(mediaId);
-                          if (protectedUrl) e.target.src = protectedUrl;
-                        }}
-                      />
-                      <div className="flex-grow-1 min-w-0">
-                        <small className="fw-semibold d-block text-truncate text-white" style={{ fontSize: "0.82rem" }}>{item.title}</small>
-                        <small style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.72rem" }}>
-                          <i className="fas fa-heart me-1" style={{ color: "#E85555" }}></i>
-                          {item.likes || 0} likes
-                        </small>
-                      </div>
-                      <small style={{ color: "var(--pm-teal)", fontWeight: 600, flexShrink: 0, fontSize: "0.8rem" }}>KES {item.price}</small>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              )}
             </div>
           </div>
-
-          {/* Recent Sales */}
-          <div className="glass-card p-0 overflow-hidden">
-            <div className="px-4 py-3 d-flex justify-content-between align-items-center" style={{ borderBottom: "1px solid rgba(107,189,208,0.15)" }}>
-              <h6 className="mb-0" style={{ color: "var(--pm-teal)", fontFamily: "var(--font-sans)", fontSize: "0.88rem", fontWeight: 600 }}>
-                <i className="fas fa-shopping-cart me-2"></i>
-                Recent Sales
-              </h6>
-              <Link to="/photographer/sales">
-                <button className="btn btn-sm" style={{ background: "rgba(107,189,208,0.12)", color: "var(--pm-teal)", border: "1px solid rgba(107,189,208,0.25)", borderRadius: "var(--radius-pill)", fontSize: "0.78rem", padding: "0.25rem 0.85rem" }}>
-                  View All
-                </button>
-              </Link>
-            </div>
-            <div className="table-responsive">
-              <table className="table mb-0" style={{ color: "rgba(255,255,255,0.8)" }}>
-                <thead>
-                  <tr style={{ borderColor: "rgba(107,189,208,0.12)" }}>
-                    {["Buyer","Item","Amount","Date","Status"].map(h => (
-                      <th key={h} style={{ color: "rgba(107,189,208,0.7)", fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", padding: "0.75rem 1rem", borderColor: "rgba(107,189,208,0.12)", background: "transparent" }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentSales.map((sale, idx) => (
-                    <tr key={idx} style={{ borderColor: "rgba(107,189,208,0.08)" }}
-                      onMouseEnter={e => e.currentTarget.style.background = "rgba(107,189,208,0.05)"}
-                      onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                    >
-                      <td style={{ padding: "0.75rem 1rem", fontSize: "0.84rem", borderColor: "rgba(107,189,208,0.08)" }}>
-                        <i className="fas fa-user-circle me-2" style={{ color: "var(--pm-teal)" }}></i>
-                        {sale.buyer?.email || sale.description || "Anonymous"}
-                      </td>
-                      <td style={{ padding: "0.75rem 1rem", fontSize: "0.84rem", borderColor: "rgba(107,189,208,0.08)" }}>{sale.mediaTitle || sale.description || "Media"}</td>
-                      <td style={{ padding: "0.75rem 1rem", borderColor: "rgba(107,189,208,0.08)" }}>
-                        <span style={{ background: "rgba(46,204,154,0.15)", color: "var(--pm-success)", border: "1px solid rgba(46,204,154,0.25)", borderRadius: "var(--radius-pill)", fontSize: "0.75rem", padding: "0.2rem 0.6rem" }}>
-                          KES {Number(sale.amount || 0).toLocaleString()}
-                        </span>
-                      </td>
-                      <td style={{ padding: "0.75rem 1rem", fontSize: "0.78rem", color: "rgba(255,255,255,0.45)", borderColor: "rgba(107,189,208,0.08)" }}>
-                        {new Date(sale.date || sale.createdAt || sale.transactionDate).toLocaleDateString()}
-                      </td>
-                      <td style={{ padding: "0.75rem 1rem", borderColor: "rgba(107,189,208,0.08)" }}>
-                        <span style={{ background: "rgba(46,204,154,0.15)", color: "var(--pm-success)", border: "1px solid rgba(46,204,154,0.25)", borderRadius: "var(--radius-pill)", fontSize: "0.72rem", padding: "0.18rem 0.55rem" }}>
-                          Completed
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                  {recentSales.length === 0 && (
-                    <tr>
-                      <td colSpan="5" style={{ textAlign: "center", color: "rgba(255,255,255,0.3)", padding: "2rem", fontSize: "0.88rem", borderColor: "transparent" }}>
-                        No sales yet
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </>
-      )}
+        </div>
+      </div>
     </PhotographerLayout>
   );
 };
