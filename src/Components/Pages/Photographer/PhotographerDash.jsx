@@ -327,7 +327,19 @@ const PhotographerDashboard = () => {
           <h2>Good Day, {displayName}!</h2>
           <p>Have a productive {new Date().toLocaleDateString("en-US", { weekday: "long" })}.</p>
         </div>
-        <div className="mc-hero-art">📸</div>
+        <div className="mc-hero-art" style={{ background: "none", fontSize: "unset" }}>
+          {storedUser?.profilePicture || storedUser?.profileImage ? (
+            <img
+              src={storedUser.profilePicture || storedUser.profileImage}
+              alt={displayName}
+              style={{ width: 90, height: 90, borderRadius: "50%", objectFit: "cover", border: "3px solid rgba(255,255,255,0.25)", boxShadow: "0 4px 20px rgba(0,0,0,0.3)" }}
+            />
+          ) : (
+            <div style={{ width: 90, height: 90, borderRadius: "50%", background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2.5rem", fontWeight: 700, color: "#fff", border: "3px solid rgba(255,255,255,0.25)" }}>
+              {avatarLetter}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Stat Cards */}

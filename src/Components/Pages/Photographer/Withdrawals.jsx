@@ -47,18 +47,15 @@ const PhotographerWithdrawals = () => {
     }
   };
 
-  const photographerId = getCurrentUserId();
-  const headers = getAuthHeaders();
-
   const fetchWithdrawals = useCallback(async () => {
+    const headers = getAuthHeaders();
+    const photographerId = getCurrentUserId();
     try {
       setLoading(true);
 
-      // Fetch withdrawals
       const withdrawalsRes = await axios.get(`${API}/withdrawals/my`, { headers });
       setWithdrawals(withdrawalsRes.data || []);
 
-      // Fetch available balance from earnings
       const earningsRes = await axios.get(API_ENDPOINTS.PAYMENTS.EARNINGS_SUMMARY(photographerId), { headers });
       setAvailableBalance(earningsRes.data?.available || 0);
 
@@ -67,7 +64,7 @@ const PhotographerWithdrawals = () => {
     } finally {
       setLoading(false);
     }
-  }, [photographerId, headers]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     fetchWithdrawals();
@@ -88,6 +85,7 @@ const PhotographerWithdrawals = () => {
 
     try {
       setSubmitting(true);
+      const headers = getAuthHeaders();
 
       const payload = {
         amount: Number(requestData.amount),

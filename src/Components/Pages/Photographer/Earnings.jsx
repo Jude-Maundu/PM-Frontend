@@ -16,10 +16,9 @@ const PhotographerEarnings = () => {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const photographerId = getCurrentUserId();
-  const headers = getAuthHeaders();
-
   const fetchEarnings = useCallback(async () => {
+    const photographerId = getCurrentUserId();
+    const headers = getAuthHeaders();
     if (!photographerId) {
       console.warn("Photographer ID missing; cannot fetch earnings.");
       setLoading(false);
@@ -46,7 +45,7 @@ const PhotographerEarnings = () => {
     } finally {
       setLoading(false);
     }
-  }, [photographerId, headers]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     fetchEarnings();
