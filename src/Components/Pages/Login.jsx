@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import { API_BASE_URL } from "../../api/apiConfig";
+import GoogleAuth from "../GoogleAuth";
 
 const BOKEH = [
   { size: 10, top: "10%", left: "18%", delay: "0s",   dur: "3.4s" },
@@ -260,7 +261,9 @@ const Login = () => {
               <hr className="flex-grow-1 m-0" style={{ borderColor: col.divider }} />
             </div>
 
-            <p className="text-center small mb-0" style={{ color: col.muted }}>
+            <GoogleAuth text="Continue with Google" />
+
+            <p className="text-center small mb-0 mt-3" style={{ color: col.muted }}>
               <i className="fas fa-shield-alt me-1" style={{ color: "var(--pm-teal)" }}></i>
               Secured with end-to-end encryption
             </p>
