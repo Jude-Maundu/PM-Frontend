@@ -214,7 +214,8 @@ export function getImageUrl(item, fallbackUrl = null) {
   }
 
   // Prefer dedicated fields from object payloads.
-  const candidates = [item.imageUrl, item.fileUrl, item.url, item.photo, item.previewUrl];
+  // watermarkedUrl is always shown as preview; fileUrl only delivered post-payment.
+  const candidates = [item.watermarkedUrl, item.imageUrl, item.fileUrl, item.url, item.photo, item.previewUrl];
   for (const raw of candidates) {
     const resolved = resolveUrl(raw);
     if (resolved) return resolved;

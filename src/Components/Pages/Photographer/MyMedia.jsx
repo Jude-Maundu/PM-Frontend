@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
+import GalleryQRModal from "../../GalleryQRModal";
 import PhotographerLayout from "./PhotographerLayout";
 import PageHeader from "../../PageHeader";
 import { useNavigate } from "react-router-dom";
@@ -31,6 +32,9 @@ const PhotographerMedia = () => {
   const [bulkSelectedIds, setBulkSelectedIds] = useState(new Set());
   const [bulkPrice, setBulkPrice] = useState("");
   const [bulkApplying, setBulkApplying] = useState(false);
+
+  // QR modal state
+  const [qrAlbum, setQrAlbum] = useState(null);
 
   // Watermark state
   const [watermark, setWatermark] = useState("");
@@ -157,12 +161,13 @@ const PhotographerMedia = () => {
         mediaItems = [];
       }
 
-      const userMedia = userId 
+      // Backend already filters by auth user; client-side guard in case of stale cache
+      const userMedia = userId
         ? mediaItems.filter(item => {
             const ownerId = item.photographer?._id || item.photographer?.id || item.owner || item.userId;
             return String(ownerId) === String(userId);
           })
-        : mediaItems;
+        : [];
 
       setMedia(userMedia);
       await fetchProtectedUrls(userMedia);
@@ -951,6 +956,16 @@ const PhotographerMedia = () => {
                           onClick={() => handleViewAlbum(album)}
                           onError={(e) => { e.target.src = placeholderMedium; }}
                         />
+                        {/* QR shortcut — bottom left of cover image */}
+                        <button
+                          className="btn btn-sm position-absolute bottom-0 start-0 m-2"
+                          style={{ background: "rgba(0,0,0,0.65)", border: "1px solid rgba(107,189,208,0.4)", color: "#6BBDD0", borderRadius: 8, backdropFilter: "blur(4px)", zIndex: 2 }}
+                          title="Public Gallery QR"
+                          onClick={(e) => { e.stopPropagation(); setQrAlbum(album); }}
+                        >
+                          <i className="fas fa-qrcode me-1"></i>QR
+                        </button>
+
                         <div className="position-absolute top-0 end-0 m-2">
                           <div className="dropdown">
                             <button className="btn btn-sm btn-dark rounded-circle" data-bs-toggle="dropdown">
@@ -981,6 +996,11 @@ const PhotographerMedia = () => {
                               <li>
                                 <button className="dropdown-item text-white" onClick={() => generateAlbumShareLink(album)}>
                                   <i className="fas fa-share-alt me-2 text-success"></i>Share
+                                </button>
+                              </li>
+                              <li>
+                                <button className="dropdown-item text-white" onClick={() => setQrAlbum(album)}>
+                                  <i className="fas fa-qrcode me-2" style={{ color: "#6BBDD0" }}></i>Public Gallery QR
                                 </button>
                               </li>
                               <li>
@@ -1830,6 +1850,9 @@ const PhotographerMedia = () => {
           </div>
         </div>
       )}
+    {qrAlbum && (
+      <GalleryQRModal album={qrAlbum} onClose={() => setQrAlbum(null)} />
+    )}
     </PhotographerLayout>
   );
 };

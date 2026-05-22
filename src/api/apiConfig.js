@@ -63,6 +63,8 @@ const API_ENDPOINTS = {
     GET_ALBUMS: `${API_BASE_URL}/media/albums`,
     GET_PUBLIC_ALBUMS: `${API_BASE_URL}/media/albums/public`,
     GET_ALBUM: (albumId) => `${API_BASE_URL}/media/album/${albumId}`,
+    GET_PUBLIC_GALLERY: (albumId) => `${API_BASE_URL}/media/album/${albumId}/public`,
+    FACE_SEARCH: `${API_BASE_URL}/media/face-search`,
     UPDATE_ALBUM: (albumId) => `${API_BASE_URL}/media/album/${albumId}`,
     DELETE_ALBUM: (albumId) => `${API_BASE_URL}/media/album/${albumId}`,
     BULK_UPLOAD: `${API_BASE_URL}/media/album/bulk-upload`,

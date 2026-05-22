@@ -191,6 +191,18 @@ const PhotoCard = ({ photo, onPhotoClick }) => {
           </div>
         )}
 
+        {/* PREVIEW badge */}
+        {isPaid && (
+          <div style={{
+            position: "absolute", top: 8, left: 8, zIndex: 4,
+            background: "rgba(0,0,0,0.55)", color: "rgba(255,255,255,0.7)",
+            fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.08em",
+            padding: "2px 7px", borderRadius: 4, userSelect: "none",
+          }}>
+            PREVIEW
+          </div>
+        )}
+
         {/* Lock icon for paid photos */}
         {isPaid && (
           <div

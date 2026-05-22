@@ -1,14 +1,29 @@
 {
-  "short_name": "PhotoMarket",
-  "name": "PhotoMarket - Buy & Sell Photos",
+  "short_name": "RelicSnap",
+  "name": "RelicSnap — Event Photo Marketplace",
   "icons": [
     { "src": "favicon.ico", "sizes": "64x64 32x32 24x24 16x16", "type": "image/x-icon" },
-    { "src": "logo192.png", "type": "image/png", "sizes": "192x192" },
-    { "src": "logo512.png", "type": "image/png", "sizes": "512x512" }
+    { "src": "logo192.png", "type": "image/png", "sizes": "192x192", "purpose": "any maskable" },
+    { "src": "logo512.png", "type": "image/png", "sizes": "512x512", "purpose": "any maskable" }
   ],
-  "start_url": ".",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "theme_color": "#0a1628",
-  "background_color": "#0a1628",
-  "description": "Buy and sell professional photos with ease"
+  "orientation": "portrait",
+  "theme_color": "#1B2A4A",
+  "background_color": "#1B2A4A",
+  "description": "Find and buy your event photos instantly. Photographers sell with one upload.",
+  "categories": ["photography", "shopping"],
+  "shortcuts": [
+    {
+      "name": "Browse Gallery",
+      "url": "/explore",
+      "description": "Browse public photo galleries"
+    },
+    {
+      "name": "Upload Photos",
+      "url": "/photographer/upload",
+      "description": "Upload your event photos"
+    }
+  ]
 }

@@ -68,6 +68,7 @@ import HomePage from './Components/Pages/HomePage';
 import ClientProofing from './Components/Pages/Photographer/ClientProofing';
 import ClientProofingView from './Components/Pages/Proofing/ClientProofingView';
 import OnboardingWizard from './Components/OnboardingWizard';
+import PublicGallery from './Components/Pages/Public/PublicGallery';
 
 function RouteWithBodyClass({ children }) {
   const location = useLocation();
@@ -156,6 +157,9 @@ function App() {
 
           {/* Public Portfolio */}
           <Route path="/portfolio/:username" element={<PublicPortfolio />} />
+
+          {/* Public Gallery */}
+          <Route path="/gallery/:albumId" element={<PublicGallery />} />
 
           {/* Catch-all fallback */}
           <Route path="*" element={<Navigate to="/explore" replace />} />

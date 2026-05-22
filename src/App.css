@@ -2746,3 +2746,48 @@ input:focus, textarea:focus, select:focus, .form-control:focus {
 }
 
 .mc-empty p { font-size: 0.9rem; margin: 0; }
+
+/* ── Photo Card Watermark Preview Overlay ───────────────────────────── */
+.photo-card-wrap {
+  position: relative;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+.photo-card-wrap .preview-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(0,0,0,0.55);
+  color: rgba(255,255,255,0.7);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 2px 7px;
+  border-radius: 4px;
+  user-select: none;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.photo-card-wrap .card-hover-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 55%);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 0.75rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 3;
+}
+
+.photo-card-wrap:hover .card-hover-overlay {
+  opacity: 1;
+}
+
+/* Gallery hover overlay (used in PublicGallery) */
+.gallery-hover-overlay:hover {
+  opacity: 1 !important;
+}
