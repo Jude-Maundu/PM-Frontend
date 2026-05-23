@@ -1,18 +1,23 @@
 import { toast } from "../../../utils/toast";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import axios from "axios";
+import { io } from "socket.io-client";
 import PhotographerLayout from "./PhotographerLayout";
 import PageHeader from "../../PageHeader";
 import { API_BASE_URL, API_ENDPOINTS } from "../../../api/apiConfig";
-import { getAuthHeaders, getCurrentUserId } from "../../../utils/auth";
+import { getAuthHeaders, getCurrentUserId, getStoredUser } from "../../../utils/auth";
 
 const API = API_BASE_URL;
+const SOCKET_URL = "https://pm-backend-f3b6.onrender.com";
 
 const PAYOUT_SCHEDULE_KEY = "photographer_payout_schedule";
 
 const defaultSchedule = { enabled: false, dayOfMonth: 1, minBalance: 1000 };
 
 const PhotographerWithdrawals = () => {
+  const storedUser = getStoredUser();
+  const storedPhone = storedUser?.phoneNumber || storedUser?.phone || "";
+
   const [withdrawals, setWithdrawals] = useState([]);
   const [availableBalance, setAvailableBalance] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -20,11 +25,12 @@ const PhotographerWithdrawals = () => {
   const [requestData, setRequestData] = useState({
     amount: "",
     method: "mpesa",
-    phone: "",
+    phone: storedPhone,
     accountName: "",
     accountNumber: "",
   });
   const [submitting, setSubmitting] = useState(false);
+  const socketRef = useRef(null);
 
   // Auto withdrawal schedule state
   const [schedule, setSchedule] = useState(() => {
@@ -70,6 +76,36 @@ const PhotographerWithdrawals = () => {
     fetchWithdrawals();
   }, [fetchWithdrawals]);
 
+  // Real-time withdrawal status updates via Socket.IO
+  useEffect(() => {
+    const userId = getCurrentUserId();
+    if (!userId) return;
+
+    const socket = io(SOCKET_URL, {
+      transports: ["websocket"],
+      auth: { token: localStorage.getItem("token") },
+    });
+    socketRef.current = socket;
+    socket.emit("join", `user_${userId}`);
+
+    socket.on("withdrawal:processing", (data) => {
+      toast.info(data.message || "Your withdrawal is being processed.");
+      fetchWithdrawals();
+    });
+
+    socket.on("withdrawal:completed", (data) => {
+      toast.success(data.message || `KES ${data.amount?.toLocaleString()} sent to your M-Pesa!`);
+      fetchWithdrawals();
+    });
+
+    socket.on("withdrawal:failed", (data) => {
+      toast.error(data.message || "Withdrawal failed. Your balance has been restored.");
+      fetchWithdrawals();
+    });
+
+    return () => { socket.disconnect(); };
+  }, [fetchWithdrawals]);
+
   const handleRequest = async (e) => {
     e.preventDefault();
 
@@ -95,14 +131,14 @@ const PhotographerWithdrawals = () => {
         accountNumber: requestData.method === 'bank' ? requestData.accountNumber : undefined,
       };
 
-      await axios.post(`${API}/withdrawals/request`, payload, { headers });
+      const res = await axios.post(`${API}/withdrawals/request`, payload, { headers });
 
-      toast.success("Withdrawal request submitted successfully!");
+      toast.success(res.data?.message || "Withdrawal request submitted successfully!");
       setShowRequestForm(false);
       setRequestData({
         amount: "",
         method: "mpesa",
-        phone: "",
+        phone: storedPhone,
         accountName: "",
         accountNumber: "",
       });
@@ -286,17 +322,30 @@ const PhotographerWithdrawals = () => {
                     </div>
 
                     {requestData.method === "mpesa" ? (
-                      <div className="mb-3">
-                        <label className="form-label text-white-50">M-Pesa Phone Number</label>
-                        <input
-                          type="tel"
-                          className="form-control bg-dark text-white border-secondary"
-                          placeholder="254712345678"
-                          value={requestData.phone}
-                          onChange={(e) => setRequestData({...requestData, phone: e.target.value})}
-                          required
-                        />
-                      </div>
+                      <>
+                        <div className="mb-3">
+                          <label className="form-label text-white-50">M-Pesa Phone Number</label>
+                          <input
+                            type="tel"
+                            className="form-control bg-dark text-white border-secondary"
+                            placeholder="254712345678"
+                            value={requestData.phone}
+                            onChange={(e) => setRequestData({...requestData, phone: e.target.value})}
+                            required
+                          />
+                        </div>
+                        <div
+                          className="d-flex gap-2 p-3 rounded-3 mb-3"
+                          style={{ background: "rgba(107,189,208,0.08)", border: "1px solid rgba(107,189,208,0.2)" }}
+                        >
+                          <i className="fas fa-mobile-alt mt-1 flex-shrink-0" style={{ color: "var(--mc-accent-teal)" }}></i>
+                          <small style={{ color: "rgba(255,255,255,0.6)", lineHeight: 1.5 }}>
+                            You will receive an <strong style={{ color: "var(--mc-accent-teal)" }}>M-Pesa notification</strong> on{" "}
+                            <strong style={{ color: "#fff" }}>{requestData.phone || "your phone"}</strong> once the transfer is initiated.
+                            Funds typically arrive within a few minutes.
+                          </small>
+                        </div>
+                      </>
                     ) : (
                       <>
                         <div className="mb-3">
@@ -323,7 +372,13 @@ const PhotographerWithdrawals = () => {
                     )}
 
                     <button type="submit" className="mc-btn mc-btn-primary w-100" disabled={submitting}>
-                      {submitting ? 'Submitting...' : 'Submit Request'}
+                      {submitting ? (
+                        <><span className="spinner-border spinner-border-sm me-2"></span>Sending to M-Pesa...</>
+                      ) : requestData.method === "mpesa" ? (
+                        <><i className="fas fa-paper-plane me-2"></i>Send to M-Pesa</>
+                      ) : (
+                        <><i className="fas fa-university me-2"></i>Submit Bank Request</>
+                      )}
                     </button>
                   </form>
                 </div>
