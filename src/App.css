@@ -1690,12 +1690,13 @@ input:focus, textarea:focus, select:focus, .form-control:focus {
   box-shadow: 2px 0 20px rgba(0,0,0,0.18);
   z-index: 100;
   transition: width 0.3s cubic-bezier(0.4,0,0.2,1), background 0.3s;
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* Collapsed sidebar */
 .mc-shell.mc-collapsed .mc-sidebar {
   width: 64px;
+  overflow: hidden;
 }
 
 /* Sidebar brand / header row */
@@ -1781,7 +1782,9 @@ input:focus, textarea:focus, select:focus, .form-control:focus {
   padding: 0.75rem 8px;
   overflow-y: auto;
   overflow-x: hidden;
+  scrollbar-width: none;
 }
+.mc-nav::-webkit-scrollbar { display: none; }
 
 .mc-nav-item {
   display: flex;
