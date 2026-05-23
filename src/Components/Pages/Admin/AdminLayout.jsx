@@ -90,13 +90,22 @@ const AdminLayout = ({ children }) => {
             <input className="mc-search" placeholder="Search..." readOnly />
           </div>
           <div className="mc-topbar-actions">
+            <div className="mc-topbar-profile">
+              <div className="mc-topbar-avatar" title={displayName} style={{ width: 32, height: 32, fontSize: "0.78rem" }}>
+                {storedUser?.profilePicture ? (
+                  <img src={storedUser.profilePicture} alt={displayName} />
+                ) : avatarLetter}
+              </div>
+              <div className="mc-topbar-profile-info">
+                <span className="mc-topbar-profile-name">{displayName}</span>
+                <span className="mc-topbar-profile-status">Admin</span>
+              </div>
+            </div>
             <div className="mc-icon-btn"><ThemeToggle /></div>
             <NotificationBell />
-            <div className="mc-topbar-avatar" title={displayName}>
-              {storedUser?.profilePicture ? (
-                <img src={storedUser.profilePicture} alt={displayName} />
-              ) : avatarLetter}
-            </div>
+            <NavLink to="/admin/settings" className="mc-topbar-action-btn">
+              <i className="fas fa-plus"></i>Manage
+            </NavLink>
           </div>
         </div>
 

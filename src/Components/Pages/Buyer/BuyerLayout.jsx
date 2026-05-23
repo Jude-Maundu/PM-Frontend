@@ -98,13 +98,22 @@ const BuyerLayout = ({ children }) => {
             <input className="mc-search" placeholder="Search photos..." readOnly />
           </div>
           <div className="mc-topbar-actions">
+            <div className="mc-topbar-profile">
+              <div className="mc-topbar-avatar" title={displayName} style={{ width: 32, height: 32, fontSize: "0.78rem" }}>
+                {storedUser?.profilePicture ? (
+                  <img src={storedUser.profilePicture} alt={displayName} />
+                ) : avatarLetter}
+              </div>
+              <div className="mc-topbar-profile-info">
+                <span className="mc-topbar-profile-name">{displayName}</span>
+                <span className="mc-topbar-profile-status">Active</span>
+              </div>
+            </div>
             <div className="mc-icon-btn"><ThemeToggle /></div>
             <NotificationBell />
-            <div className="mc-topbar-avatar" title={displayName}>
-              {storedUser?.profilePicture ? (
-                <img src={storedUser.profilePicture} alt={displayName} />
-              ) : avatarLetter}
-            </div>
+            <NavLink to="/buyer/explore" className="mc-topbar-action-btn">
+              <i className="fas fa-compass"></i>Explore
+            </NavLink>
           </div>
         </div>
 
