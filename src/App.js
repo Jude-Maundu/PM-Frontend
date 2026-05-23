@@ -15,6 +15,7 @@ import AuthCallback from './Components/AuthCallback';
 
 // Protected Route Component
 import ProtectedRoute from './Components/ProtectedRoute';
+import ErrorBoundary from './Components/ErrorBoundary';
 
 // Admin Pages
 import AdminDash from './Components/Pages/Admin/AdminDash';
@@ -91,6 +92,7 @@ function App() {
     <ConfirmDialog />
     <BrowserRouter>
       <OnboardingWizard />
+      <ErrorBoundary>
       <RouteWithBodyClass>
         <Routes>
           {/* Public Routes - Landing Page */}
@@ -165,6 +167,7 @@ function App() {
           <Route path="*" element={<Navigate to="/explore" replace />} />
         </Routes>
       </RouteWithBodyClass>
+      </ErrorBoundary>
     </BrowserRouter>
     </ThemeProvider>
   );
