@@ -1619,40 +1619,53 @@ input:focus, textarea:focus, select:focus, .form-control:focus {
    Light:          #EFF3FF bg, #FFFFFF cards, #FFFFFF sidebar
    ============================================================ */
 
-/* MC Variables — dark mode defaults */
+/* MC Variables — light content + dark sidebar (matches dashboard design) */
 :root {
-  --mc-bg:             #1B2A4A;
-  --mc-sidebar-bg:     #162038;
-  --mc-card-bg:        #1E3060;
-  --mc-card-shadow:    0 4px 24px rgba(0,0,0,0.25);
+  --mc-bg:             #EDF0FA;
+  --mc-sidebar-bg:     #141C38;
+  --mc-topbar-bg:      #FFFFFF;
+  --mc-card-bg:        #FFFFFF;
+  --mc-card-shadow:    0 2px 12px rgba(74,108,231,0.09);
   --mc-hero-from:      #3B5FCC;
-  --mc-hero-to:        #6B7AE8;
+  --mc-hero-to:        #7B6AE8;
   --mc-accent:         #5B7FE5;
   --mc-accent-pink:    #F06B8D;
   --mc-accent-teal:    #4CC9A6;
   --mc-accent-gold:    #F5A623;
   --mc-accent-purple:  #9D7FEB;
+  --mc-text:           #1E2A5E;
+  --mc-text-muted:     #8896BC;
+  --mc-text-sub:       #A0AECB;
+  --mc-border:         rgba(74,108,231,0.1);
+  --mc-sidebar-icon:   #6B84B8;
+}
+
+/* Dark override (manual toggle) */
+[data-theme="dark"] {
+  --mc-bg:             #1B2A4A;
+  --mc-sidebar-bg:     #0E1528;
+  --mc-topbar-bg:      #1E3060;
+  --mc-card-bg:        #1E3060;
+  --mc-card-shadow:    0 4px 24px rgba(0,0,0,0.28);
+  --mc-hero-from:      #2B4FBB;
+  --mc-hero-to:        #5B6AD8;
   --mc-text:           #E8EEFF;
   --mc-text-muted:     #6B84B8;
   --mc-text-sub:       #8FA8CE;
   --mc-border:         rgba(91,127,229,0.2);
   --mc-sidebar-icon:   #4B6A9B;
-  --mc-sidebar-w:      64px;
 }
 
-[data-theme="light"] {
-  --mc-bg:             #EFF3FF;
-  --mc-sidebar-bg:     #FFFFFF;
-  --mc-card-bg:        #FFFFFF;
-  --mc-card-shadow:    0 4px 24px rgba(74,108,231,0.08);
-  --mc-hero-from:      #4B7FDE;
-  --mc-hero-to:        #7B9FE8;
-  --mc-text:           #1E2A5E;
-  --mc-text-muted:     #8896BC;
-  --mc-text-sub:       #A0AECB;
-  --mc-border:         rgba(74,108,231,0.12);
-  --mc-sidebar-icon:   #B0BCDC;
-}
+/* Sidebar always uses its own light-on-dark palette regardless of theme */
+.mc-sidebar { color: #C8D8F8; }
+.mc-brand-name { color: #E8EEFF !important; }
+.mc-nav-item { color: #7090C0 !important; }
+.mc-nav-item:hover { color: #C8D8F8 !important; background: rgba(255,255,255,0.06) !important; }
+.mc-nav-item.active { color: #fff !important; }
+.mc-toggle-btn { color: #6B84B8 !important; border-color: rgba(255,255,255,0.08) !important; }
+.mc-toggle-btn:hover { color: #fff !important; border-color: rgba(91,127,229,0.5) !important; }
+.mc-logout-btn { color: #7090C0 !important; }
+.mc-logout-btn:hover { color: #ff7070 !important; }
 
 /* ── MC Shell ── */
 .mc-shell {
@@ -1930,7 +1943,14 @@ input:focus, textarea:focus, select:focus, .form-control:focus {
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 1.25rem 1.5rem 0.75rem;
+  padding: 0 1.5rem;
+  height: 64px;
+  background: var(--mc-topbar-bg);
+  border-bottom: 1px solid var(--mc-border);
+  box-shadow: 0 1px 4px rgba(74,108,231,0.06);
+  position: sticky;
+  top: 0;
+  z-index: 90;
 }
 
 .mc-search-wrap {
@@ -1991,9 +2011,33 @@ input:focus, textarea:focus, select:focus, .form-control:focus {
 
 .mc-icon-btn:hover { color: var(--mc-accent); border-color: var(--mc-accent); }
 
+/* Topbar user avatar */
+.mc-topbar-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid var(--mc-border);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--mc-accent);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 700;
+  transition: border-color 0.2s;
+}
+.mc-topbar-avatar:hover { border-color: var(--mc-accent); }
+.mc-topbar-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+/* Page content wrapper (padding below topbar) */
+.mc-page { padding: 1.25rem 1.5rem; }
+
 /* ── MC Hero Banner ── */
 .mc-hero {
-  margin: 0.75rem 1.5rem 1.25rem;
+  margin: 0 0 1.25rem;
   background: linear-gradient(135deg, var(--mc-hero-from) 0%, var(--mc-hero-to) 100%);
   border-radius: 20px;
   padding: 1.5rem 2rem;
@@ -2790,4 +2834,221 @@ input:focus, textarea:focus, select:focus, .form-control:focus {
 /* Gallery hover overlay (used in PublicGallery) */
 .gallery-hover-overlay:hover {
   opacity: 1 !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   LIGHT-THEME BOOTSTRAP OVERRIDES
+   Scoped to .mc-page so the dark sidebar / hero are untouched.
+   These remap Bootstrap dark utilities so all dashboard inner pages
+   (My Media, Earnings, Withdrawals, etc.) render correctly on the
+   light #EDF0FA background.
+═══════════════════════════════════════════════════════════════════ */
+
+/* Cards & dark panels → white */
+.mc-page .bg-dark,
+.mc-page .bg-dark.card,
+.mc-page .card.bg-dark,
+.mc-page .modal-content.bg-dark {
+  background: var(--mc-card-bg) !important;
+  color: var(--mc-text) !important;
+}
+
+/* Text in previously-dark containers */
+.mc-page .text-white:not(.btn):not(.badge):not([class*="btn-"]) {
+  color: var(--mc-text) !important;
+}
+.mc-page .text-white-50 {
+  color: var(--mc-text-muted) !important;
+}
+.mc-page .text-muted {
+  color: var(--mc-text-muted) !important;
+}
+
+/* Borders */
+.mc-page .border-secondary,
+.mc-page .border-dark {
+  border-color: var(--mc-border) !important;
+}
+
+/* Generic card  */
+.mc-page .card {
+  background: var(--mc-card-bg) !important;
+  border-color: var(--mc-border) !important;
+  box-shadow: var(--mc-card-shadow) !important;
+  color: var(--mc-text) !important;
+}
+.mc-page .card-header,
+.mc-page .card-footer {
+  background: rgba(91,127,229,0.04) !important;
+  border-color: var(--mc-border) !important;
+  color: var(--mc-text) !important;
+}
+.mc-page .card-body {
+  color: var(--mc-text) !important;
+}
+
+/* Dropdowns */
+.mc-page .dropdown-menu {
+  background: var(--mc-card-bg) !important;
+  border: 1px solid var(--mc-border) !important;
+  box-shadow: 0 8px 24px rgba(74,108,231,0.12) !important;
+}
+.mc-page .dropdown-item {
+  color: var(--mc-text) !important;
+}
+.mc-page .dropdown-item:hover,
+.mc-page .dropdown-item:focus {
+  background: rgba(91,127,229,0.08) !important;
+  color: var(--mc-accent) !important;
+}
+.mc-page .dropdown-divider {
+  border-color: var(--mc-border) !important;
+}
+
+/* Form inputs */
+.mc-page .form-control,
+.mc-page .form-select {
+  background: var(--mc-card-bg) !important;
+  border-color: var(--mc-border) !important;
+  color: var(--mc-text) !important;
+}
+.mc-page .form-control::placeholder { color: var(--mc-text-muted) !important; }
+.mc-page .form-control:focus,
+.mc-page .form-select:focus {
+  border-color: var(--mc-accent) !important;
+  box-shadow: 0 0 0 3px rgba(91,127,229,0.12) !important;
+}
+.mc-page .input-group-text {
+  background: rgba(91,127,229,0.06) !important;
+  border-color: var(--mc-border) !important;
+  color: var(--mc-text-muted) !important;
+}
+.mc-page .form-label,
+.mc-page .form-check-label {
+  color: var(--mc-text) !important;
+}
+
+/* Tables */
+.mc-page .table {
+  color: var(--mc-text) !important;
+  --bs-table-color: var(--mc-text);
+  --bs-table-bg: transparent;
+  --bs-table-border-color: var(--mc-border);
+}
+.mc-page .table-dark {
+  --bs-table-bg: var(--mc-card-bg) !important;
+  color: var(--mc-text) !important;
+}
+.mc-page thead th {
+  color: var(--mc-text-muted) !important;
+  border-bottom-color: var(--mc-border) !important;
+}
+.mc-page td, .mc-page th {
+  border-color: var(--mc-border) !important;
+}
+
+/* Badges stay coloured; only fix text-white on non-badge elements */
+.mc-page .badge { /* unchanged */ }
+
+/* Modals inside page flows */
+.mc-page .modal-content {
+  background: var(--mc-card-bg) !important;
+  border-color: var(--mc-border) !important;
+  color: var(--mc-text) !important;
+}
+.mc-page .modal-header,
+.mc-page .modal-footer {
+  border-color: var(--mc-border) !important;
+}
+
+/* Nav tabs within pages */
+.mc-page .nav-tabs {
+  border-color: var(--mc-border) !important;
+}
+.mc-page .nav-tabs .nav-link {
+  color: var(--mc-text-muted) !important;
+}
+.mc-page .nav-tabs .nav-link.active,
+.mc-page .nav-tabs .nav-link:hover {
+  color: var(--mc-accent) !important;
+  border-color: var(--mc-border) var(--mc-border) var(--mc-card-bg) !important;
+  background: var(--mc-card-bg) !important;
+}
+
+/* Tab panels */
+.mc-page .tab-content { color: var(--mc-text) !important; }
+
+/* Section/page headings */
+.mc-page h1, .mc-page h2, .mc-page h3,
+.mc-page h4, .mc-page h5, .mc-page h6 {
+  color: var(--mc-text) !important;
+}
+.mc-page p, .mc-page li, .mc-page span:not(.badge):not(.btn) {
+  color: inherit;
+}
+
+/* Small / helper text */
+.mc-page small { color: var(--mc-text-muted) !important; }
+
+/* Alerts */
+.mc-page .alert {
+  border-color: var(--mc-border) !important;
+}
+
+/* PageHeader component */
+.mc-page .page-header-title { color: var(--mc-text) !important; }
+
+/* mc-table-card used on many listing pages */
+.mc-page .mc-table-card {
+  background: var(--mc-card-bg) !important;
+  border-color: var(--mc-border) !important;
+}
+
+/* ── Dashboard responsive grids ── */
+.mc-dash-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.9rem;
+  margin-bottom: 0.9rem;
+}
+.mc-dash-grid-4b {
+  display: grid;
+  grid-template-columns: 1.1fr 1.1fr 1.3fr 1fr;
+  gap: 0.9rem;
+  margin-bottom: 0.9rem;
+}
+.mc-dash-grid-5 {
+  display: grid;
+  grid-template-columns: 1.6fr 1.2fr 1fr 1fr 0.85fr;
+  gap: 0.9rem;
+  margin-bottom: 0.9rem;
+}
+
+@media (max-width: 1200px) {
+  .mc-dash-grid-5 {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  .mc-dash-grid-4b {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .mc-dash-grid-4 {
+    grid-template-columns: 1fr 1fr;
+  }
+  .mc-dash-grid-4b {
+    grid-template-columns: 1fr 1fr;
+  }
+  .mc-dash-grid-5 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .mc-dash-grid-4,
+  .mc-dash-grid-4b,
+  .mc-dash-grid-5 {
+    grid-template-columns: 1fr;
+  }
 }

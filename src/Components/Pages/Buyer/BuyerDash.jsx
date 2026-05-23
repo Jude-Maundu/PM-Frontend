@@ -12,8 +12,6 @@ import {
 import { placeholderMedium, placeholderSmall } from "../../../utils/placeholders";
 import { getImageUrl, fetchProtectedUrl } from "../../../utils/imageUrl";
 import { getDisplayName } from "../../../utils/auth";
-import ThemeToggle from "../../ThemeToggle";
-import NotificationBell from "../../NotificationBell";
 
 const BuyerDashboard = () => {
   const [featuredMedia, setFeaturedMedia] = useState([]);
@@ -344,23 +342,6 @@ const BuyerDashboard = () => {
 
   return (
     <BuyerLayout>
-      {/* Top Bar */}
-      <div className="mc-topbar">
-        <div className="mc-search-wrap">
-          <i className="fas fa-search mc-search-icon"></i>
-          <input
-            className="mc-search"
-            placeholder="Search..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-          />
-        </div>
-        <div className="mc-topbar-actions">
-          <div className="mc-icon-btn"><ThemeToggle /></div>
-          <NotificationBell />
-        </div>
-      </div>
-
       {/* Hero Banner */}
       <div className="mc-hero">
         <div>

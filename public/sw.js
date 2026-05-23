@@ -1,9 +1,6 @@
 const CACHE_NAME = "relicsnap-v1";
 const STATIC_ASSETS = [
   "/",
-  "/explore",
-  "/static/js/main.chunk.js",
-  "/static/js/bundle.js",
   "/manifest.json",
   "/favicon.ico"
 ];
@@ -29,6 +26,16 @@ self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
   if (url.pathname.startsWith("/api/")) return;
 
+  // Navigation requests (page load, reload, shared link) — always serve index.html.
+  // This fixes blank screens when the server has no fallback rewrite rule.
+  if (e.request.mode === "navigate") {
+    e.respondWith(
+      caches.match("/").then((cached) => cached || fetch("/"))
+    );
+    return;
+  }
+
+  // Static assets — cache-first with background refresh
   e.respondWith(
     caches.match(e.request).then((cached) => {
       const fresh = fetch(e.request).then((res) => {

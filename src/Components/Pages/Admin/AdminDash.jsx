@@ -4,7 +4,6 @@ import AdminLayout from "./AdminLayout";
 import { Link } from "react-router-dom";
 import { API_BASE_URL } from "../../../api/apiConfig";
 import { placeholderMedium } from "../../../utils/placeholders";
-import ThemeToggle from "../../ThemeToggle";
 
 const API = API_BASE_URL;
 
@@ -199,22 +198,6 @@ const AdminDash = () => {
 
   return (
     <AdminLayout>
-      {/* Top Bar */}
-      <div className="mc-topbar">
-        <div className="mc-search-wrap">
-          <i className="fas fa-search mc-search-icon"></i>
-          <input
-            className="mc-search"
-            placeholder="Search..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-          />
-        </div>
-        <div className="mc-topbar-actions">
-          <div className="mc-icon-btn"><ThemeToggle /></div>
-        </div>
-      </div>
-
       {/* Hero Banner */}
       <div className="mc-hero">
         <div>
