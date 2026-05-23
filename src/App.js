@@ -33,6 +33,10 @@ import AdminAlbums from './Components/Pages/Admin/AdminAlbums';
 import AdminWallets from './Components/Pages/Admin/AdminWallets';
 import AdminPortfolios from './Components/Pages/Admin/AdminPortfolios';
 import AdminProfile from './Components/Pages/Admin/AdminProfile';
+import AdminConfig from './Components/Pages/Admin/AdminConfig';
+import AdminApplications from './Components/Pages/Admin/AdminApplications';
+import AdminLogs from './Components/Pages/Admin/AdminLogs';
+import AdminStaff from './Components/Pages/Admin/AdminStaff';
 import ShareAccess from './Components/Pages/Buyer/ShareAccess';
 
 // Photographer Pages
@@ -120,7 +124,11 @@ function App() {
           <Route path="/admin/withdrawals" element={<ProtectedRoute requiredRole="admin"><AdminWithdrawals /></ProtectedRoute>} />
           <Route path="/admin/albums" element={<ProtectedRoute requiredRole="admin"><AdminAlbums /></ProtectedRoute>} />
           <Route path="/admin/wallets" element={<ProtectedRoute requiredRole="admin"><AdminWallets /></ProtectedRoute>} />
-          <Route path="/admin/portfolios" element={<ProtectedRoute requiredRole="admin"><AdminPortfolios /></ProtectedRoute>} />
+          <Route path="/admin/portfolios"    element={<ProtectedRoute requiredRole="admin"><AdminPortfolios /></ProtectedRoute>} />
+          <Route path="/admin/config"        element={<ProtectedRoute requiredRole="admin"><AdminConfig /></ProtectedRoute>} />
+          <Route path="/admin/applications"  element={<ProtectedRoute requiredRole="admin"><AdminApplications /></ProtectedRoute>} />
+          <Route path="/admin/logs"          element={<ProtectedRoute requiredRole="admin"><AdminLogs /></ProtectedRoute>} />
+          <Route path="/admin/staff"         element={<ProtectedRoute requiredRole="admin"><AdminStaff /></ProtectedRoute>} />
           
           {/* Photographer Routes */}
           <Route path='/photographer/dashboard' element={<ProtectedRoute requiredRole="photographer"><PhotographerDash /></ProtectedRoute>} />

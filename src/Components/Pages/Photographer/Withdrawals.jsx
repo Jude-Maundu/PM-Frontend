@@ -4,7 +4,7 @@ import axios from "axios";
 import { io } from "socket.io-client";
 import PhotographerLayout from "./PhotographerLayout";
 import PageHeader from "../../PageHeader";
-import { API_BASE_URL, API_ENDPOINTS } from "../../../api/apiConfig";
+import { API_BASE_URL } from "../../../api/apiConfig";
 import { getAuthHeaders, getCurrentUserId, getStoredUser } from "../../../utils/auth";
 
 const API = API_BASE_URL;
@@ -59,11 +59,15 @@ const PhotographerWithdrawals = () => {
     try {
       setLoading(true);
 
-      const withdrawalsRes = await axios.get(`${API}/withdrawals/my`, { headers });
-      setWithdrawals(withdrawalsRes.data || []);
+      const [withdrawalsRes, walletRes] = await Promise.all([
+        axios.get(`${API}/withdrawals/my`, { headers }),
+        photographerId
+          ? axios.get(`${API}/payments/wallet/${photographerId}`, { headers }).catch(() => ({ data: { balance: 0 } }))
+          : Promise.resolve({ data: { balance: 0 } }),
+      ]);
 
-      const earningsRes = await axios.get(API_ENDPOINTS.PAYMENTS.EARNINGS_SUMMARY(photographerId), { headers });
-      setAvailableBalance(earningsRes.data?.available || 0);
+      setWithdrawals(withdrawalsRes.data || []);
+      setAvailableBalance(walletRes.data?.balance ?? walletRes.data?.netBalance ?? 0);
 
     } catch (error) {
       console.error("Error fetching withdrawals:", error);

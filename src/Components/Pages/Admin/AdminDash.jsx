@@ -3,7 +3,7 @@ import axios from "axios";
 import AdminLayout from "./AdminLayout";
 import { Link } from "react-router-dom";
 import { API_BASE_URL } from "../../../api/apiConfig";
-import { placeholderMedium } from "../../../utils/placeholders";
+import { getAuthHeaders } from "../../../utils/auth";
 
 const API = API_BASE_URL;
 
@@ -17,88 +17,45 @@ const AdminDash = () => {
     photographerEarnings: 0,
     platformFees: 0,
   });
+  const [health, setHealth] = useState(null);
   const [recentReceipts, setRecentReceipts] = useState([]);
-  const [recentRefunds, setRecentRefunds] = useState([]);
-  const [shareSummary, setShareSummary] = useState({
-    totalShares: 0,
-    activeShares: 0,
-    expiredShares: 0,
-    totalAccesses: 0,
-    totalDownloads: 0,
-  });
-  const [recentShares, setRecentShares] = useState([]);
-  const [popularMedia, setPopularMedia] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [timeRange, setTimeRange] = useState("week");
-  const [searchQuery, setSearchQuery] = useState("");
 
   const fetchDashboardData = useCallback(async () => {
-    const token = localStorage.getItem("token");
-    const headers = { Authorization: `Bearer ${token}` };
+    const headers = getAuthHeaders();
     try {
       setLoading(true);
-      
-      const [
-        dashboardRes,
-        mediaRes,
-        receiptsRes,
-        refundsRes,
-        usersRes,
-        sharesRes,
-      ] = await Promise.all([
+
+      const [healthRes, dashboardRes, receiptsRes] = await Promise.all([
+        axios.get(`${API}/admin/health`, { headers }).catch(() => ({ data: {} })),
         axios.get(`${API}/payments/admin/dashboard`, { headers }).catch(() => ({ data: {} })),
-        axios.get(`${API}/media`, { headers }),
-        axios.get(`${API}/payments/admin/receipts`, { headers }),
-        axios.get(`${API}/payments/admin/refunds`, { headers }),
-        axios.get(`${API}/auth/users`, { headers }).catch(() => ({ data: [] })),
-        axios.get(`${API}/notifications/admin/shares?limit=6`, { headers }).catch(() => ({ data: {} })),
+        axios.get(`${API}/payments/admin/receipts`, { headers }).catch(() => ({ data: [] })),
       ]);
 
-      const media = Array.isArray(mediaRes.data?.media) 
-        ? mediaRes.data.media 
-        : (Array.isArray(mediaRes.data) ? mediaRes.data : []);
-      
+      const h = healthRes.data || {};
+      setHealth(h);
+
       const receipts = receiptsRes.data || [];
       setRecentReceipts(receipts.slice(0, 5));
-      
-      const refunds = refundsRes.data || [];
-      setRecentRefunds(refunds.filter(r => r.status === "pending").slice(0, 5));
-      
+
       const dashboardStats = dashboardRes.data?.stats || {};
       const totalRevenue = dashboardStats.totalRevenue ?? receipts.reduce((sum, r) => sum + (r.amount || 0), 0);
       const totalTransactions = dashboardStats.totalSales ?? receipts.length;
-      const totalUsers = dashboardStats.totalBuyers + dashboardStats.totalPhotographers + dashboardStats.totalAdmins || (Array.isArray(usersRes.data) ? usersRes.data.length : 0);
-      const pendingRefunds = dashboardStats.pendingRefunds ?? refunds.filter(r => r.status === "pending").length;
+      const totalUsers = h.totalUsers ?? (dashboardStats.totalBuyers + dashboardStats.totalPhotographers + dashboardStats.totalAdmins) ?? 0;
+      const pendingRefunds = dashboardStats.pendingRefunds ?? 0;
       const photographerEarnings = dashboardStats.totalPhotographerEarnings ?? totalRevenue * 0.7;
       const platformFees = totalRevenue - photographerEarnings;
 
-      const shares = Array.isArray(sharesRes.data?.shares) ? sharesRes.data.shares : [];
-      const totalAccesses = shares.reduce((sum, item) => sum + (item.accessCount || 0), 0);
-      const totalDownloads = shares.reduce((sum, item) => sum + (item.downloadCount || 0), 0);
-      const activeShares = shares.filter((item) => item.isActive).length;
-      const expiredShares = shares.filter((item) => item.isExpired).length;
-      setShareSummary({
-        totalShares: sharesRes.data?.total ?? shares.length,
-        activeShares,
-        expiredShares,
-        totalAccesses,
-        totalDownloads,
-      });
-      setRecentShares(shares.slice(0, 5));
-
-      const popular = [...media].sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 5);
-      setPopularMedia(popular);
-      
       setStats({
         totalRevenue,
         totalUsers,
-        totalMedia: dashboardStats.totalMedia ?? media.length,
+        totalMedia: h.pendingMedia ?? dashboardStats.totalMedia ?? 0,
         totalTransactions,
         pendingRefunds,
         photographerEarnings,
         platformFees,
       });
-      
+
     } catch (error) {
       console.error("Dashboard error:", error);
     } finally {
@@ -213,6 +170,27 @@ const AdminDash = () => {
         <div className="mc-hero-art">🛡️</div>
       </div>
 
+      {/* Health Alert Badges */}
+      {health && (health.pendingWithdrawals > 0 || health.pendingApplications > 0 || health.pendingMedia > 0) && (
+        <div className="d-flex gap-2 flex-wrap mb-3">
+          {health.pendingWithdrawals > 0 && (
+            <Link to="/admin/withdrawals" className="badge bg-warning text-dark text-decoration-none" style={{ fontSize: "0.78rem", padding: "0.45em 0.9em" }}>
+              <i className="fas fa-money-bill-wave me-1"></i>{health.pendingWithdrawals} withdrawal{health.pendingWithdrawals !== 1 ? "s" : ""} pending
+            </Link>
+          )}
+          {health.pendingApplications > 0 && (
+            <Link to="/admin/applications" className="badge bg-info text-dark text-decoration-none" style={{ fontSize: "0.78rem", padding: "0.45em 0.9em" }}>
+              <i className="fas fa-user-clock me-1"></i>{health.pendingApplications} application{health.pendingApplications !== 1 ? "s" : ""} pending
+            </Link>
+          )}
+          {health.pendingMedia > 0 && (
+            <Link to="/admin/media" className="badge bg-secondary text-decoration-none" style={{ fontSize: "0.78rem", padding: "0.45em 0.9em" }}>
+              <i className="fas fa-image me-1"></i>{health.pendingMedia} media awaiting approval
+            </Link>
+          )}
+        </div>
+      )}
+
       {/* Stat Cards */}
       <div className="mc-stats-row">
         {/* Card 1: Total Users */}
@@ -221,34 +199,34 @@ const AdminDash = () => {
             <span className="mc-stat-label">Total Users</span>
             <span className="mc-stat-dots">···</span>
           </div>
-          <div className="mc-stat-value">{stats.totalUsers}</div>
+          <div className="mc-stat-value">{(health?.totalUsers ?? stats.totalUsers).toLocaleString()}</div>
           <div className="mc-stat-sub">registered users</div>
           <div className="mc-stat-trend up">
             <Sparkline values={sparkValues} color="#F06B8D" />
           </div>
         </div>
 
-        {/* Card 2: Total Revenue */}
+        {/* Card 2: Sales Today */}
         <div className="mc-stat-card">
           <div className="mc-stat-header">
-            <span className="mc-stat-label">Total Revenue</span>
+            <span className="mc-stat-label">Sales Today</span>
             <span className="mc-stat-dots">···</span>
           </div>
-          <div className="mc-stat-value">{"KES " + stats.totalRevenue.toLocaleString()}</div>
-          <div className="mc-stat-sub">platform earnings</div>
+          <div className="mc-stat-value">{"KES " + (health?.salesToday ?? 0).toLocaleString()}</div>
+          <div className="mc-stat-sub">this week: KES {(health?.salesThisWeek ?? 0).toLocaleString()}</div>
           <div className="mc-stat-trend up">
             <Sparkline values={sparkValues} color="#4CC9A6" />
           </div>
         </div>
 
-        {/* Card 3: Media */}
+        {/* Card 3: Pending Withdrawals */}
         <div className="mc-stat-card">
           <div className="mc-stat-header">
-            <span className="mc-stat-label">Media</span>
+            <span className="mc-stat-label">Pending Withdrawals</span>
             <span className="mc-stat-dots">···</span>
           </div>
-          <div className="mc-stat-value">{stats.totalMedia}</div>
-          <div className="mc-stat-sub">published items</div>
+          <div className="mc-stat-value">{health?.pendingWithdrawals ?? 0}</div>
+          <div className="mc-stat-sub">KES {(health?.pendingWithdrawalsAmount ?? 0).toLocaleString()} total</div>
           <div className="mc-stat-trend neu">
             <Sparkline values={sparkValues} color="#9D7FEB" />
           </div>
