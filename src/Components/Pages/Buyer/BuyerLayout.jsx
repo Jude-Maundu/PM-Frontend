@@ -6,7 +6,6 @@ import NotificationBell from "../../NotificationBell";
 import { getStoredUser, getDisplayName } from "../../../utils/auth";
 
 const BuyerLayout = ({ children }) => {
-  const [isMobile, setIsMobile]   = useState(window.innerWidth < 768);
   const [cartCount, setCartCount] = useState(0);
   const [collapsed, setCollapsed] = useState(
     () => localStorage.getItem("mc-sidebar-collapsed") === "true"
@@ -17,12 +16,6 @@ const BuyerLayout = ({ children }) => {
   const storedUser   = getStoredUser();
   const displayName  = getDisplayName(storedUser) || "Buyer";
   const avatarLetter = displayName.charAt(0).toUpperCase();
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
 
   useEffect(() => {
     try { setCartCount(getLocalCart().length); } catch {}
@@ -58,8 +51,6 @@ const BuyerLayout = ({ children }) => {
     { path: "/buyer/profile",      icon: "fa-user",          label: "Profile"      },
     { path: "/buyer/settings",     icon: "fa-cog",           label: "Settings"     },
   ];
-
-  const mobileItems = navItems.slice(0, 5);
 
   if (location.pathname === "/login") return <>{children}</>;
 
@@ -122,40 +113,7 @@ const BuyerLayout = ({ children }) => {
           {children}
         </div>
 
-        <div className="d-md-none" style={{ height: "72px" }}></div>
       </main>
-
-      {/* ── Mobile bottom nav ── */}
-      {isMobile && (
-        <div className="d-md-none position-fixed bottom-0 start-0 w-100" style={{
-          background: "var(--mc-sidebar-bg)",
-          borderTop: "1px solid rgba(255,255,255,0.06)",
-          zIndex: 1030,
-          paddingBottom: "env(safe-area-inset-bottom)",
-        }}>
-          <div className="d-flex justify-content-around align-items-center py-2">
-            {mobileItems.map((item, idx) => (
-              <NavLink key={idx} to={item.path}
-                style={({ isActive }) => ({
-                  color: isActive ? "var(--mc-accent)" : "#5A7AAA",
-                  fontSize: "0.62rem",
-                })}
-                className="d-flex flex-column align-items-center text-decoration-none py-1 px-2 rounded position-relative"
-              >
-                {({ isActive }) => (
-                  <>
-                    <i className={`fas ${item.icon} mb-1`} style={{ fontSize: "1rem" }}></i>
-                    <span>{item.label.split(" ")[0]}</span>
-                    {item.badge > 0 && (
-                      <span style={{ position:"absolute",top:"2px",right:"4px",width:"14px",height:"14px",borderRadius:"50%",background:"#F06B8D",color:"#fff",fontSize:"0.55rem",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700 }}>{item.badge}</span>
-                    )}
-                  </>
-                )}
-              </NavLink>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 };

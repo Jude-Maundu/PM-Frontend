@@ -109,8 +109,8 @@ const PhotographerWithdrawals = () => {
   const handleRequest = async (e) => {
     e.preventDefault();
 
-    if (!requestData.amount || Number(requestData.amount) < 1000) {
-      toast.warning("Minimum withdrawal amount is KES 1,000");
+    if (!requestData.amount || Number(requestData.amount) < 1) {
+      toast.warning("Please enter a valid withdrawal amount");
       return;
     }
 
@@ -266,19 +266,19 @@ const PhotographerWithdrawals = () => {
         <div className="mc-card" style={{ marginBottom: "1.25rem" }}>
           <div className="mc-card-header">
             <span className="mc-card-title">AVAILABLE BALANCE</span>
-            <span className="mc-card-badge">Min KES 1,000</span>
+            <span className="mc-card-badge">Withdraw any amount</span>
           </div>
           <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
             <div>
               <div style={{ fontSize: "2rem", fontWeight: 700, color: "var(--mc-accent-gold)" }}>
                 KES {availableBalance.toLocaleString()}
               </div>
-              <small style={{ opacity: 0.55 }}>Minimum withdrawal: KES 1,000</small>
+              <small style={{ opacity: 0.55 }}>Withdraw your full balance or any amount</small>
             </div>
             <button
               className="mc-btn mc-btn-primary"
               onClick={() => setShowRequestForm(true)}
-              disabled={availableBalance < 1000}
+              disabled={availableBalance <= 0}
             >
               <i className="fas fa-plus-circle me-2"></i>
               Request Withdrawal
@@ -305,7 +305,7 @@ const PhotographerWithdrawals = () => {
                         value={requestData.amount}
                         onChange={(e) => setRequestData({...requestData, amount: e.target.value})}
                         required
-                        min="1000"
+                        min="1"
                       />
                     </div>
 
