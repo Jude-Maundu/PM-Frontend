@@ -1679,7 +1679,6 @@ input:focus, textarea:focus, select:focus, .form-control:focus {
 /* ── MC Sidebar — retractable (expanded 240px ↔ collapsed 64px) ── */
 .mc-sidebar {
   width: 240px;
-  min-height: 100vh;
   background: var(--mc-sidebar-bg);
   display: flex;
   flex-direction: column;
@@ -1690,13 +1689,12 @@ input:focus, textarea:focus, select:focus, .form-control:focus {
   box-shadow: 2px 0 20px rgba(0,0,0,0.18);
   z-index: 100;
   transition: width 0.3s cubic-bezier(0.4,0,0.2,1), background 0.3s;
-  overflow: visible;
+  overflow: hidden;
 }
 
 /* Collapsed sidebar */
 .mc-shell.mc-collapsed .mc-sidebar {
   width: 64px;
-  overflow: hidden;
 }
 
 /* Sidebar brand / header row */
@@ -1778,6 +1776,7 @@ input:focus, textarea:focus, select:focus, .form-control:focus {
   flex-direction: column;
   gap: 0.2rem;
   flex: 1;
+  min-height: 0;
   width: 100%;
   padding: 0.75rem 8px;
   overflow-y: auto;
