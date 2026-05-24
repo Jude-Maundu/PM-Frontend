@@ -1,6 +1,5 @@
-const CACHE_NAME = "relicsnap-v1";
+const CACHE_NAME = "pm-v3";
 const STATIC_ASSETS = [
-  "/",
   "/manifest.json",
   "/favicon.ico"
 ];
@@ -26,12 +25,10 @@ self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
   if (url.pathname.startsWith("/api/")) return;
 
-  // Navigation requests (page load, reload, shared link) — always serve index.html.
-  // This fixes blank screens when the server has no fallback rewrite rule.
+  // Navigation requests — always fetch fresh HTML so new JS bundles load correctly.
+  // Never serve a cached index.html (stale hashes break the app after deploys).
   if (e.request.mode === "navigate") {
-    e.respondWith(
-      caches.match("/").then((cached) => cached || fetch("/"))
-    );
+    e.respondWith(fetch(e.request).catch(() => caches.match("/")));
     return;
   }
 
