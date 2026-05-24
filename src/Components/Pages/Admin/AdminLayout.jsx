@@ -139,6 +139,28 @@ const AdminLayout = ({ children }) => {
           {children}
         </div>
       </main>
+
+      {/* ── Mobile bottom nav ── */}
+      <nav className={`mc-bottom-nav${mobileOpen ? " mc-bottom-nav-hidden" : ""}`}>
+        <div className="mc-bottom-nav-inner">
+          {[
+            { path: "/admin/dashboard",    icon: "fa-tachometer-alt", label: "Home"       },
+            { path: "/admin/users",        icon: "fa-users",          label: "Users"      },
+            { path: "/admin/media",        icon: "fa-photo-video",    label: "Media"      },
+            { path: "/admin/analytics",    icon: "fa-chart-bar",      label: "Analytics"  },
+            { path: "/admin/settings",     icon: "fa-cog",            label: "Settings"   },
+          ].map((item, idx) => (
+            <NavLink
+              key={idx}
+              to={item.path}
+              className={({ isActive }) => `mc-bottom-nav-link${isActive ? " active" : ""}`}
+            >
+              <i className={`fas ${item.icon}`}></i>
+              <span>{item.label}</span>
+            </NavLink>
+          ))}
+        </div>
+      </nav>
     </div>
   );
 };

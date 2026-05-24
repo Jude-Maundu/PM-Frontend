@@ -139,6 +139,28 @@ const PhotographerLayout = ({ children }) => {
           {children}
         </div>
       </main>
+
+      {/* ── Mobile bottom nav ── */}
+      <nav className={`mc-bottom-nav${mobileOpen ? " mc-bottom-nav-hidden" : ""}`}>
+        <div className="mc-bottom-nav-inner">
+          {[
+            { path: "/photographer/dashboard",   icon: "fa-chart-pie",       label: "Home"      },
+            { path: "/photographer/media",        icon: "fa-photo-video",     label: "Media"     },
+            { path: "/photographer/upload",       icon: "fa-cloud-upload-alt",label: "Upload"    },
+            { path: "/photographer/earnings",     icon: "fa-dollar-sign",     label: "Earnings"  },
+            { path: "/photographer/profile",      icon: "fa-user",            label: "Profile"   },
+          ].map((item, idx) => (
+            <NavLink
+              key={idx}
+              to={item.path}
+              className={({ isActive }) => `mc-bottom-nav-link${isActive ? " active" : ""}`}
+            >
+              <i className={`fas ${item.icon}`}></i>
+              <span>{item.label}</span>
+            </NavLink>
+          ))}
+        </div>
+      </nav>
     </div>
   );
 };

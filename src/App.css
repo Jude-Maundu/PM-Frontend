@@ -2123,7 +2123,80 @@ input:focus, textarea:focus, select:focus, .form-control:focus {
 .mc-topbar-action-btn:hover { opacity: 0.85; color: #fff; }
 
 /* Page content wrapper (padding below topbar) */
-.mc-page { padding: 1.25rem 1.5rem; }
+.mc-page { padding: 1.5rem 1.5rem; }
+
+/* ── Mobile bottom nav ── */
+.mc-bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 62px;
+  background: var(--mc-sidebar-bg);
+  border-top: 1px solid var(--mc-border);
+  z-index: 95;
+  padding-bottom: env(safe-area-inset-bottom);
+  transform: translateY(0);
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.mc-bottom-nav.mc-bottom-nav-hidden {
+  transform: translateY(100%);
+}
+.mc-bottom-nav-inner {
+  display: flex;
+  align-items: stretch;
+  height: 62px;
+}
+.mc-bottom-nav-link {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  text-decoration: none;
+  color: var(--mc-sidebar-icon, rgba(200,216,248,0.6));
+  font-size: 0.62rem;
+  font-weight: 500;
+  transition: color 0.18s;
+  padding: 6px 4px 0;
+  position: relative;
+}
+.mc-bottom-nav-link i {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+.mc-bottom-nav-link.active,
+.mc-bottom-nav-link:hover {
+  color: var(--mc-accent);
+}
+.mc-bottom-nav-link.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 20%;
+  right: 20%;
+  height: 2px;
+  background: var(--mc-accent);
+  border-radius: 0 0 2px 2px;
+}
+.mc-bottom-nav-badge {
+  position: absolute;
+  top: 4px;
+  right: calc(50% - 14px);
+  background: var(--mc-accent);
+  color: #fff;
+  font-size: 0.55rem;
+  font-weight: 700;
+  min-width: 15px;
+  height: 15px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+}
 
 /* ── MC Hero Banner ── */
 .mc-hero {
@@ -2665,6 +2738,7 @@ input:focus, textarea:focus, select:focus, .form-control:focus {
   .mc-shell.mc-collapsed .mc-nav-item { justify-content: flex-start !important; }
 
   .mc-hamburger { display: flex; }
+  .mc-bottom-nav { display: block; }
   .mc-main { margin-left: 0 !important; }
   .mc-stats-row { grid-template-columns: 1fr; gap: 0.75rem; }
   .mc-bottom-grid { grid-template-columns: 1fr; }
@@ -2675,7 +2749,8 @@ input:focus, textarea:focus, select:focus, .form-control:focus {
   .mc-topbar { padding: 0.75rem 1rem; gap: 0.6rem; }
   .mc-stats-row, .mc-bottom-grid { padding-left: 1rem; padding-right: 1rem; }
   .mc-hero { margin: 0.5rem 1rem 1rem; }
-  .mc-page { padding: 0 1rem 2rem; }
+  /* extra top gap between topbar and content; bottom padding clears the bottom nav */
+  .mc-page { padding: 1rem 1rem 80px; }
 }
 
 /* ============================================================
@@ -3089,7 +3164,6 @@ input:focus, textarea:focus, select:focus, .form-control:focus {
 }
 
 /* Badges stay coloured; only fix text-white on non-badge elements */
-.mc-page .badge { /* unchanged */ }
 
 /* Modals inside page flows */
 .mc-page .modal-content {

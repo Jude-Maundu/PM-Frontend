@@ -145,6 +145,29 @@ const BuyerLayout = ({ children }) => {
           {children}
         </div>
       </main>
+
+      {/* ── Mobile bottom nav ── */}
+      <nav className={`mc-bottom-nav${mobileOpen ? " mc-bottom-nav-hidden" : ""}`}>
+        <div className="mc-bottom-nav-inner">
+          {[
+            { path: "/buyer/dashboard",    icon: "fa-home",          label: "Home"      },
+            { path: "/buyer/explore",      icon: "fa-compass",       label: "Explore"   },
+            { path: "/buyer/cart",         icon: "fa-shopping-cart", label: "Cart",      badge: cartCount },
+            { path: "/buyer/favorites",    icon: "fa-heart",         label: "Favorites" },
+            { path: "/buyer/profile",      icon: "fa-user",          label: "Profile"   },
+          ].map((item, idx) => (
+            <NavLink
+              key={idx}
+              to={item.path}
+              className={({ isActive }) => `mc-bottom-nav-link${isActive ? " active" : ""}`}
+            >
+              <i className={`fas ${item.icon}`}></i>
+              {item.badge > 0 && <span className="mc-bottom-nav-badge">{item.badge}</span>}
+              <span>{item.label}</span>
+            </NavLink>
+          ))}
+        </div>
+      </nav>
     </div>
   );
 };
