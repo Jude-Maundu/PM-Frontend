@@ -1955,10 +1955,38 @@ input:focus, textarea:focus, select:focus, .form-control:focus {
   z-index: 90;
 }
 
+.mc-topbar-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: 0 0 auto;
+}
+
+.mc-topbar-page-icon {
+  font-size: 1rem;
+  color: var(--mc-accent);
+  opacity: 0.85;
+}
+
+.mc-topbar-page-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--mc-text);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
 .mc-search-wrap {
   position: relative;
   flex: 1;
   max-width: 380px;
+}
+
+.mc-page-search-wrap {
+  position: relative;
+  flex: 1;
+  max-width: 380px;
+  margin-bottom: 1rem;
 }
 
 .mc-search-icon {

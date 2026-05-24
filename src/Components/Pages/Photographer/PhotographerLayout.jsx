@@ -85,9 +85,16 @@ const PhotographerLayout = ({ children }) => {
       <main className="mc-main">
         {/* Navbar */}
         <div className="mc-topbar">
-          <div className="mc-search-wrap">
-            <i className="fas fa-search mc-search-icon"></i>
-            <input className="mc-search" placeholder="Search..." readOnly />
+          <div className="mc-topbar-title">
+            {(() => {
+              const active = navItems.find(n => location.pathname === n.path || location.pathname.startsWith(n.path + "/"));
+              return active ? (
+                <>
+                  <i className={`fas ${active.icon} mc-topbar-page-icon`}></i>
+                  <span className="mc-topbar-page-name">{active.label}</span>
+                </>
+              ) : <span className="mc-topbar-page-name">Dashboard</span>;
+            })()}
           </div>
           <div className="mc-topbar-actions">
             <div className="mc-topbar-profile">
