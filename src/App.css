@@ -2612,8 +2612,59 @@ input:focus, textarea:focus, select:focus, .form-control:focus {
   }
 }
 
+/* ── Hamburger button (mobile only) ── */
+.mc-hamburger {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: none;
+  border-radius: 10px;
+  background: var(--mc-card-bg);
+  color: var(--mc-text);
+  font-size: 1rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+.mc-hamburger:hover { background: var(--mc-border); }
+
+/* ── Mobile sidebar backdrop ── */
+.mc-mobile-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(3px);
+  z-index: 99;
+}
+
 @media (max-width: 768px) {
-  .mc-sidebar { display: none !important; }
+  /* Sidebar hidden by default on mobile — slides in as drawer */
+  .mc-sidebar {
+    transform: translateX(-100%);
+    width: 260px !important;
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 100;
+  }
+  .mc-sidebar.mc-sidebar-open {
+    transform: translateX(0);
+  }
+  /* Collapsed state has no effect on mobile — always full width when open */
+  .mc-shell.mc-collapsed .mc-sidebar {
+    width: 260px !important;
+  }
+  .mc-shell.mc-collapsed .mc-nav-label,
+  .mc-shell.mc-collapsed .mc-logout-label,
+  .mc-shell.mc-collapsed .mc-brand-name {
+    display: block !important;
+    opacity: 1 !important;
+    width: auto !important;
+    overflow: visible !important;
+  }
+  .mc-shell.mc-collapsed .mc-nav-item { justify-content: flex-start !important; }
+
+  .mc-hamburger { display: flex; }
   .mc-main { margin-left: 0 !important; }
   .mc-stats-row { grid-template-columns: 1fr; gap: 0.75rem; }
   .mc-bottom-grid { grid-template-columns: 1fr; }
@@ -2621,7 +2672,7 @@ input:focus, textarea:focus, select:focus, .form-control:focus {
   .mc-hero { min-height: 110px; padding: 1.25rem 1.5rem; }
   .mc-hero h2 { font-size: 1.15rem !important; }
   .mc-hero-art { font-size: 2.5rem; }
-  .mc-topbar { padding: 1rem 1rem 0.5rem; }
+  .mc-topbar { padding: 0.75rem 1rem; gap: 0.6rem; }
   .mc-stats-row, .mc-bottom-grid { padding-left: 1rem; padding-right: 1rem; }
   .mc-hero { margin: 0.5rem 1rem 1rem; }
   .mc-page { padding: 0 1rem 2rem; }
