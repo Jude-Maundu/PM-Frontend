@@ -1,67 +1,48 @@
 import React, { useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { toast } from '../utils/toast';
+import { useSearchParams } from 'react-router-dom';
 
 const AuthCallback = () => {
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    const handleCallback = async () => {
-      const token = searchParams.get('token');
-      const userParam = searchParams.get('user');
-      const error = searchParams.get('error');
+    const token = searchParams.get('token');
+    const userParam = searchParams.get('user');
+    const error = searchParams.get('error');
 
-      if (error) {
-        console.error('Authentication error:', error);
-        toast.error('Authentication failed. Please try again.');
-        navigate('/login');
-        return;
-      }
+    if (error) {
+      window.location.href = '/login?error=auth_failed';
+      return;
+    }
 
-      if (token && userParam) {
-        try {
-          const user = JSON.parse(decodeURIComponent(userParam));
+    if (token && userParam) {
+      try {
+        const user = JSON.parse(decodeURIComponent(userParam));
 
-          // Store authentication data
-          localStorage.setItem('token', token);
-          localStorage.setItem('user', JSON.stringify(user));
-          localStorage.setItem('role', user.role);
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(user));
+        localStorage.setItem('role', user.role);
 
-          console.log('✅ Google authentication successful:', user);
-
-          // Redirect based on role
-          const roleLower = String(user.role).toLowerCase().trim();
-          if (roleLower === "admin" || roleLower.includes("admin")) {
-            navigate("/admin/dashboard");
-          } else if (roleLower === "reviewer" || roleLower === "support") {
-            navigate("/admin/dashboard");
-          } else if (roleLower === "photographer" || roleLower.includes("photographer")) {
-            navigate("/photographer/dashboard");
-          } else {
-            navigate("/buyer/dashboard");
-          }
-        } catch (error) {
-          console.error('Error processing authentication data:', error);
-          toast.error('Authentication failed. Please try again.');
-          navigate('/login');
+        const roleLower = String(user.role).toLowerCase().trim();
+        if (roleLower === 'admin' || roleLower.includes('admin') || roleLower === 'reviewer' || roleLower === 'support') {
+          window.location.href = '/admin/dashboard';
+        } else if (roleLower === 'photographer' || roleLower.includes('photographer')) {
+          window.location.href = '/photographer/dashboard';
+        } else {
+          window.location.href = '/buyer/dashboard';
         }
-      } else {
-        console.error('Missing authentication data');
-        toast.error('Authentication failed. Please try again.');
-        navigate('/login');
+      } catch (e) {
+        console.error('AuthCallback: failed to parse user data', e);
+        window.location.href = '/login?error=auth_failed';
       }
-    };
-
-    handleCallback();
-  }, [searchParams, navigate]);
+    } else {
+      window.location.href = '/login?error=auth_failed';
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div
       className="min-vh-100 d-flex align-items-center justify-content-center"
-      style={{
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-      }}
+      style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
     >
       <div className="text-center">
         <div className="spinner-border text-light mb-3" role="status" style={{ width: '3rem', height: '3rem' }}>
