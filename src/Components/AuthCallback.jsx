@@ -32,9 +32,11 @@ const AuthCallback = () => {
 
           // Redirect based on role
           const roleLower = String(user.role).toLowerCase().trim();
-          if (roleLower.includes("admin")) {
-            navigate("/admin/media");
-          } else if (roleLower.includes("photographer")) {
+          if (roleLower === "admin" || roleLower.includes("admin")) {
+            navigate("/admin/dashboard");
+          } else if (roleLower === "reviewer" || roleLower === "support") {
+            navigate("/admin/dashboard");
+          } else if (roleLower === "photographer" || roleLower.includes("photographer")) {
             navigate("/photographer/dashboard");
           } else {
             navigate("/buyer/dashboard");

@@ -1,6 +1,6 @@
 import './App.css';
 import './styles/mobileStyles.css';
-import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, Navigate, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { ThemeProvider } from './context/ThemeContext';
@@ -75,6 +75,18 @@ import ClientProofingView from './Components/Pages/Proofing/ClientProofingView';
 import OnboardingWizard from './Components/OnboardingWizard';
 import PublicGallery from './Components/Pages/Public/PublicGallery';
 
+function UrlNormalizer() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  useEffect(() => {
+    if (location.pathname.includes('//')) {
+      const fixed = location.pathname.replace(/\/\/+/g, '/');
+      navigate(fixed + location.search + location.hash, { replace: true });
+    }
+  }, [location.pathname, navigate]);
+  return null;
+}
+
 function RouteWithBodyClass({ children }) {
   const location = useLocation();
 
@@ -95,6 +107,7 @@ function App() {
     <ToastContainer />
     <ConfirmDialog />
     <BrowserRouter>
+      <UrlNormalizer />
       <OnboardingWizard />
       <ErrorBoundary>
       <RouteWithBodyClass>

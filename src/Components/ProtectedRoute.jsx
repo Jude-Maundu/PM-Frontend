@@ -130,9 +130,9 @@ const ProtectedRoute = ({ children, requiredRole }) => {
   if (requiredRole) {
     const requiredRoleLower = String(requiredRole).toLowerCase().trim();
 
-    // Allow admin access to everything
-    if (roleLower === 'admin' || roleLower.includes('admin')) {
-      console.log('[ProtectedRoute] Admin access granted');
+    // Allow admin / staff (reviewer, support) access to everything
+    if (roleLower === 'admin' || roleLower.includes('admin') || roleLower === 'reviewer' || roleLower === 'support') {
+      console.log('[ProtectedRoute] Admin/staff access granted');
       return children;
     }
 
