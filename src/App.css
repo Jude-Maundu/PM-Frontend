@@ -263,8 +263,8 @@ input:focus, textarea:focus, select:focus, .form-control:focus {
   outline: none !important;
 }
 
-/* ── Navbar (dashboard/app) ── */
-.navbar {
+/* ── Navbar (dashboard/app only — never the home page navbar) ── */
+.navbar:not(.home-navbar) {
   background-color: var(--pm-white) !important;
   border-bottom: 1px solid var(--pm-gray-200) !important;
 }
@@ -480,15 +480,19 @@ input:focus, textarea:focus, select:focus, .form-control:focus {
 
 /* ── Navbar ── */
 /* ── Home Navbar ── */
-.home-navbar {
+.home-navbar,
+nav.navbar.home-navbar {
   background: transparent !important;
+  background-color: transparent !important;
   border-bottom: none !important;
   box-shadow: none !important;
   transition: background 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease !important;
   padding: 1.1rem 0 !important;
 }
-.home-navbar.scrolled {
+.home-navbar.scrolled,
+nav.navbar.home-navbar.scrolled {
   background: rgba(255, 255, 255, 0.97) !important;
+  background-color: rgba(255, 255, 255, 0.97) !important;
   backdrop-filter: blur(18px) !important;
   -webkit-backdrop-filter: blur(18px) !important;
   border-bottom: 1px solid rgba(168, 216, 232, 0.4) !important;
