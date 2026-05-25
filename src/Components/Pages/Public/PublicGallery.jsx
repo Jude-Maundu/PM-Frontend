@@ -199,7 +199,7 @@ const PublicGallery = () => {
         )}
 
         <p className="mt-4 text-center" style={{ color: "rgba(255,255,255,0.25)", fontSize: "0.75rem" }}>
-          Powered by PhotoMarket · All images are watermarked previews. HD originals delivered after payment.
+          Powered by Relic Snap · All images are watermarked previews. HD originals delivered after payment.
         </p>
       </div>
 

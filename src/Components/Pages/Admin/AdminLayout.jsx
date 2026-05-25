@@ -64,7 +64,7 @@ const AdminLayout = ({ children }) => {
         <div className="mc-sidebar-brand">
           <Link to="/admin/dashboard" className="mc-brand-logo-wrap" onClick={closeMobile}>
             <img src="/Pasted%20image.png" alt="PM" className="mc-sidebar-logo" />
-            <span className="mc-brand-name">Admin Panel</span>
+            <span className="mc-brand-name">Relic Snap</span>
           </Link>
           <button className="mc-toggle-btn d-none d-md-flex" onClick={toggleSidebar} title={collapsed ? "Expand" : "Collapse"}>
             <i className={`fas fa-chevron-${collapsed ? "right" : "left"}`}></i>

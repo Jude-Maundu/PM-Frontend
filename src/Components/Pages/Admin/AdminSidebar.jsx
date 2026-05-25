@@ -212,7 +212,7 @@ const AdminSidebar = ({ isOpen, onToggle, onNav }) => {
         {/* Footer */}
         <div className="px-4 py-3 mt-auto" style={{ borderTop: "1px solid rgba(107,189,208,0.12)" }}>
           <small style={{ color: "rgba(255,255,255,0.3)", display: "block", textAlign: "center", fontSize: "0.6rem" }}>
-            © {new Date().getFullYear()} PhotoMarket Admin
+            © {new Date().getFullYear()} Relic Snap Admin
           </small>
         </div>
       </div>

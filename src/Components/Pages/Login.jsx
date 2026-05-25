@@ -121,7 +121,7 @@ const Login = () => {
           <div className="auth-panel-logo-icon">
             <i className="fas fa-camera"></i>
           </div>
-          <h2 className="auth-panel-heading">PhotoMarket</h2>
+          <h2 className="auth-panel-heading">Relic Snap</h2>
           <p className="auth-panel-sub">Your gateway to stunning photography</p>
           <div className="auth-panel-stats">
             <div className="auth-stat"><strong>50K+</strong><span>Photos</span></div>
@@ -141,7 +141,7 @@ const Login = () => {
               <i className="fas fa-camera"></i>
             </div>
             <span style={{ fontFamily: "var(--font-serif)", fontWeight: 700, fontSize: "1.3rem", color: col.heading }}>
-              PhotoMarket
+              Relic Snap
             </span>
           </div>
 

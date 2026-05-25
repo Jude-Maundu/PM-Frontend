@@ -61,7 +61,7 @@ const PhotographerLayout = ({ children }) => {
         <div className="mc-sidebar-brand">
           <Link to="/photographer/dashboard" className="mc-brand-logo-wrap" onClick={closeMobile}>
             <img src="/Pasted%20image.png" alt="PM" className="mc-sidebar-logo" />
-            <span className="mc-brand-name">PhotoMarket</span>
+            <span className="mc-brand-name">Relic Snap</span>
           </Link>
           {/* Desktop collapse toggle */}
           <button className="mc-toggle-btn d-none d-md-flex" onClick={toggleSidebar} title={collapsed ? "Expand" : "Collapse"}>

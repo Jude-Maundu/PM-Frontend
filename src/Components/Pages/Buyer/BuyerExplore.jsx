@@ -959,7 +959,7 @@ const BuyerExplore = () => {
                     textAlign: "center"
                   }}
                 >
-                  © PhotoMarket
+                  © Relic Snap
                 </div>
                 
                 {/* Image with protection */}

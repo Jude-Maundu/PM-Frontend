@@ -447,7 +447,7 @@ const HomePage = () => {
             <span className="section-label">Simple Process</span>
             <h2 className="home-feature-heading" style={{ fontSize: "clamp(1.8rem,3.5vw,2.6rem)" }}>How It Works</h2>
             <p style={{ color: "var(--pm-text-muted)", maxWidth: 460, margin: "0 auto", fontSize: "0.95rem" }}>
-              Three easy steps to start exploring or selling on PhotoMarket.
+              Three easy steps to start exploring or selling on Relic Snap.
             </p>
           </div>
           <div className="row g-4">
@@ -526,7 +526,7 @@ const HomePage = () => {
             <em style={{ fontStyle: "italic", color: "var(--pm-teal-light)" }}>built for creators like you.</em>
           </h2>
           <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "1rem", maxWidth: 460, margin: "0 auto 2rem", lineHeight: 1.7 }}>
-            Join PhotoMarket today and get instant access to thousands of high-quality, licensed photos — or start earning from your own photography.
+            Join Relic Snap today and get instant access to thousands of high-quality, licensed photos — or start earning from your own photography.
           </p>
           <div className="d-flex flex-wrap gap-3 justify-content-center">
             <Link to="/register">
@@ -568,7 +568,7 @@ const HomePage = () => {
             <div className="col-12 col-md-4">
               <div className="home-footer-brand d-flex align-items-center gap-2 mb-3">
                 <i className="fas fa-camera" style={{ color: "var(--pm-teal)", fontSize: "1.1rem" }}></i>
-                PhotoMarket
+                Relic Snap
               </div>
               <p style={{ fontSize: "0.88rem", color: "var(--pm-text-muted)", maxWidth: 260, lineHeight: 1.7 }}>
                 Premium stock photos from the world's most talented photographers.
@@ -639,7 +639,7 @@ const HomePage = () => {
           <hr style={{ borderColor: "var(--pm-gray-200)", margin: "1.5rem 0 1rem" }} />
           <div className="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
             <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--pm-text-muted)" }}>
-              &copy; {new Date().getFullYear()} PhotoMarket. All rights reserved.
+              &copy; {new Date().getFullYear()} Relic Snap. All rights reserved.
             </p>
             <div className="d-flex gap-3">
               {[["Privacy Policy","/privacy"],["Terms of Service","/terms"],["Cookie Policy","/cookies"]].map(([label,to]) => (

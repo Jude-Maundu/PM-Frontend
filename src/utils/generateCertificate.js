@@ -40,7 +40,7 @@ ${licenseType === "commercial"
   : "This license grants the right to use the image for personal, non-commercial purposes only. The photographer retains copyright."
 }
 
-This certificate confirms a valid purchase on the PhotoMarket platform.
+This certificate confirms a valid purchase on the Relic Snap platform.
 =====================================
   `.trim();
 

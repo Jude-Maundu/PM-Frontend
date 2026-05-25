@@ -159,7 +159,7 @@ const OnboardingWizard = () => {
             >
               <i className="fas fa-camera" style={{ color: "var(--pm-teal, #6bbdd0)", fontSize: "1.8rem" }}></i>
             </div>
-            <h3 style={{ fontWeight: 700, color: "#fff", marginBottom: 10 }}>Welcome to PhotoMarket!</h3>
+            <h3 style={{ fontWeight: 700, color: "#fff", marginBottom: 10 }}>Welcome to Relic Snap!</h3>
             <p style={{ color: "rgba(255,255,255,0.5)", lineHeight: 1.6, marginBottom: 28 }}>
               Let's set up your photographer profile so you can start selling your incredible work.
             </p>
@@ -262,7 +262,7 @@ const OnboardingWizard = () => {
             </div>
             <h4 style={{ fontWeight: 700, color: "#fff", marginBottom: 8 }}>Upload Your First Photo</h4>
             <p style={{ color: "rgba(255,255,255,0.45)", marginBottom: 28, fontSize: "0.87rem" }}>
-              Share your best work with thousands of buyers on PhotoMarket.
+              Share your best work with thousands of buyers on Relic Snap.
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <button

@@ -21,7 +21,7 @@ const AdminSettings = () => {
   const [success, setSuccess] = useState(null);
 
   const [settings, setSettings] = useState({
-    siteName: "PhotoMarket",
+    siteName: "Relic Snap",
     siteUrl: "https://pm-frontend-1-u2y3.onrender.com",
     adminEmail: "",
     platformFee: 30,

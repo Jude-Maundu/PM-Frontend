@@ -158,7 +158,7 @@ const Register = () => {
           <div className="auth-panel-logo-icon">
             <i className="fas fa-user-plus"></i>
           </div>
-          <h2 className="auth-panel-heading">Join PhotoMarket</h2>
+          <h2 className="auth-panel-heading">Join Relic Snap</h2>
           <p className="auth-panel-sub">Sell or discover premium photography</p>
           <div className="auth-panel-stats">
             <div className="auth-stat"><strong>Free</strong><span>To Join</span></div>
@@ -178,7 +178,7 @@ const Register = () => {
               <i className="fas fa-camera"></i>
             </div>
             <span style={{ fontFamily: "var(--font-serif)", fontWeight: 700, fontSize: "1.3rem", color: col.heading }}>
-              PhotoMarket
+              Relic Snap
             </span>
           </div>
 
