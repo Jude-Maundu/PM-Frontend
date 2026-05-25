@@ -1052,7 +1052,7 @@ input:focus {
 }
 
 @media (prefers-color-scheme: dark) {
-  .navbar {
+  .navbar:not(.home-navbar) {
     background: rgba(0, 0, 0, 0.98) !important;
   }
   .dropdown-menu {
