@@ -99,9 +99,8 @@ const Register = () => {
       setSuccess("Account created! Redirecting to your dashboard…");
 
       setTimeout(() => {
-        const dest = role === "photographer" ? "/photographer/dashboard" : "/buyer/dashboard";
-        window.location.href = dest;
-      }, 1500);
+        navigate(role === "photographer" ? "/photographer/dashboard" : "/buyer/dashboard");
+      }, 2000);
     } catch (err) {
       if (err.response)     setError(err.response.data?.message || `Error: ${err.response.status}`);
       else if (err.request) setError("Cannot connect to server. Check your connection.");
