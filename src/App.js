@@ -12,6 +12,9 @@ import ConfirmDialog from './Components/ConfirmDialog';
 import Login from './Components/Pages/Login';
 import Register from './Components/Pages/Register';
 import AuthCallback from './Components/AuthCallback';
+import ForgotPassword from './Components/Pages/ForgotPassword';
+import ResetPassword from './Components/Pages/ResetPassword';
+import EmailVerification from './Components/Pages/EmailVerification';
 
 // Protected Route Component
 import ProtectedRoute from './Components/ProtectedRoute';
@@ -118,6 +121,9 @@ function App() {
           <Route path='/login' element={<Login />} />
           <Route path='/register' element={<Register />} />
           <Route path='/auth/google/callback' element={<AuthCallback />} />
+          <Route path='/forgot-password' element={<ForgotPassword />} />
+          <Route path='/reset-password' element={<ResetPassword />} />
+          <Route path='/verify-email' element={<EmailVerification />} />
           
           {/* Admin Routes */}
           <Route path='/admin/dashboard' element={<ProtectedRoute requiredRole="admin"><AdminDash /></ProtectedRoute>} />
