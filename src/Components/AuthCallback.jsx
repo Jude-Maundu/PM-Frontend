@@ -1,58 +1,37 @@
-import React, { useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React from 'react';
+import { Navigate } from 'react-router-dom';
 
 const AuthCallback = () => {
-  const [searchParams] = useSearchParams();
+  // Read directly from window.location — bypasses any React Router parsing quirks
+  const params    = new URLSearchParams(window.location.search);
+  const token     = params.get('token');
+  const userParam = params.get('user');
+  const error     = params.get('error');
 
-  useEffect(() => {
-    const token = searchParams.get('token');
-    const userParam = searchParams.get('user');
-    const error = searchParams.get('error');
+  if (error || !token || !userParam) {
+    return <Navigate to="/login?error=auth_failed" replace />;
+  }
 
-    if (error) {
-      window.location.href = '/login?error=auth_failed';
-      return;
+  try {
+    const user     = JSON.parse(userParam);
+    const roleLower = String(user.role || 'user').toLowerCase().trim();
+
+    localStorage.setItem('token', token);
+    localStorage.setItem('user',  JSON.stringify(user));
+    localStorage.setItem('role',  user.role || 'user');
+
+    if (roleLower === 'admin' || roleLower === 'reviewer' || roleLower === 'support') {
+      return <Navigate to="/admin/dashboard" replace />;
     }
-
-    if (token && userParam) {
-      try {
-        const user = JSON.parse(decodeURIComponent(userParam));
-
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(user));
-        localStorage.setItem('role', user.role);
-
-        const roleLower = String(user.role).toLowerCase().trim();
-        if (roleLower === 'admin' || roleLower.includes('admin') || roleLower === 'reviewer' || roleLower === 'support') {
-          window.location.href = '/admin/dashboard';
-        } else if (roleLower === 'photographer' || roleLower.includes('photographer')) {
-          window.location.href = '/photographer/dashboard';
-        } else {
-          window.location.href = '/buyer/dashboard';
-        }
-      } catch (e) {
-        console.error('AuthCallback: failed to parse user data', e);
-        window.location.href = '/login?error=auth_failed';
-      }
-    } else {
-      window.location.href = '/login?error=auth_failed';
+    if (roleLower.includes('photographer')) {
+      return <Navigate to="/photographer/dashboard" replace />;
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    return <Navigate to="/buyer/dashboard" replace />;
 
-  return (
-    <div
-      className="min-vh-100 d-flex align-items-center justify-content-center"
-      style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
-    >
-      <div className="text-center">
-        <div className="spinner-border text-light mb-3" role="status" style={{ width: '3rem', height: '3rem' }}>
-          <span className="visually-hidden">Loading...</span>
-        </div>
-        <h4 className="text-white mb-2">Completing Sign In</h4>
-        <p className="text-white-50">Please wait while we set up your account...</p>
-      </div>
-    </div>
-  );
+  } catch (e) {
+    console.error('AuthCallback parse error:', e);
+    return <Navigate to="/login?error=auth_failed" replace />;
+  }
 };
 
 export default AuthCallback;
