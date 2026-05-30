@@ -2,6 +2,10 @@
  * API Configuration File
  * Central location for all API endpoints
  */
+import axios from 'axios';
+
+// Global 8-second timeout — prevents dashboards hanging on Render cold starts
+axios.defaults.timeout = 8000;
 
 // FORCE USE ONLINE SERVER - Remove localhost fallback
 const ONLINE_API_BASE_URL = "https://pm-backend-f3b6.onrender.com/api";
