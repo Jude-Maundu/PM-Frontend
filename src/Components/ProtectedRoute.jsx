@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { API_BASE_URL } from '../api/apiConfig';
+import DashboardSkeleton from './DashboardSkeleton';
 
 const ProtectedRoute = ({ children, requiredRole }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
@@ -45,7 +46,7 @@ const ProtectedRoute = ({ children, requiredRole }) => {
             `${API_BASE_URL}/auth/users/me`,
             {
               headers: { Authorization: `Bearer ${token}` },
-              timeout: 5000
+              timeout: 3000
             }
           );
           
@@ -100,22 +101,7 @@ const ProtectedRoute = ({ children, requiredRole }) => {
     checkAuth();
   }, [location.pathname]);
 
-  // Show loading spinner while checking authentication
-  if (isLoading) {
-    return (
-      <div className="min-vh-100 d-flex align-items-center justify-content-center bg-dark">
-        <div className="text-center">
-          <div className="spinner-border text-warning mb-3" role="status" style={{ width: '3rem', height: '3rem' }}>
-            <span className="visually-hidden">Loading...</span>
-          </div>
-          <h4 className="text-white">Checking authentication...</h4>
-          {authError && (
-            <p className="text-white-50 small mt-2">{authError}</p>
-          )}
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return <DashboardSkeleton />;
 
   // Redirect to login if not authenticated
   if (!isAuthenticated) {
