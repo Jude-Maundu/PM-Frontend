@@ -42,6 +42,11 @@ import AdminLogs from './Components/Pages/Admin/AdminLogs';
 import AdminStaff from './Components/Pages/Admin/AdminStaff';
 import ShareAccess from './Components/Pages/Buyer/ShareAccess';
 
+// Staff Role Dashboards
+import SecretaryDash from './Components/Pages/Secretary/SecretaryDash';
+import EngineerDash from './Components/Pages/Engineer/EngineerDash';
+import MarketingDash from './Components/Pages/Marketing/MarketingDash';
+
 // Photographer Pages
 import PhotographerPortfolio from './Components/Pages/Photographer/PhotographerPortfolio';
 import PublicPortfolio from './Components/Pages/Portfolio/PublicPortfolio';
@@ -67,10 +72,7 @@ import BuyerWallet from './Components/Pages/Buyer/BuyerWallet';
 import BuyerExplore from './Components/Pages/Buyer/BuyerExplore';
 import BuyerSettings from './Components/Pages/Buyer/BuyerSettings';
 import BuyerAlbumAccess from './Components/Pages/Buyer/BuyerAlbumAccess';
-import MessagingPage from './Components/Pages/Messaging/MessagingPage';
-import BuyerFollowPage from './Components/Pages/Buyer/BuyerFollowPage';
 import BuyerReferralPage from './Components/Pages/Buyer/BuyerReferralPage';
-import PhotographerFollowPage from './Components/Pages/Photographer/PhotographerFollowPage';
 import Explore from './Components/Pages/Explore';
 import HomePage from './Components/Pages/HomePage';
 import ClientProofing from './Components/Pages/Photographer/ClientProofing';
@@ -150,6 +152,11 @@ function App() {
           <Route path="/admin/logs"          element={<ProtectedRoute requiredRole="admin"><AdminLogs /></ProtectedRoute>} />
           <Route path="/admin/staff"         element={<ProtectedRoute requiredRole="admin"><AdminStaff /></ProtectedRoute>} />
           
+          {/* Staff Role Routes */}
+          <Route path='/secretary/dashboard'  element={<ProtectedRoute requiredRole="secretary"><SecretaryDash /></ProtectedRoute>} />
+          <Route path='/engineer/dashboard'   element={<ProtectedRoute requiredRole="engineer"><EngineerDash /></ProtectedRoute>} />
+          <Route path='/marketing/dashboard'  element={<ProtectedRoute requiredRole="marketing"><MarketingDash /></ProtectedRoute>} />
+
           {/* Photographer Routes */}
           <Route path='/photographer/dashboard' element={<ProtectedRoute requiredRole="photographer"><PhotographerDash /></ProtectedRoute>} />
           <Route path="/photographer/earnings" element={<ProtectedRoute requiredRole="photographer"><PhotographerEarnings /></ProtectedRoute>} />
@@ -158,7 +165,6 @@ function App() {
           <Route path="/photographer/sales" element={<ProtectedRoute requiredRole="photographer"><PhotographerSales /></ProtectedRoute>} />
           <Route path="/photographer/upload" element={<ProtectedRoute requiredRole="photographer"><PhotographerUpload /></ProtectedRoute>} />
           <Route path="/photographer/withdrawals" element={<ProtectedRoute requiredRole="photographer"><PhotographerWithdrawals /></ProtectedRoute>} />
-          <Route path="/photographer/follow" element={<ProtectedRoute requiredRole="photographer"><PhotographerFollowPage /></ProtectedRoute>} />
           <Route path="/photographer/settings" element={<ProtectedRoute requiredRole="photographer"><PhotographerSettings /></ProtectedRoute>} />
           <Route path="/photographer/portfolio" element={<ProtectedRoute requiredRole="photographer"><PhotographerPortfolio /></ProtectedRoute>} />
           <Route path="/photographer/analytics" element={<ProtectedRoute requiredRole="photographer"><SalesAnalytics /></ProtectedRoute>} />
@@ -174,11 +180,8 @@ function App() {
           <Route path="/buyer/profile" element={<ProtectedRoute requiredRole="buyer"><BuyerProfile /></ProtectedRoute>} />
           <Route path="/buyer/wallet" element={<ProtectedRoute requiredRole="buyer"><BuyerWallet /></ProtectedRoute>} />
           <Route path="/buyer/explore" element={<ProtectedRoute requiredRole="buyer"><BuyerExplore /></ProtectedRoute>} />
-          <Route path="/buyer/follow" element={<ProtectedRoute requiredRole="buyer"><BuyerFollowPage /></ProtectedRoute>} />
           <Route path="/buyer/referral" element={<ProtectedRoute requiredRole="buyer"><BuyerReferralPage /></ProtectedRoute>} />
           <Route path="/buyer/settings" element={<ProtectedRoute requiredRole="buyer"><BuyerSettings /></ProtectedRoute>} />
-          <Route path="/buyer/messages" element={<ProtectedRoute><MessagingPage /></ProtectedRoute>} />
-          <Route path="/messages" element={<ProtectedRoute><MessagingPage /></ProtectedRoute>} />
           <Route path="/album/:albumId/access/:token" element={<ProtectedRoute requiredRole="buyer"><BuyerAlbumAccess /></ProtectedRoute>} />
           <Route path="/share/:token" element={<ShareAccess />} />
 

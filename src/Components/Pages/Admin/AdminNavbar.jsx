@@ -9,7 +9,7 @@ const AdminNavbar = ({ toggleSidebar }) => {
 
   const handleLogout = () => {
     localStorage.clear();
-    navigate("/login");
+    window.location.href = '/login';
   };
 
   return (

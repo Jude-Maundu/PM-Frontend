@@ -45,9 +45,19 @@ const Login = () => {
 
   const redirectByRole = (role) => {
     const r = String(role).toLowerCase().trim();
-    if (r === "admin" || r === "reviewer" || r === "support") window.location.href = "/admin/dashboard";
-    else if (r.includes("photographer")) window.location.href = "/photographer/dashboard";
-    else window.location.href = "/buyer/dashboard";
+    if (r === "admin" || r.includes("admin") || r === "reviewer" || r === "support") {
+      window.location.href = "/admin/dashboard";
+    } else if (r === "secretary") {
+      window.location.href = "/secretary/dashboard";
+    } else if (r === "engineer") {
+      window.location.href = "/engineer/dashboard";
+    } else if (r === "marketing") {
+      window.location.href = "/marketing/dashboard";
+    } else if (r.includes("photographer")) {
+      window.location.href = "/photographer/dashboard";
+    } else {
+      window.location.href = "/buyer/dashboard";
+    }
   };
 
   const handleLogin = async (e) => {

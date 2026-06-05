@@ -25,6 +25,12 @@ const AuthCallback = () => {
         const roleLower = String(user.role).toLowerCase().trim();
         if (roleLower === 'admin' || roleLower.includes('admin') || roleLower === 'reviewer' || roleLower === 'support') {
           window.location.href = '/admin/dashboard';
+        } else if (roleLower === 'secretary') {
+          window.location.href = '/secretary/dashboard';
+        } else if (roleLower === 'engineer') {
+          window.location.href = '/engineer/dashboard';
+        } else if (roleLower === 'marketing') {
+          window.location.href = '/marketing/dashboard';
         } else if (roleLower === 'photographer' || roleLower.includes('photographer')) {
           window.location.href = '/photographer/dashboard';
         } else {

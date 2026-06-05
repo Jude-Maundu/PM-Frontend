@@ -16,7 +16,7 @@ const PhotographerLayout = ({ children }) => {
   const displayName  = getDisplayName(storedUser) || "Photographer";
   const avatarLetter = displayName.charAt(0).toUpperCase();
 
-  const handleLogout = () => { localStorage.clear(); navigate("/login"); };
+  const handleLogout = () => { localStorage.clear(); window.location.href = '/login'; };
 
   const toggleSidebar = () => {
     setCollapsed(prev => {
@@ -35,8 +35,6 @@ const PhotographerLayout = ({ children }) => {
     { path: "/photographer/upload",      icon: "fa-cloud-upload-alt", label: "Upload"         },
     { path: "/photographer/earnings",    icon: "fa-dollar-sign",      label: "Earnings"       },
     { path: "/photographer/sales",       icon: "fa-history",          label: "Sales History"  },
-    { path: "/photographer/follow",      icon: "fa-user-friends",     label: "Followers"      },
-    { path: "/messages",                 icon: "fa-comments",         label: "Messages"       },
     { path: "/photographer/withdrawals", icon: "fa-money-bill-wave",  label: "Withdrawals"    },
     { path: "/photographer/profile",     icon: "fa-user",             label: "Profile"        },
     { path: "/photographer/portfolio",   icon: "fa-globe",            label: "My Portfolio"   },

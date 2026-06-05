@@ -126,54 +126,39 @@ const ProtectedRoute = ({ children, requiredRole }) => {
   // Normalize role for matching
   const roleLower = String(userRole).toLowerCase().trim();
 
+  // Helper to get the home route for a given role
+  const homeRouteForRole = (role) => {
+    if (role === 'admin' || role.includes('admin')) return '/admin/dashboard';
+    if (role === 'reviewer' || role === 'support') return '/admin/dashboard';
+    if (role === 'secretary') return '/secretary/dashboard';
+    if (role === 'engineer') return '/engineer/dashboard';
+    if (role === 'marketing') return '/marketing/dashboard';
+    if (role === 'photographer' || role.includes('photographer')) return '/photographer/dashboard';
+    if (role === 'buyer' || role === 'user') return '/buyer/dashboard';
+    return '/login';
+  };
+
   // Protect role-specific routes explicitly
   if (requiredRole) {
     const requiredRoleLower = String(requiredRole).toLowerCase().trim();
 
-    // Allow admin / staff (reviewer, support) access to everything
-    if (roleLower === 'admin' || roleLower.includes('admin') || roleLower === 'reviewer' || roleLower === 'support') {
-      console.log('[ProtectedRoute] Admin/staff access granted');
+    // Exact role match — grant access
+    if (roleLower === requiredRoleLower) {
       return children;
     }
 
-    // Photographer role check
-    if (requiredRoleLower === 'photographer') {
-      if (roleLower === 'photographer' || roleLower.includes('photographer')) {
-        console.log('[ProtectedRoute] Photographer access granted');
-        return children;
-      }
-      if (roleLower === 'buyer' || roleLower === 'user') {
-        console.log('[ProtectedRoute] Buyer trying to access photographer route, redirecting');
-        return <Navigate to="/buyer/dashboard" replace />;
-      }
-      console.log('[ProtectedRoute] Unknown role, redirecting to login');
-      return <Navigate to="/login" replace />;
+    // Admin / superuser can access everything
+    if (roleLower === 'admin' || roleLower.includes('admin')) {
+      return children;
     }
 
-    // Buyer role check
-    if (requiredRoleLower === 'buyer') {
-      if (roleLower === 'buyer' || roleLower === 'user') {
-        console.log('[ProtectedRoute] Buyer access granted');
-        return children;
-      }
-      if (roleLower === 'photographer') {
-        console.log('[ProtectedRoute] Photographer trying to access buyer route, redirecting');
-        return <Navigate to="/photographer/dashboard" replace />;
-      }
-      console.log('[ProtectedRoute] Unknown role, redirecting to login');
-      return <Navigate to="/login" replace />;
-    }
+    // Role aliases
+    if (requiredRoleLower === 'photographer' && roleLower.includes('photographer')) return children;
+    if (requiredRoleLower === 'admin' && (roleLower === 'reviewer' || roleLower === 'support')) return children;
 
-    // Admin role check
-    if (requiredRoleLower === 'admin') {
-      if (roleLower === 'photographer') {
-        return <Navigate to="/photographer/dashboard" replace />;
-      }
-      if (roleLower === 'buyer' || roleLower === 'user') {
-        return <Navigate to="/buyer/dashboard" replace />;
-      }
-      return <Navigate to="/login" replace />;
-    }
+    // Wrong role — redirect to their own dashboard
+    console.log(`[ProtectedRoute] Role mismatch: has "${roleLower}", needs "${requiredRoleLower}" — redirecting`);
+    return <Navigate to={homeRouteForRole(roleLower)} replace />;
   }
 
   // If no requiredRole is provided, allow any authenticated user

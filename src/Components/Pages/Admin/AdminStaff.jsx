@@ -15,7 +15,7 @@ const PERM_LABELS = {
   canManageWithdrawals:{ label: "Manage Withdrawals",   icon: "fa-money-bill-wave" },
 };
 
-const ROLE_COLORS = { reviewer: "info", support: "secondary" };
+const ROLE_COLORS = { reviewer: "info", support: "secondary", secretary: "primary", engineer: "success", marketing: "warning" };
 
 const EMPTY_FORM = { username: "", email: "", password: "", role: "reviewer", permissions: { canApprovePhotos: false, canVerifyUsers: false, canViewOrders: false, canManageWithdrawals: false } };
 
@@ -202,6 +202,9 @@ export default function AdminStaff() {
                         value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))}>
                         <option value="reviewer">Reviewer</option>
                         <option value="support">Support</option>
+                        <option value="secretary">Secretary</option>
+                        <option value="engineer">Website Maintenance Engineer</option>
+                        <option value="marketing">Marketing Lead</option>
                       </select>
                     </div>
                     <div className="col-12">

@@ -28,7 +28,7 @@ const BuyerLayout = ({ children }) => {
     return () => window.removeEventListener("pm:cart-updated", handleCartUpdate);
   }, []);
 
-  const handleLogout = () => { localStorage.clear(); navigate("/login"); };
+  const handleLogout = () => { localStorage.clear(); window.location.href = '/login'; };
 
   const toggleSidebar = () => {
     setCollapsed(prev => {
@@ -43,12 +43,10 @@ const BuyerLayout = ({ children }) => {
   const navItems = [
     { path: "/buyer/dashboard",    icon: "fa-home",          label: "Dashboard"    },
     { path: "/buyer/explore",      icon: "fa-compass",       label: "Explore"      },
-    { path: "/buyer/follow",       icon: "fa-user-friends",  label: "Following"    },
     { path: "/buyer/cart",         icon: "fa-shopping-cart", label: "Cart",         badge: cartCount },
     { path: "/buyer/transactions", icon: "fa-history",       label: "Transactions" },
     { path: "/buyer/downloads",    icon: "fa-download",      label: "My Downloads" },
     { path: "/buyer/favorites",    icon: "fa-heart",         label: "Favorites"    },
-    { path: "/messages",           icon: "fa-comments",      label: "Messages"     },
     { path: "/buyer/wallet",       icon: "fa-wallet",        label: "Wallet"       },
     { path: "/buyer/referral",     icon: "fa-gift",          label: "Referral"     },
     { path: "/buyer/profile",      icon: "fa-user",          label: "Profile"      },
