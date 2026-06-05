@@ -40,10 +40,12 @@ import AdminConfig from './Components/Pages/Admin/AdminConfig';
 import AdminApplications from './Components/Pages/Admin/AdminApplications';
 import AdminLogs from './Components/Pages/Admin/AdminLogs';
 import AdminStaff from './Components/Pages/Admin/AdminStaff';
+import AdminNotifications from './Components/Pages/Admin/AdminNotifications';
 import ShareAccess from './Components/Pages/Buyer/ShareAccess';
 
 // Staff Role Dashboards
 import SecretaryDash from './Components/Pages/Secretary/SecretaryDash';
+import SecretaryNotifications from './Components/Pages/Secretary/SecretaryNotifications';
 import EngineerDash from './Components/Pages/Engineer/EngineerDash';
 import MarketingDash from './Components/Pages/Marketing/MarketingDash';
 
@@ -150,12 +152,14 @@ function App() {
           <Route path="/admin/config"        element={<ProtectedRoute requiredRole="admin"><AdminConfig /></ProtectedRoute>} />
           <Route path="/admin/applications"  element={<ProtectedRoute requiredRole="admin"><AdminApplications /></ProtectedRoute>} />
           <Route path="/admin/logs"          element={<ProtectedRoute requiredRole="admin"><AdminLogs /></ProtectedRoute>} />
-          <Route path="/admin/staff"         element={<ProtectedRoute requiredRole="admin"><AdminStaff /></ProtectedRoute>} />
-          
+          <Route path="/admin/staff"          element={<ProtectedRoute requiredRole="admin"><AdminStaff /></ProtectedRoute>} />
+          <Route path="/admin/notifications" element={<ProtectedRoute requiredRole="admin"><AdminNotifications /></ProtectedRoute>} />
+
           {/* Staff Role Routes */}
-          <Route path='/secretary/dashboard'  element={<ProtectedRoute requiredRole="secretary"><SecretaryDash /></ProtectedRoute>} />
-          <Route path='/engineer/dashboard'   element={<ProtectedRoute requiredRole="engineer"><EngineerDash /></ProtectedRoute>} />
-          <Route path='/marketing/dashboard'  element={<ProtectedRoute requiredRole="marketing"><MarketingDash /></ProtectedRoute>} />
+          <Route path='/secretary/dashboard'     element={<ProtectedRoute requiredRole="secretary"><SecretaryDash /></ProtectedRoute>} />
+          <Route path='/secretary/notifications' element={<ProtectedRoute requiredRole="secretary"><SecretaryNotifications /></ProtectedRoute>} />
+          <Route path='/engineer/dashboard'      element={<ProtectedRoute requiredRole="engineer"><EngineerDash /></ProtectedRoute>} />
+          <Route path='/marketing/dashboard'     element={<ProtectedRoute requiredRole="marketing"><MarketingDash /></ProtectedRoute>} />
 
           {/* Photographer Routes */}
           <Route path='/photographer/dashboard' element={<ProtectedRoute requiredRole="photographer"><PhotographerDash /></ProtectedRoute>} />

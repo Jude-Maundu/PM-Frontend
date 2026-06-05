@@ -42,6 +42,7 @@ const AdminLayout = ({ children }) => {
     { path: "/admin/wallets",       icon: "fa-wallet",          label: "Wallets"       },
     { path: "/admin/albums",        icon: "fa-images",          label: "Albums"        },
     { path: "/admin/portfolios",    icon: "fa-globe",           label: "Portfolios"    },
+    { path: "/admin/notifications", icon: "fa-bell",            label: "Notifications" },
     { path: "/admin/logs",          icon: "fa-clipboard-list",  label: "Audit Logs"    },
     { path: "/admin/config",        icon: "fa-sliders-h",       label: "Config"        },
     { path: "/admin/profile",       icon: "fa-user-shield",     label: "Admin Profile" },
