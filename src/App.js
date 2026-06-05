@@ -106,6 +106,7 @@ function RouteWithBodyClass({ children }) {
 
 function App() {
   return (
+    <ErrorBoundary>
     <ThemeProvider>
     <ToastContainer />
     <ConfirmDialog />
@@ -197,6 +198,7 @@ function App() {
       </ErrorBoundary>
     </BrowserRouter>
     </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 

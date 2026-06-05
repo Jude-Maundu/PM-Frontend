@@ -66,7 +66,7 @@ class ErrorBoundary extends React.Component {
               <i className="fas fa-arrow-left me-2"></i>Go Back
             </button>
           </div>
-          {process.env.NODE_ENV !== "production" && this.state.error && (
+          {this.state.error && (
             <pre
               style={{
                 marginTop: "1.5rem",
