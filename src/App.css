@@ -1693,8 +1693,11 @@ nav.navbar.home-navbar.scrolled {
   box-shadow: 2px 0 20px rgba(0,0,0,0.18);
   z-index: 100;
   transition: width 0.3s cubic-bezier(0.4,0,0.2,1), background 0.3s;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: none;
 }
+.mc-sidebar::-webkit-scrollbar { display: none; }
 
 /* Collapsed sidebar */
 .mc-shell.mc-collapsed .mc-sidebar {
@@ -1711,6 +1714,10 @@ nav.navbar.home-navbar.scrolled {
   flex-shrink: 0;
   min-height: 64px;
   overflow: hidden;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--mc-sidebar-bg);
 }
 
 .mc-brand-logo-wrap {
@@ -1779,15 +1786,10 @@ nav.navbar.home-navbar.scrolled {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
-  flex: 1;
-  min-height: 0;
   width: 100%;
   padding: 0.75rem 8px;
-  overflow-y: auto;
-  overflow-x: hidden;
-  scrollbar-width: none;
+  overflow: visible;
 }
-.mc-nav::-webkit-scrollbar { display: none; }
 
 .mc-nav-item {
   display: flex;
@@ -1884,6 +1886,10 @@ nav.navbar.home-navbar.scrolled {
   padding: 8px;
   border-top: 1px solid var(--mc-border);
   flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  background: var(--mc-sidebar-bg);
 }
 
 .mc-logout-btn {
