@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import { API_ENDPOINTS } from '../../../api/apiConfig';
 import ReviewsSection from '../../ReviewsSection';
+import { Helmet } from 'react-helmet-async';
 
 /* ──────────────── shared helpers ──────────────── */
 
@@ -791,11 +792,41 @@ const PublicPortfolio = () => {
   }
 
   const template = portfolio.template || 'noir';
+  const photographer = portfolio.photographer || {};
+  const pgName = photographer.name || photographer.username || username;
+  const pgBio  = photographer.bio  || `Browse ${pgName}'s photography portfolio on Relic Snap.`;
+  const pgImg  = photographer.profilePictureUrl || 'https://relicsnap.onrender.com/logo512.png';
+  const pgUrl  = `https://relicsnap.onrender.com/portfolio/${username}`;
 
-  if (template === 'studio') return <StudioTemplate portfolio={portfolio} />;
-  if (template === 'bold') return <BoldTemplate portfolio={portfolio} />;
-  if (template === 'lens') return <LensTemplate portfolio={portfolio} />;
-  return <NoirTemplate portfolio={portfolio} />;
+  const seoHead = (
+    <Helmet>
+      <title>{`${pgName} — Photography Portfolio | Relic Snap`}</title>
+      <meta name="description" content={pgBio.slice(0, 160)} />
+      <meta property="og:title" content={`${pgName} — Photography Portfolio`} />
+      <meta property="og:description" content={pgBio.slice(0, 160)} />
+      <meta property="og:image" content={pgImg} />
+      <meta property="og:url" content={pgUrl} />
+      <meta property="og:type" content="profile" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={`${pgName} — Photography Portfolio`} />
+      <meta name="twitter:image" content={pgImg} />
+      <link rel="canonical" href={pgUrl} />
+      <script type="application/ld+json">{JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "ProfilePage",
+        "name": `${pgName} — Relic Snap`,
+        "description": pgBio.slice(0, 200),
+        "url": pgUrl,
+        "image": pgImg,
+        "author": { "@type": "Person", "name": pgName },
+      })}</script>
+    </Helmet>
+  );
+
+  if (template === 'studio') return <>{seoHead}<StudioTemplate portfolio={portfolio} /></>;
+  if (template === 'bold')   return <>{seoHead}<BoldTemplate   portfolio={portfolio} /></>;
+  if (template === 'lens')   return <>{seoHead}<LensTemplate   portfolio={portfolio} /></>;
+  return <>{seoHead}<NoirTemplate portfolio={portfolio} /></>;
 };
 
 export default PublicPortfolio;

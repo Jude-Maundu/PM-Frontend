@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import { API_BASE_URL } from "../../api/apiConfig";
+import { Helmet } from "react-helmet-async";
 
 const BOKEH = [
   { size: 10, top: "10%", left: "18%", delay: "0s",   dur: "3.4s" },
@@ -116,6 +117,12 @@ const Login = () => {
 
   return (
     <div className={`auth-page-v2 ${m}`}>
+      <Helmet>
+        <title>Sign In — Relic Snap</title>
+        <meta name="description" content="Sign in to your Relic Snap account to buy photos, manage your portfolio, or access your dashboard." />
+        <meta name="robots" content="noindex, nofollow" />
+        <link rel="canonical" href="https://relicsnap.onrender.com/login" />
+      </Helmet>
       <button className={`auth-mode-toggle ${!isDark ? "is-light" : ""}`} onClick={() => setIsDark(!isDark)}>
         <i className={`fas ${isDark ? "fa-sun" : "fa-moon"}`}></i>
         {isDark ? "Light Mode" : "Dark Mode"}

@@ -5,6 +5,7 @@ import "@fortawesome/fontawesome-free/css/all.min.css";
 import { Link } from "react-router-dom";
 import { getAllMedia } from "../../api/API";
 import ThemeToggle from "../ThemeToggle";
+import { Helmet } from "react-helmet-async";
 
 const HomePage = () => {
   const [loading, setLoading] = useState(true);
@@ -91,6 +92,15 @@ const HomePage = () => {
 
   return (
     <div className="home-page-shell">
+      <Helmet>
+        <title>Relic Snap — Kenya's Premium Photography Marketplace</title>
+        <meta name="description" content="Buy and download stunning photos from Kenya's best photographers. High-quality wedding, nature, portrait, wildlife and travel photography." />
+        <meta property="og:title" content="Relic Snap — Kenya's Premium Photography Marketplace" />
+        <meta property="og:description" content="Buy and download stunning photos from Kenya's best photographers." />
+        <meta property="og:url" content="https://relicsnap.onrender.com/" />
+        <meta property="og:type" content="website" />
+        <link rel="canonical" href="https://relicsnap.onrender.com/" />
+      </Helmet>
 
       {/* ── Navbar ── */}
       <nav

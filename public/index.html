@@ -2,49 +2,93 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <!-- Camera icon favicon (local image) -->
     <link rel="icon" href="%PUBLIC_URL%/Pasted%20image.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <meta
-      name="description"
-      content="Web site created using create-react-app"
-    />
-    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
-    <!--
-      manifest.json provides metadata used when your web app is installed on a
-      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
-    -->
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-    <!-- Google Sign-In -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <!--
-      Notice the use of %PUBLIC_URL% in the tags above.
-      It will be replaced with the URL of the `public` folder during the build.
-      Only files inside the `public` folder can be referenced from the HTML.
+    <meta name="theme-color" content="#667eea" />
 
-      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
-      work correctly both with client-side routing and a non-root public URL.
-      Learn how to configure a non-root public URL by running `npm run build`.
-    -->
-    <title>Relic Snap — Premium Stock Photography</title>
-    <!-- Google Fonts: Playfair Display (serif headings) + Inter (body) -->
+    <!-- Primary meta — react-helmet-async overrides these per page -->
+    <title>Relic Snap — Kenya's Premium Photography Marketplace</title>
+    <meta name="description" content="Buy and download stunning photos from Kenya's best photographers. High-quality images for personal and commercial use. Weddings, nature, portraits, wildlife and more." />
+    <meta name="keywords" content="Kenya photography, buy photos, stock photos Kenya, photographers marketplace, Nairobi photographers, African photography" />
+    <meta name="author" content="Relic Snap" />
+    <meta name="robots" content="index, follow" />
+
+    <!-- Canonical -->
+    <link rel="canonical" href="https://relicsnap.onrender.com" />
+
+    <!-- Open Graph — Facebook, WhatsApp, LinkedIn -->
+    <meta property="og:site_name" content="Relic Snap" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://relicsnap.onrender.com" />
+    <meta property="og:title" content="Relic Snap — Kenya's Premium Photography Marketplace" />
+    <meta property="og:description" content="Buy and download stunning photos from Kenya's best photographers. Weddings, nature, portraits, wildlife and more." />
+    <meta property="og:image" content="https://relicsnap.onrender.com/logo512.png" />
+    <meta property="og:image:width" content="512" />
+    <meta property="og:image:height" content="512" />
+    <meta property="og:locale" content="en_KE" />
+
+    <!-- Twitter / X card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@RelicSnap" />
+    <meta name="twitter:title" content="Relic Snap — Kenya's Photography Marketplace" />
+    <meta name="twitter:description" content="Buy and download stunning photos from Kenya's best photographers." />
+    <meta name="twitter:image" content="https://relicsnap.onrender.com/logo512.png" />
+
+    <!-- PWA -->
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+
+    <!-- Preconnect to speed up resource loading (Core Web Vitals) -->
+    <link rel="preconnect" href="https://pm-backend-f3b6.onrender.com" />
+    <link rel="preconnect" href="https://res.cloudinary.com" />
+    <link rel="dns-prefetch" href="https://res.cloudinary.com" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400;1,600&family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet" />
+
+    <!-- Google Sign-In -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <!-- JSON-LD structured data — website level -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Relic Snap",
+      "url": "https://relicsnap.onrender.com",
+      "description": "Kenya's premium photography marketplace. Buy and download photos from talented Kenyan photographers.",
+      "inLanguage": "en-KE",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://relicsnap.onrender.com/explore?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+
+    <!-- JSON-LD — Organization -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Relic Snap",
+      "url": "https://relicsnap.onrender.com",
+      "logo": "https://relicsnap.onrender.com/logo512.png",
+      "description": "Kenya's premium photography marketplace",
+      "foundingLocation": {
+        "@type": "Place",
+        "name": "Nairobi, Kenya"
+      }
+    }
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
-    <!--
-      This HTML file is a template.
-      If you open it directly in the browser, you will see an empty page.
-
-      You can add webfonts, meta tags, or analytics to this file.
-      The build step will place the bundled scripts into the <body> tag.
-
-      To begin the development, run `npm start` or `yarn start`.
-      To create a production bundle, use `npm run build` or `yarn build`.
-    -->
   </body>
 </html>

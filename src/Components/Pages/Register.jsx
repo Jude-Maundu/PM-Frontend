@@ -3,6 +3,7 @@ import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import { API_BASE_URL } from "../../api/apiConfig";
 import GoogleAuth from "../GoogleAuth";
+import { Helmet } from "react-helmet-async";
 
 function getRefFromUrl() {
   try {
@@ -112,6 +113,14 @@ const Register = () => {
 
   return (
     <div className={`auth-page-v2 ${m}`}>
+      <Helmet>
+        <title>Create Account — Relic Snap</title>
+        <meta name="description" content="Join Relic Snap — Kenya's photography marketplace. Sign up as a buyer to access premium photos, or as a photographer to sell your work." />
+        <meta property="og:title" content="Join Relic Snap — Create Your Account" />
+        <meta property="og:description" content="Sign up as a buyer or photographer on Kenya's leading photo marketplace." />
+        <meta property="og:url" content="https://relicsnap.onrender.com/register" />
+        <link rel="canonical" href="https://relicsnap.onrender.com/register" />
+      </Helmet>
 
       {/* Mode toggle */}
       <button className={`auth-mode-toggle ${!isDark ? "is-light" : ""}`} onClick={() => setIsDark(!isDark)}>

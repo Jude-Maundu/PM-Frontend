@@ -6,6 +6,7 @@ import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import { API_ENDPOINTS } from "../../api/apiConfig";
 import SocialShareButtons from "../SocialShareButtons";
+import { Helmet } from "react-helmet-async";
 
 const CATEGORIES = [
   { id: "all", name: "All", icon: "fas fa-th-large" },
@@ -469,6 +470,14 @@ const Explore = () => {
 
   return (
     <div className="dash-shell">
+      <Helmet>
+        <title>Explore Photos — Relic Snap</title>
+        <meta name="description" content="Browse and download thousands of high-quality photos from Kenya's top photographers. Search by category: weddings, nature, portraits, wildlife, travel and more." />
+        <meta property="og:title" content="Explore Photos — Relic Snap" />
+        <meta property="og:description" content="Browse thousands of high-quality photos from Kenya's top photographers." />
+        <meta property="og:url" content="https://relicsnap.onrender.com/explore" />
+        <link rel="canonical" href="https://relicsnap.onrender.com/explore" />
+      </Helmet>
       {/* Navigation */}
       <nav
         className="glass-navbar navbar navbar-expand-lg fixed-top w-100 py-3"

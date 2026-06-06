@@ -5,6 +5,7 @@ import { API_ENDPOINTS, SITE_URL } from "../../../api/apiConfig";
 import QuickBuyModal from "../../QuickBuyModal";
 import FaceSearchModal from "../../FaceSearchModal";
 import { QRCodeSVG } from "qrcode.react";
+import { Helmet } from "react-helmet-async";
 
 const PublicGallery = () => {
   const { albumId } = useParams();
@@ -56,8 +57,24 @@ const PublicGallery = () => {
     </div>
   );
 
+  const albumTitle = album?.title || "Photo Gallery";
+  const albumDesc  = album?.description || `Browse ${media.length} photos in this gallery on Relic Snap.`;
+  const albumCover = album?.coverImage || media[0]?.url || "https://relicsnap.onrender.com/logo512.png";
+
   return (
     <div style={{ minHeight: "100vh", background: "var(--mc-bg, #1B2A4A)", color: "#fff" }}>
+      <Helmet>
+        <title>{`${albumTitle} — Relic Snap Gallery`}</title>
+        <meta name="description" content={albumDesc.slice(0, 160)} />
+        <meta property="og:title" content={`${albumTitle} — Relic Snap`} />
+        <meta property="og:description" content={albumDesc.slice(0, 160)} />
+        <meta property="og:image" content={albumCover} />
+        <meta property="og:url" content={galleryUrl} />
+        <meta property="og:type" content="website" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:image" content={albumCover} />
+        <link rel="canonical" href={galleryUrl} />
+      </Helmet>
       {/* Header */}
       <div style={{ background: "var(--mc-sidebar-bg, #162038)", borderBottom: "1px solid rgba(107,189,208,0.15)", padding: "1rem 1.5rem" }}>
         <div className="d-flex align-items-center justify-content-between flex-wrap gap-3" style={{ maxWidth: 1200, margin: "0 auto" }}>

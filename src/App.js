@@ -7,6 +7,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import '@fortawesome/fontawesome-free/css/all.min.css'
 import ToastContainer from './Components/ToastContainer';
 import ConfirmDialog from './Components/ConfirmDialog';
+import { HelmetProvider } from 'react-helmet-async';
 
 // Public Pages
 import Login from './Components/Pages/Login';
@@ -110,6 +111,7 @@ function RouteWithBodyClass({ children }) {
 
 function App() {
   return (
+    <HelmetProvider>
     <ErrorBoundary>
     <ThemeProvider>
     <ToastContainer />
@@ -206,6 +208,7 @@ function App() {
     </BrowserRouter>
     </ThemeProvider>
     </ErrorBoundary>
+    </HelmetProvider>
   );
 }
 
