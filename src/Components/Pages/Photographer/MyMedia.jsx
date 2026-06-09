@@ -1121,10 +1121,25 @@ const PhotographerMedia = () => {
                         </div>
                         <div className="card-body p-2 p-sm-3">
                           <h6 className="text-truncate mb-2 fs-7 fw-semibold">{item.title || "Untitled"}</h6>
-                          <div className="mb-2">
+                          <div className="mb-2 d-flex gap-1 flex-wrap align-items-center">
                             <span className="badge bg-warning text-dark rounded-pill px-2 py-1 fs-8">
                               KES {item.price || 0}
                             </span>
+                            {item.isApproved === false && !item.rejectionReason && (
+                              <span className="badge rounded-pill px-2 py-1 fs-8" style={{ background: "rgba(245,166,35,0.18)", color: "#d4900a", border: "1px solid rgba(245,166,35,0.35)" }}>
+                                <i className="fas fa-clock me-1"></i>Pending
+                              </span>
+                            )}
+                            {item.isApproved === true && (
+                              <span className="badge rounded-pill px-2 py-1 fs-8" style={{ background: "rgba(40,167,69,0.15)", color: "#28a745", border: "1px solid rgba(40,167,69,0.3)" }}>
+                                <i className="fas fa-check me-1"></i>Live
+                              </span>
+                            )}
+                            {item.rejectionReason && (
+                              <span className="badge rounded-pill px-2 py-1 fs-8" title={item.rejectionReason} style={{ background: "rgba(220,53,69,0.12)", color: "#dc3545", border: "1px solid rgba(220,53,69,0.3)", cursor: "help" }}>
+                                <i className="fas fa-times me-1"></i>Rejected
+                              </span>
+                            )}
                           </div>
                           {isEditing ? (
                             <div className="d-flex gap-1">

@@ -1623,51 +1623,51 @@ nav.navbar.home-navbar.scrolled {
    Light:          #EFF3FF bg, #FFFFFF cards, #FFFFFF sidebar
    ============================================================ */
 
-/* MC Variables — light content + dark sidebar (matches dashboard design) */
+/* MC Variables — aligned with Relic Snap brand (navy #1A2E3B, teal #6BBDD0) */
 :root {
-  --mc-bg:             #EDF0FA;
-  --mc-sidebar-bg:     #141C38;
+  --mc-bg:             #F0F4F8;
+  --mc-sidebar-bg:     #1A2E3B;
   --mc-topbar-bg:      #FFFFFF;
   --mc-card-bg:        #FFFFFF;
-  --mc-card-shadow:    0 2px 12px rgba(74,108,231,0.09);
-  --mc-hero-from:      #3B5FCC;
-  --mc-hero-to:        #7B6AE8;
-  --mc-accent:         #5B7FE5;
+  --mc-card-shadow:    0 2px 12px rgba(26,46,59,0.09);
+  --mc-hero-from:      #1a6b8a;
+  --mc-hero-to:        #6BBDD0;
+  --mc-accent:         #6BBDD0;
   --mc-accent-pink:    #F06B8D;
-  --mc-accent-teal:    #4CC9A6;
+  --mc-accent-teal:    #6BBDD0;
   --mc-accent-gold:    #F5A623;
   --mc-accent-purple:  #9D7FEB;
-  --mc-text:           #1E2A5E;
-  --mc-text-muted:     #8896BC;
-  --mc-text-sub:       #A0AECB;
-  --mc-border:         rgba(74,108,231,0.1);
-  --mc-sidebar-icon:   #6B84B8;
+  --mc-text:           #1A2E3B;
+  --mc-text-muted:     #6B8A9A;
+  --mc-text-sub:       #9ABAC8;
+  --mc-border:         rgba(107,189,208,0.15);
+  --mc-sidebar-icon:   #6B9AB0;
 }
 
 /* Dark override (manual toggle) */
 [data-theme="dark"] {
-  --mc-bg:             #1B2A4A;
-  --mc-sidebar-bg:     #0E1528;
-  --mc-topbar-bg:      #1E3060;
-  --mc-card-bg:        #1E3060;
-  --mc-card-shadow:    0 4px 24px rgba(0,0,0,0.28);
-  --mc-hero-from:      #2B4FBB;
-  --mc-hero-to:        #5B6AD8;
-  --mc-text:           #E8EEFF;
-  --mc-text-muted:     #6B84B8;
-  --mc-text-sub:       #8FA8CE;
-  --mc-border:         rgba(91,127,229,0.2);
-  --mc-sidebar-icon:   #4B6A9B;
+  --mc-bg:             #0f1e2e;
+  --mc-sidebar-bg:     #0a1520;
+  --mc-topbar-bg:      #162030;
+  --mc-card-bg:        #162030;
+  --mc-card-shadow:    0 4px 24px rgba(0,0,0,0.35);
+  --mc-hero-from:      #1a6b8a;
+  --mc-hero-to:        #6BBDD0;
+  --mc-text:           #D8EEF5;
+  --mc-text-muted:     #5A8A9A;
+  --mc-text-sub:       #7AAAB8;
+  --mc-border:         rgba(107,189,208,0.15);
+  --mc-sidebar-icon:   #4A7A90;
 }
 
 /* Sidebar always uses its own light-on-dark palette regardless of theme */
-.mc-sidebar { color: #C8D8F8; }
-.mc-brand-name { color: #E8EEFF !important; }
-.mc-nav-item { color: #7090C0 !important; }
-.mc-nav-item:hover { color: #C8D8F8 !important; background: rgba(255,255,255,0.06) !important; }
-.mc-nav-item.active { color: #fff !important; }
-.mc-toggle-btn { color: #6B84B8 !important; border-color: rgba(255,255,255,0.08) !important; }
-.mc-toggle-btn:hover { color: #fff !important; border-color: rgba(91,127,229,0.5) !important; }
+.mc-sidebar { color: #B8D8E8; }
+.mc-brand-name { color: #E8F5FA !important; }
+.mc-nav-item { color: #6B9AB0 !important; }
+.mc-nav-item:hover { color: #B8D8E8 !important; background: rgba(107,189,208,0.08) !important; }
+.mc-nav-item.active { color: #fff !important; background: rgba(107,189,208,0.18) !important; }
+.mc-toggle-btn { color: #6B9AB0 !important; border-color: rgba(107,189,208,0.12) !important; }
+.mc-toggle-btn:hover { color: #fff !important; border-color: rgba(107,189,208,0.45) !important; }
 .mc-logout-btn { color: #7090C0 !important; }
 .mc-logout-btn:hover { color: #ff7070 !important; }
 

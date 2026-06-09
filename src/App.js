@@ -42,6 +42,7 @@ import AdminApplications from './Components/Pages/Admin/AdminApplications';
 import AdminLogs from './Components/Pages/Admin/AdminLogs';
 import AdminStaff from './Components/Pages/Admin/AdminStaff';
 import AdminNotifications from './Components/Pages/Admin/AdminNotifications';
+import AdminMediaApproval from './Components/Pages/Admin/AdminMediaApproval';
 import ShareAccess from './Components/Pages/Buyer/ShareAccess';
 
 // Staff Role Dashboards
@@ -155,7 +156,8 @@ function App() {
           <Route path="/admin/applications"  element={<ProtectedRoute requiredRole="admin"><AdminApplications /></ProtectedRoute>} />
           <Route path="/admin/logs"          element={<ProtectedRoute requiredRole="admin"><AdminLogs /></ProtectedRoute>} />
           <Route path="/admin/staff"          element={<ProtectedRoute requiredRole="admin"><AdminStaff /></ProtectedRoute>} />
-          <Route path="/admin/notifications" element={<ProtectedRoute requiredRole="admin"><AdminNotifications /></ProtectedRoute>} />
+          <Route path="/admin/notifications"   element={<ProtectedRoute requiredRole="admin"><AdminNotifications /></ProtectedRoute>} />
+          <Route path="/admin/media-approval" element={<ProtectedRoute requiredRole="admin"><AdminMediaApproval /></ProtectedRoute>} />
 
           {/* Staff Role Routes */}
           <Route path='/secretary/dashboard'     element={<ProtectedRoute requiredRole="secretary"><SecretaryDash /></ProtectedRoute>} />

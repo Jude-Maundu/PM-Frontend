@@ -35,6 +35,7 @@ const AdminLayout = ({ children }) => {
     { path: "/admin/applications",  icon: "fa-user-clock",      label: "Applications"  },
     { path: "/admin/staff",         icon: "fa-user-tie",        label: "Staff"         },
     { path: "/admin/media",         icon: "fa-photo-video",     label: "Media"         },
+    { path: "/admin/media-approval",icon: "fa-camera-retro",    label: "Photo Approval" },
     { path: "/admin/analytics",     icon: "fa-chart-bar",       label: "Analytics"     },
     { path: "/admin/moderation",    icon: "fa-shield-alt",      label: "Moderation"    },
     { path: "/admin/transactions",  icon: "fa-exchange-alt",    label: "Transactions"  },
