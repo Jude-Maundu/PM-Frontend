@@ -151,7 +151,7 @@ const PhotoCard = ({ photo, onPhotoClick }) => {
     >
       <div className="position-relative overflow-hidden" style={{ height: "240px" }}>
         <img
-          src={photo.image || photo.thumbnail}
+          src={photo.fileUrl || photo.watermarkedUrl || photo.image || photo.thumbnail}
           alt={photo.title}
           className="w-100 h-100"
           style={{
@@ -280,7 +280,7 @@ const PhotoCard = ({ photo, onPhotoClick }) => {
             <h6 className="fw-bold mb-1 text-white text-truncate">{photo.title}</h6>
             <p className="small mb-0 text-truncate" style={{ color: "rgba(255,255,255,0.45)" }}>
               <i className="fas fa-user-circle me-1"></i>
-              {photo.photographer}
+              {photo.photographer?.username || photo.photographerName || photo.photographer}
             </p>
           </div>
           <span
@@ -446,7 +446,7 @@ const Explore = () => {
     const searchMatch =
       !searchQuery ||
       (photo.title || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (photo.photographer || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (photo.photographer?.username || photo.photographerName || String(photo.photographer || "")).toLowerCase().includes(searchQuery.toLowerCase()) ||
       (photo.tags || []).some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()));
     return categoryMatch && licenseMatch && minMatch && maxMatch && searchMatch;
   }).sort((a, b) => {
@@ -1166,7 +1166,7 @@ const Explore = () => {
               <div className="modal-body">
                 <div className="position-relative rounded-3 overflow-hidden mb-3">
                   <img
-                    src={selectedPhoto.image || selectedPhoto.thumbnail}
+                    src={selectedPhoto.fileUrl || selectedPhoto.watermarkedUrl || selectedPhoto.image || selectedPhoto.thumbnail}
                     alt={selectedPhoto.title}
                     className="w-100"
                     style={{
@@ -1204,7 +1204,7 @@ const Explore = () => {
                   <div className="col-md-8">
                     <p className="text-white-50 small mb-1">
                       <i className="fas fa-user-circle me-1" style={{ color: "var(--pm-teal)" }}></i>
-                      {selectedPhoto.photographer}
+                      {selectedPhoto.photographer?.username || selectedPhoto.photographerName || selectedPhoto.photographer}
                     </p>
                     <div className="d-flex flex-wrap gap-2">
                       {selectedPhoto.category && (
