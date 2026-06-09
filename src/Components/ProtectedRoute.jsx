@@ -49,8 +49,8 @@ const ProtectedRoute = ({ children, requiredRole }) => {
             }
           );
           
-          if (response.data && response.data.id) {
-            userData = response.data;
+          if (response.data && (response.data.id || response.data._id)) {
+            userData = { ...response.data, id: response.data.id || String(response.data._id) };
             backendVerified = true;
             console.log('[ProtectedRoute] ✅ Backend verification successful:', { 
               userId: userData.id, 
@@ -153,6 +153,7 @@ const ProtectedRoute = ({ children, requiredRole }) => {
     }
 
     // Role aliases
+    if (requiredRoleLower === 'buyer' && (roleLower === 'user' || roleLower === 'buyer')) return children;
     if (requiredRoleLower === 'photographer' && roleLower.includes('photographer')) return children;
     if (requiredRoleLower === 'admin' && (roleLower === 'reviewer' || roleLower === 'support')) return children;
 
