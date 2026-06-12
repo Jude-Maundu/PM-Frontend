@@ -1,340 +1,94 @@
 import React, { useEffect, useState, useCallback } from "react";
 import BuyerLayout from "./BuyerLayout";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   getAllMedia,
   getPurchaseHistory,
   getUserFavorites,
   getWalletBalance,
-  getLikedMedia,
-  getUserFollowing,
 } from "../../../api/API";
 import { placeholderMedium, placeholderSmall } from "../../../utils/placeholders";
-import { getImageUrl, fetchProtectedUrl } from "../../../utils/imageUrl";
+import { getImageUrl } from "../../../utils/imageUrl";
 import { getDisplayName } from "../../../utils/auth";
 
 const BuyerDashboard = () => {
   const [featuredMedia, setFeaturedMedia] = useState([]);
   const [recentPurchases, setRecentPurchases] = useState([]);
-  const [recommended, setRecommended] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [stats, setStats] = useState({
-    purchases: 0,
-    downloads: 0,
-    favorites: 0,
-    wallet: 0,
-    totalSpent: 0
-  });
-  const [, setLikedItems] = useState(new Set());
-  const [, setFollowingUsers] = useState(new Set());
-  const [imageUrls, setImageUrls] = useState({});
-  const [searchQuery, setSearchQuery] = useState("");
+  const [stats, setStats] = useState({ purchases: 0, downloads: 0, favorites: 0, wallet: 0 });
 
-  const navigate = useNavigate();
-  const token = localStorage.getItem("token");
+  const token   = localStorage.getItem("token");
   const userStr = localStorage.getItem("user");
-  const user = userStr ? JSON.parse(userStr) : {};
-  const displayName = getDisplayName(user) || "Buyer";
+  const user    = userStr ? JSON.parse(userStr) : {};
+  const displayName  = getDisplayName(user) || "Explorer";
+  const avatarLetter = (displayName || "B").charAt(0).toUpperCase();
+  const userId  = user?.id || user?._id;
 
-  const userId = user?.id || user?._id || user?.userId || user?.uid;
-
-  const loadLikedItems = useCallback(async () => {
-    if (!token) return;
-    try {
-      const res = await getLikedMedia();
-      const likedIds = new Set((res.data || []).map(item => item._id));
-      setLikedItems(likedIds);
-    } catch (err) {
-      console.warn("Unable to load liked items", err);
-    }
-  }, [token]);
-
-  const loadFollowingStatus = useCallback(async () => {
-    if (!token || !userId) return;
-    try {
-      const res = await getUserFollowing(userId);
-      const followingList = res.data?.following || [];
-      const followingIds = new Set(followingList.map(u => u._id));
-      setFollowingUsers(followingIds);
-    } catch (err) {
-      console.warn("Unable to load following status", err);
-    }
-  }, [token, userId]);
-
-  // 🔧 FIXED: Better image resolution for any item
-  const resolveImage = useCallback((item) => {
-    if (!item) return placeholderMedium;
-    
-    // Try to get from imageUrls first
-    const mediaId = item._id || item.mediaId || item.media?._id;
-    if (mediaId && imageUrls[mediaId]) {
-      return imageUrls[mediaId];
-    }
-    
-    // Try direct getImageUrl
-    return getImageUrl(item, placeholderMedium);
-  }, [imageUrls]);
+  const hour     = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        setError(null);
-        
-        // Get all media
+
         const mediaRes = await getAllMedia();
         let allMedia = [];
-        if (Array.isArray(mediaRes.data?.media)) {
-          allMedia = mediaRes.data.media;
-        } else if (Array.isArray(mediaRes.data)) {
-          allMedia = mediaRes.data;
-        }
-        console.log(`✅ Loaded ${allMedia.length} media items`);
+        if (Array.isArray(mediaRes.data?.media)) allMedia = mediaRes.data.media;
+        else if (Array.isArray(mediaRes.data))    allMedia = mediaRes.data;
 
-        let purchases = [];
-        let favorites = [];
-        let walletAmount = 0;
-        let totalSpent = 0;
+        let purchases = [], favorites = [], walletAmount = 0;
 
         if (userId) {
           try {
             const purchasesRes = await getPurchaseHistory(userId);
-            console.log("📦 Purchase history response:", purchasesRes.data);
-            
-            // Handle different response structures
-            if (Array.isArray(purchasesRes.data)) {
-              purchases = purchasesRes.data;
-            } else if (purchasesRes.data?.purchases) {
-              purchases = purchasesRes.data.purchases;
-            } else if (purchasesRes.data?.purchaseHistory) {
-              purchases = purchasesRes.data.purchaseHistory;
-            } else if (purchasesRes.data?.data && Array.isArray(purchasesRes.data.data)) {
-              purchases = purchasesRes.data.data;
-            }
-            
-            // Calculate total spent
-            totalSpent = purchases.reduce((sum, p) => sum + (p.amount || p.price || 0), 0);
-            console.log(`✅ Found ${purchases.length} purchases, total spent: ${totalSpent}`);
-          } catch (err) {
-            console.log("ℹ️ No purchase history yet", err?.message || err);
-          }
+            const d = purchasesRes.data;
+            purchases = Array.isArray(d) ? d
+              : Array.isArray(d?.purchases) ? d.purchases
+              : Array.isArray(d?.data) ? d.data : [];
+          } catch {}
 
           try {
             const favRes = await getUserFavorites(userId);
-            favorites = Array.isArray(favRes.data)
-              ? favRes.data
-              : Array.isArray(favRes.data?.favorites)
-                ? favRes.data.favorites
-                : [];
-          } catch (err) {
-            console.log("ℹ️ Favorites not available", err?.message || err);
-          }
+            favorites = Array.isArray(favRes.data) ? favRes.data
+              : Array.isArray(favRes.data?.favorites) ? favRes.data.favorites : [];
+          } catch {}
 
           try {
             const walletRes = await getWalletBalance(userId);
-            const walletData = walletRes.data || {};
-            walletAmount = Number(
-              walletData.balance ??
-              walletData.netBalance ??
-              walletData.amount ??
-              walletData.wallet ??
-              0
-            ) || 0;
-          } catch (err) {
-            console.log("ℹ️ Wallet balance unavailable", err?.message || err);
-          }
+            const wd = walletRes.data || {};
+            walletAmount = Number(wd.balance ?? wd.netBalance ?? wd.amount ?? 0) || 0;
+          } catch {}
         }
 
-        // Fallback to localStorage wallet
         if (!walletAmount) {
-          const rawWallet = localStorage.getItem("pm_wallet") || localStorage.getItem("wallet");
-          if (rawWallet) {
-            try {
-              const parsedWallet = JSON.parse(rawWallet);
-              walletAmount = Number(parsedWallet?.balance ?? parsedWallet?.amount ?? parsedWallet?.wallet ?? parsedWallet) || walletAmount;
-            } catch {
-              walletAmount = Number(rawWallet) || walletAmount;
-            }
-          }
+          const raw = localStorage.getItem("pm_wallet") || localStorage.getItem("wallet");
+          if (raw) { try { walletAmount = Number(JSON.parse(raw)?.balance ?? raw) || 0; } catch {} }
         }
 
-        const featured = allMedia.slice(0, 8);
-        const rec = allMedia.slice(8, 14);
-
-        setFeaturedMedia(featured);
-        setRecommended(rec);
+        setFeaturedMedia(allMedia.slice(0, 6));
         setRecentPurchases(purchases.slice(0, 5));
-
         setStats({
-          purchases: purchases.length || 0,
-          downloads: purchases.filter(p => p.downloaded).length || purchases.length || 0,
-          favorites: favorites.length || 0,
-          wallet: walletAmount || 0,
-          totalSpent: totalSpent || 0,
+          purchases: purchases.length,
+          downloads: purchases.filter(p => p.downloaded).length || purchases.length,
+          favorites: favorites.length,
+          wallet: walletAmount,
         });
-
-        // Preload protected URLs for purchased/free items
-        const purchasedMediaIds = new Set((purchases || []).map(p => p.media?._id || p.mediaId || p.media?._id || p._id));
-        const itemsToResolve = [...featured, ...rec, ...purchases.slice(0, 5)];
-        const urls = {};
-        await Promise.all(
-          itemsToResolve.map(async (item) => {
-            // Get media ID from multiple possible locations
-            const mediaId = item._id || item.mediaId || item.media?._id || item.id;
-            if (!mediaId) return;
-
-            const isFree = !item.price || item.price <= 0;
-            const isPurchased = purchasedMediaIds.has(mediaId);
-
-            if (!isFree && !isPurchased) return;
-
-            const raw = getImageUrl(item, null);
-            if (raw && !raw.includes("/opt/") && !raw.startsWith("file://") && raw.startsWith("http")) {
-              urls[mediaId] = raw;
-              return;
-            }
-
-            try {
-              const protectedUrl = await fetchProtectedUrl(mediaId);
-              if (protectedUrl && protectedUrl !== placeholderMedium) {
-                urls[mediaId] = protectedUrl;
-              }
-            } catch (err) {
-              console.debug("Could not resolve protected URL for", mediaId);
-            }
-          })
-        );
-        setImageUrls(urls);
-
-        await loadLikedItems();
-        await loadFollowingStatus();
-
       } catch (err) {
-        console.error("❌ Error fetching data:", err);
-        setError(err.response?.data?.message || "Failed to load content. Please refresh the page.");
+        console.error("BuyerDash fetch error:", err);
       } finally {
         setLoading(false);
       }
     };
-
     fetchData();
-  }, [userId, loadLikedItems, loadFollowingStatus]);
-
-
-  // 🔧 Helper to get image for purchase item
-  const getPurchaseImageUrl = (purchase) => {
-    // Try multiple locations where the image URL might be
-    const media = purchase.media || purchase;
-    
-    // Get media ID
-    const mediaId = purchase._id || purchase.mediaId || purchase.media?._id || media._id;
-    
-    // Check if we have a pre-fetched URL
-    if (mediaId && imageUrls[mediaId]) {
-      return imageUrls[mediaId];
-    }
-    
-    // Check for direct URL in media
-    if (media.fileUrl) {
-      const filename = media.fileUrl.split('/').pop();
-      if (filename) {
-        return `${process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://pm-backend-f3b6.onrender.com'}/uploads/photos/${filename}`;
-      }
-    }
-    
-    // Check for thumbnail or image field
-    if (media.thumbnail) return media.thumbnail;
-    if (media.image) return media.image;
-    if (media.imageUrl) return media.imageUrl;
-    
-    // Try getImageUrl utility
-    return getImageUrl(media, placeholderSmall);
-  };
-
-  // ── Shared helper components ──────────────────────────────────────────────
-
-  const Sparkline = ({ values = [], color = "#5B7FE5" }) => {
-    if (!values.length) return null;
-    const max = Math.max(...values, 1);
-    const min = Math.min(...values);
-    const range = max - min || 1;
-    const W = 80, H = 32;
-    const pts = values.map((v, i) => ({
-      x: (i / Math.max(values.length - 1, 1)) * W,
-      y: H - ((v - min) / range) * H * 0.85 + 2,
-    }));
-    const d = pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ");
-    return (
-      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ overflow: "visible" }}>
-        <path d={d} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    );
-  };
-
-  const MiniCalendar = () => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
-    const today = now.getDate();
-    const firstDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const days = [];
-    for (let i = 0; i < firstDay; i++) days.push({ day: "", other: true });
-    for (let d = 1; d <= daysInMonth; d++) days.push({ day: d, isToday: d === today });
-    const dayNames = ["Su","Mo","Tu","We","Th","Fr","Sa"];
-    const monthName = now.toLocaleString("default", { month: "long" });
-    return (
-      <div>
-        <div className="mc-cal-header">
-          <span className="mc-cal-month">{monthName}</span>
-          <span style={{ fontSize: "0.72rem", color: "var(--mc-text-muted)" }}>{year}</span>
-        </div>
-        <div className="mc-cal-grid">
-          {dayNames.map(d => <div key={d} className="mc-cal-dayname">{d}</div>)}
-          {days.map((item, idx) => (
-            <div
-              key={idx}
-              className={`mc-cal-day${item.isToday ? " mc-today" : ""}${item.other ? " mc-other" : ""}`}
-            >
-              {item.day || ""}
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
-  // ── Derived values ────────────────────────────────────────────────────────
-
-  const sparkValues = [3, 5, 2, 8, 6, 9, 4];
-  const busynessPct = Math.min(99, Math.round((stats.purchases / Math.max(stats.favorites + 1, 1)) * 100)) || 35;
-  const budgetUsedPct = Math.min(99, Math.round(stats.totalSpent / 5000 * 100));
-  const downloadsPct = Math.min(99, Math.round(stats.downloads * 10));
-  const collectionPct = Math.min(99, Math.round(stats.favorites * 5));
-  const avatarLetter = (displayName || "B").charAt(0).toUpperCase();
-
-  const eventList = [
-    { count: stats.purchases, label: "Purchases", color: "#F06B8D" },
-    { count: stats.downloads, label: "Downloads", color: "#4CC9A6" },
-    { count: stats.favorites, label: "Favorites", color: "#9D7FEB" },
-  ];
+  }, [userId]);
 
   if (loading) {
     return (
       <BuyerLayout>
-        <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "60vh" }}>
-          <div className="spinner-border" style={{ color: "var(--mc-accent)" }}></div>
-        </div>
-      </BuyerLayout>
-    );
-  }
-
-  if (error) {
-    return (
-      <BuyerLayout>
-        <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "60vh" }}>
-          <div className="spinner-border" style={{ color: "var(--mc-accent)" }}></div>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "60vh", gap: "1rem" }}>
+          <div className="spinner-border" style={{ color: "var(--mc-accent)", width: 48, height: 48 }}></div>
+          <p style={{ color: "var(--mc-text-muted)", fontSize: "1rem", margin: 0 }}>Loading your dashboard…</p>
         </div>
       </BuyerLayout>
     );
@@ -342,198 +96,226 @@ const BuyerDashboard = () => {
 
   return (
     <BuyerLayout>
-      {/* Hero Banner */}
-      <div className="mc-hero">
-        <div>
-          <div className="mc-hero-date">
-            <i className="fas fa-calendar-alt"></i>
-            {new Date().toLocaleDateString("en-US", {
-              weekday: "long", month: "long", day: "numeric", year: "numeric",
-            })}
-          </div>
-          <h2>Good Day, {displayName}!</h2>
-          <p>Have a productive {new Date().toLocaleDateString("en-US", { weekday: "long" })}.</p>
-        </div>
-        <div className="mc-hero-art">🛒</div>
-      </div>
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "1.5rem 1rem 3rem" }}>
 
-      {/* Stat Cards */}
-      <div className="mc-stats-row">
-        {/* Card 1: My Purchases */}
-        <div className="mc-stat-card">
-          <div className="mc-stat-header">
-            <span className="mc-stat-label">My Purchases</span>
-            <span className="mc-stat-dots">···</span>
-          </div>
-          <div className="mc-stat-value">{stats.purchases}</div>
-          <div className="mc-stat-sub">images bought</div>
-          <div className="mc-stat-trend up">
-            <Sparkline values={sparkValues} color="#F06B8D" />
-          </div>
-        </div>
-
-        {/* Card 2: Downloads */}
-        <div className="mc-stat-card">
-          <div className="mc-stat-header">
-            <span className="mc-stat-label">Downloads</span>
-            <span className="mc-stat-dots">···</span>
-          </div>
-          <div className="mc-stat-value">{stats.downloads}</div>
-          <div className="mc-stat-sub">files downloaded</div>
-          <div className="mc-stat-trend up">
-            <Sparkline values={sparkValues} color="#4CC9A6" />
-          </div>
-        </div>
-
-        {/* Card 3: Wallet */}
-        <div className="mc-stat-card">
-          <div className="mc-stat-header">
-            <span className="mc-stat-label">Wallet</span>
-            <span className="mc-stat-dots">···</span>
-          </div>
-          <div className="mc-stat-value">{"KES " + stats.wallet.toLocaleString()}</div>
-          <div className="mc-stat-sub">current balance</div>
-          <div className="mc-stat-trend neu">
-            <Sparkline values={sparkValues} color="#5B7FE5" />
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom Grid */}
-      <div className="mc-bottom-grid">
-        {/* Left: Donut + event list */}
-        <div className="mc-card">
-          <div className="mc-card-header">
-            <span className="mc-card-title">MY ACTIVITY</span>
-          </div>
-          <div className="mc-donut-wrap">
-            <div
-              className="mc-donut"
-              style={{
-                background: `conic-gradient(var(--mc-accent) 0% ${busynessPct}%, var(--mc-border) ${busynessPct}% 100%)`,
-              }}
-            >
-              <span className="mc-donut-pct">{busynessPct}%</span>
-            </div>
-            <div className="mc-donut-info">
-              <h4>Activity</h4>
-              <p>purchases / collection</p>
+        {/* ── WELCOME HERO ── */}
+        <div style={{
+          background: "linear-gradient(135deg, var(--mc-hero-from) 0%, var(--mc-hero-to) 100%)",
+          borderRadius: 20, padding: "2rem 2.5rem", marginBottom: "2rem",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          flexWrap: "wrap", gap: "1.5rem",
+          boxShadow: "0 8px 32px rgba(26,46,59,0.18)",
+        }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ margin: "0 0 0.25rem", fontSize: "0.9rem", color: "rgba(255,255,255,0.75)", fontWeight: 500 }}>
+              {new Date().toLocaleDateString("en-KE", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+            </p>
+            <h2 style={{
+              margin: "0 0 0.5rem", color: "#fff",
+              fontFamily: "var(--font-serif)", fontWeight: 700,
+              fontSize: "clamp(1.4rem, 4vw, 2.1rem)",
+            }}>
+              {greeting}, {displayName}!
+            </h2>
+            <p style={{ margin: "0 0 1.5rem", color: "rgba(255,255,255,0.82)", fontSize: "1rem" }}>
+              {stats.purchases === 0
+                ? "Welcome to Relic Snap! Discover beautiful Kenyan photography."
+                : `You've purchased ${stats.purchases} photo${stats.purchases !== 1 ? "s" : ""}. Keep exploring!`}
+            </p>
+            <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+              <Link to="/explore" style={{
+                background: "#fff", color: "var(--mc-hero-from)", fontWeight: 700,
+                padding: "0.7rem 1.5rem", borderRadius: 12, textDecoration: "none",
+                fontSize: "0.95rem", display: "inline-flex", alignItems: "center", gap: "0.5rem",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+              }}>
+                <i className="fas fa-search"></i>Browse Photos
+              </Link>
+              <Link to="/buyer/downloads" style={{
+                background: "rgba(255,255,255,0.18)", color: "#fff", fontWeight: 600,
+                padding: "0.7rem 1.5rem", borderRadius: 12, textDecoration: "none",
+                fontSize: "0.95rem", display: "inline-flex", alignItems: "center", gap: "0.5rem",
+                border: "1px solid rgba(255,255,255,0.3)",
+              }}>
+                <i className="fas fa-download"></i>My Downloads
+              </Link>
             </div>
           </div>
-          <div className="mc-event-list">
-            {eventList.map((ev) => (
-              <div className="mc-event-item" key={ev.label}>
-                <span className="mc-event-dot" style={{ background: ev.color }}></span>
-                <span className="mc-event-count">{ev.count}</span>
-                <span className="mc-event-label">{ev.label}</span>
+          <div style={{ flexShrink: 0 }}>
+            <div style={{
+              width: 96, height: 96, borderRadius: "50%",
+              border: "4px solid rgba(255,255,255,0.4)", overflow: "hidden",
+              background: "rgba(255,255,255,0.2)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: "2.2rem", fontWeight: 700, color: "#fff",
+            }}>
+              {user?.profileImage
+                ? <img src={user.profileImage} alt={displayName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                : avatarLetter}
+            </div>
+          </div>
+        </div>
+
+        {/* ── STATS ROW ── */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
+          {[
+            { icon: "fa-shopping-bag", label: "Photos Purchased", value: stats.purchases,                                    color: "#6BBDD0", bg: "rgba(107,189,208,0.12)" },
+            { icon: "fa-download",     label: "Downloads",        value: stats.downloads,                                    color: "#4CC9A6", bg: "rgba(76,201,166,0.12)"  },
+            { icon: "fa-heart",        label: "Favorites",        value: stats.favorites,                                    color: "#F06B8D", bg: "rgba(240,107,141,0.12)" },
+            { icon: "fa-wallet",       label: "Wallet Balance",   value: `KES ${Number(stats.wallet).toLocaleString()}`,    color: "#F5A623", bg: "rgba(245,166,35,0.12)"  },
+          ].map(stat => (
+            <div key={stat.label} style={{
+              background: "var(--mc-card-bg)", borderRadius: 16, padding: "1.4rem 1.25rem",
+              border: "1px solid var(--mc-border)", boxShadow: "var(--mc-card-shadow)",
+              display: "flex", alignItems: "center", gap: "1rem",
+            }}>
+              <div style={{
+                width: 52, height: 52, borderRadius: 14, background: stat.bg, flexShrink: 0,
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <i className={`fas ${stat.icon}`} style={{ fontSize: "1.25rem", color: stat.color }}></i>
               </div>
+              <div>
+                <div style={{ fontSize: "0.78rem", color: "var(--mc-text-muted)", fontWeight: 500, marginBottom: "0.25rem" }}>{stat.label}</div>
+                <div style={{ fontSize: "1.45rem", fontWeight: 800, color: "var(--mc-text)", lineHeight: 1 }}>{stat.value}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* ── QUICK ACTIONS ── */}
+        <div style={{
+          background: "var(--mc-card-bg)", borderRadius: 16, padding: "1.5rem",
+          marginBottom: "2rem", border: "1px solid var(--mc-border)", boxShadow: "var(--mc-card-shadow)",
+        }}>
+          <h6 style={{ margin: "0 0 1.1rem", fontSize: "0.78rem", fontWeight: 700, color: "var(--mc-text-muted)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+            Quick Actions
+          </h6>
+          <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+            {[
+              { to: "/explore",           icon: "fa-search",          label: "Browse",     color: "#6BBDD0" },
+              { to: "/buyer/downloads",   icon: "fa-download",        label: "Downloads",  color: "#4CC9A6" },
+              { to: "/buyer/favorites",   icon: "fa-heart",           label: "Favorites",  color: "#F06B8D" },
+              { to: "/buyer/cart",        icon: "fa-shopping-cart",   label: "My Cart",    color: "#F5A623" },
+              { to: "/buyer/wallet",      icon: "fa-wallet",          label: "Wallet",     color: "#9D7FEB" },
+              { to: "/buyer/profile",     icon: "fa-user",            label: "Profile",    color: "#1A2E3B" },
+            ].map(action => (
+              <Link key={action.to} to={action.to} style={{
+                display: "flex", flexDirection: "column", alignItems: "center", gap: "0.45rem",
+                padding: "1rem 1.1rem", borderRadius: 12, textDecoration: "none",
+                background: "var(--mc-bg)", border: "1px solid var(--mc-border)", minWidth: 76,
+              }}>
+                <i className={`fas ${action.icon}`} style={{ fontSize: "1.35rem", color: action.color }}></i>
+                <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--mc-text)" }}>{action.label}</span>
+              </Link>
             ))}
           </div>
         </div>
 
-        {/* Middle: Progress bars */}
-        <div className="mc-card">
-          <div className="mc-card-header">
-            <span className="mc-card-title">MY GOALS</span>
-            <span className="mc-card-badge">Today</span>
-          </div>
+        {/* ── BOTTOM GRID: Featured Photos + Recent Purchases ── */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1.5rem" }}>
 
-          <div className="mc-prog-row">
-            <span className="mc-prog-label">Budget Used</span>
-            <span className="mc-prog-pct">{budgetUsedPct}%</span>
-            <div className="mc-prog-track">
-              <div className="mc-prog-fill" style={{ width: `${budgetUsedPct}%`, background: "#5B7FE5" }}></div>
+          {/* Featured Photos */}
+          <div style={{
+            background: "var(--mc-card-bg)", borderRadius: 16, padding: "1.5rem",
+            border: "1px solid var(--mc-border)", boxShadow: "var(--mc-card-shadow)",
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.1rem" }}>
+              <h6 style={{ margin: 0, fontWeight: 700, color: "var(--mc-text)", fontSize: "1rem" }}>
+                <i className="fas fa-star me-2" style={{ color: "var(--mc-accent)" }}></i>Discover Photos
+              </h6>
+              <Link to="/explore" style={{ fontSize: "0.8rem", color: "var(--mc-accent)", textDecoration: "none", fontWeight: 600 }}>
+                Browse all
+              </Link>
             </div>
-          </div>
 
-          <div className="mc-prog-row">
-            <span className="mc-prog-label">Downloads</span>
-            <span className="mc-prog-pct">{downloadsPct}%</span>
-            <div className="mc-prog-track">
-              <div className="mc-prog-fill" style={{ width: `${downloadsPct}%`, background: "#F06B8D" }}></div>
-            </div>
-          </div>
-
-          <div className="mc-prog-row">
-            <span className="mc-prog-label">Collection</span>
-            <span className="mc-prog-pct">{collectionPct}%</span>
-            <div className="mc-prog-track">
-              <div className="mc-prog-fill" style={{ width: `${collectionPct}%`, background: "#4CC9A6" }}></div>
-            </div>
-          </div>
-
-          <span style={{ color: "var(--mc-accent)", fontSize: "0.8rem", cursor: "pointer" }}>+ Add goal</span>
-        </div>
-
-        {/* Right panel */}
-        <div className="mc-right-panel">
-          {/* Profile mini */}
-          <div className="mc-card">
-            <div className="mc-profile-mini">
-              <div className="mc-profile-avatar">
-                {user?.profileImage ? (
-                  <img src={user.profileImage} alt="avatar" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
-                ) : (
-                  <div className="mc-avatar-placeholder">{avatarLetter}</div>
-                )}
+            {featuredMedia.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "2.5rem 1rem" }}>
+                <i className="fas fa-images fa-2x" style={{ color: "var(--mc-accent)", display: "block", marginBottom: "0.75rem", opacity: 0.45 }}></i>
+                <p style={{ color: "var(--mc-text-muted)", margin: "0 0 0.5rem", fontSize: "0.9rem" }}>No photos yet</p>
+                <Link to="/explore" style={{ color: "var(--mc-accent)", fontSize: "0.85rem", fontWeight: 600 }}>
+                  Start exploring →
+                </Link>
               </div>
-              <div className="mc-profile-name">{displayName}</div>
-              <div className="mc-profile-role">Buyer</div>
-              {user?.location && (
-                <div className="mc-profile-loc">
-                  <i className="fas fa-map-marker-alt" style={{ marginRight: 4 }}></i>
-                  {user.location}
-                </div>
-              )}
-            </div>
-            <div className="mc-profile-stats">
-              <div className="mc-pstat">
-                <div className="mc-pstat-val">{stats.purchases}</div>
-                <div className="mc-pstat-lbl">Bought</div>
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.5rem" }}>
+                {featuredMedia.slice(0, 6).map((m, i) => {
+                  const url = getImageUrl(m, placeholderMedium);
+                  return (
+                    <Link key={i} to="/explore" style={{ display: "block", borderRadius: 10, overflow: "hidden", aspectRatio: "1", background: "var(--mc-bg)", textDecoration: "none" }}>
+                      <img
+                        src={url || placeholderMedium}
+                        alt={m.title || ""}
+                        onError={e => { e.target.src = placeholderMedium; }}
+                        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                      />
+                    </Link>
+                  );
+                })}
               </div>
-              <div className="mc-pstat">
-                <div className="mc-pstat-val">{stats.downloads}</div>
-                <div className="mc-pstat-lbl">DL</div>
-              </div>
-              <div className="mc-pstat">
-                <div className="mc-pstat-val">{stats.favorites}</div>
-                <div className="mc-pstat-lbl">Favs</div>
-              </div>
-            </div>
+            )}
           </div>
 
-          {/* Mini calendar */}
-          <div className="mc-card">
-            <MiniCalendar />
-          </div>
-
-          {/* Recent purchases schedule */}
-          <div className="mc-card">
-            <div className="mc-card-header">
-              <span className="mc-card-title">RECENT PURCHASES</span>
+          {/* Recent Purchases */}
+          <div style={{
+            background: "var(--mc-card-bg)", borderRadius: 16, padding: "1.5rem",
+            border: "1px solid var(--mc-border)", boxShadow: "var(--mc-card-shadow)",
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.1rem" }}>
+              <h6 style={{ margin: 0, fontWeight: 700, color: "var(--mc-text)", fontSize: "1rem" }}>
+                <i className="fas fa-receipt me-2" style={{ color: "#4CC9A6" }}></i>Recent Purchases
+              </h6>
+              <Link to="/buyer/transactions" style={{ fontSize: "0.8rem", color: "var(--mc-accent)", textDecoration: "none", fontWeight: 600 }}>
+                View all
+              </Link>
             </div>
-            <div className="mc-schedule">
-              {recentPurchases.slice(0, 4).map((purchase, idx) => {
-                const mediaItem = purchase.media || purchase;
-                const title = mediaItem.title || purchase.title || "Photo";
-                const date = purchase.date || purchase.createdAt || Date.now();
-                return (
-                  <div className="mc-sched-item" key={idx}>
-                    <span className="mc-sched-dot" style={{ background: "#F06B8D" }}></span>
-                    <div className="mc-sched-body">
-                      <div className="mc-sched-time">{new Date(date).toLocaleDateString()}</div>
-                      <div className="mc-sched-text">{title}</div>
+
+            {recentPurchases.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "2.5rem 1rem" }}>
+                <i className="fas fa-shopping-bag fa-2x" style={{ color: "var(--mc-accent)", display: "block", marginBottom: "0.75rem", opacity: 0.45 }}></i>
+                <p style={{ color: "var(--mc-text-muted)", margin: "0 0 0.5rem", fontSize: "0.9rem" }}>No purchases yet</p>
+                <Link to="/explore" style={{ color: "var(--mc-accent)", fontSize: "0.85rem", fontWeight: 600 }}>
+                  Start browsing photos →
+                </Link>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.65rem" }}>
+                {recentPurchases.map((purchase, i) => {
+                  const media = purchase.media || purchase;
+                  const title = media.title || purchase.title || "Photo";
+                  const amount = purchase.amount || purchase.price || 0;
+                  const date = purchase.date || purchase.createdAt;
+                  const imgUrl = getImageUrl(media, placeholderSmall);
+                  return (
+                    <div key={i} style={{
+                      display: "flex", alignItems: "center", gap: "0.85rem",
+                      padding: "0.65rem 0.85rem", borderRadius: 10,
+                      background: "var(--mc-bg)", border: "1px solid var(--mc-border)",
+                    }}>
+                      <img
+                        src={imgUrl || placeholderSmall}
+                        alt={title}
+                        onError={e => { e.target.src = placeholderSmall; }}
+                        style={{ width: 44, height: 44, borderRadius: 8, objectFit: "cover", flexShrink: 0 }}
+                      />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 600, fontSize: "0.85rem", color: "var(--mc-text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          {title}
+                        </div>
+                        <div style={{ fontSize: "0.75rem", color: "var(--mc-text-muted)" }}>
+                          {date ? new Date(date).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" }) : "—"}
+                        </div>
+                      </div>
+                      <div style={{ fontWeight: 700, fontSize: "0.88rem", color: "#4CC9A6", flexShrink: 0 }}>
+                        KES {Number(amount).toLocaleString()}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-              {recentPurchases.length === 0 && (
-                <div style={{ color: "var(--mc-text-muted)", fontSize: "0.8rem", textAlign: "center", padding: "0.75rem 0" }}>
-                  No recent purchases
-                </div>
-              )}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
+
         </div>
       </div>
     </BuyerLayout>
