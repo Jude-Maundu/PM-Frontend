@@ -29,19 +29,18 @@ const PhotographerLayout = ({ children }) => {
   const closeMobile = () => setMobileOpen(false);
 
   const navItems = [
-    { path: "/photographer/dashboard",   icon: "fa-chart-pie",        label: "Dashboard"      },
-    { path: "/photographer/albums",      icon: "fa-layer-group",      label: "My Albums"      },
-    { path: "/photographer/analytics",   icon: "fa-chart-line",       label: "Analytics"      },
-    { path: "/photographer/media",       icon: "fa-photo-video",      label: "My Media"       },
-    { path: "/photographer/upload",      icon: "fa-cloud-upload-alt", label: "Upload"         },
-    { path: "/photographer/earnings",    icon: "fa-dollar-sign",      label: "Earnings"       },
-    { path: "/photographer/sales",       icon: "fa-history",          label: "Sales History"  },
-    { path: "/photographer/withdrawals", icon: "fa-money-bill-wave",  label: "Withdrawals"    },
-    { path: "/photographer/profile",     icon: "fa-user",             label: "Profile"        },
-    { path: "/photographer/portfolio",   icon: "fa-globe",            label: "My Portfolio"   },
-    { path: "/photographer/referral",    icon: "fa-gift",             label: "Referral"       },
-    { path: "/photographer/proofing",    icon: "fa-clipboard-check",  label: "Proofing"       },
-    { path: "/photographer/settings",    icon: "fa-cog",              label: "Settings"       },
+    { path: "/photographer/dashboard",        icon: "fa-chart-pie",        label: "Dashboard"      },
+    { path: "/photographer/albums/create",   icon: "fa-plus-circle",      label: "New Album"      },
+    { path: "/photographer/albums",          icon: "fa-layer-group",      label: "My Albums"      },
+    { path: "/photographer/analytics",       icon: "fa-chart-line",       label: "Analytics"      },
+    { path: "/photographer/earnings",        icon: "fa-dollar-sign",      label: "Earnings"       },
+    { path: "/photographer/sales",           icon: "fa-history",          label: "Sales History"  },
+    { path: "/photographer/withdrawals",     icon: "fa-money-bill-wave",  label: "Withdrawals"    },
+    { path: "/photographer/profile",         icon: "fa-user",             label: "Profile"        },
+    { path: "/photographer/portfolio",       icon: "fa-globe",            label: "My Portfolio"   },
+    { path: "/photographer/referral",        icon: "fa-gift",             label: "Referral"       },
+    { path: "/photographer/proofing",        icon: "fa-clipboard-check",  label: "Proofing"       },
+    { path: "/photographer/settings",        icon: "fa-cog",              label: "Settings"       },
   ];
 
   if (location.pathname === "/login") return <>{children}</>;
@@ -77,6 +76,7 @@ const PhotographerLayout = ({ children }) => {
             <NavLink
               key={idx}
               to={item.path}
+              end={item.path === "/photographer/albums/create"}
               className={({ isActive }) => `mc-nav-item${isActive ? " active" : ""}`}
               title={collapsed ? item.label : ""}
               onClick={closeMobile}
@@ -143,11 +143,11 @@ const PhotographerLayout = ({ children }) => {
       <nav className={`mc-bottom-nav${mobileOpen ? " mc-bottom-nav-hidden" : ""}`}>
         <div className="mc-bottom-nav-inner">
           {[
-            { path: "/photographer/dashboard",   icon: "fa-chart-pie",       label: "Home"      },
-            { path: "/photographer/media",        icon: "fa-photo-video",     label: "Media"     },
-            { path: "/photographer/upload",       icon: "fa-cloud-upload-alt",label: "Upload"    },
-            { path: "/photographer/earnings",     icon: "fa-dollar-sign",     label: "Earnings"  },
-            { path: "/photographer/profile",      icon: "fa-user",            label: "Profile"   },
+            { path: "/photographer/dashboard",      icon: "fa-chart-pie",    label: "Home"      },
+            { path: "/photographer/albums",        icon: "fa-layer-group",  label: "Albums"    },
+            { path: "/photographer/albums/create", icon: "fa-plus-circle",  label: "New"       },
+            { path: "/photographer/earnings",      icon: "fa-dollar-sign",  label: "Earnings"  },
+            { path: "/photographer/profile",       icon: "fa-user",         label: "Profile"   },
           ].map((item, idx) => (
             <NavLink
               key={idx}
