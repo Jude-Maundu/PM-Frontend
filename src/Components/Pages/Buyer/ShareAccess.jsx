@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import axios from "axios";
 import { API_ENDPOINTS } from "../../../api/apiConfig";
 import { placeholderMedium } from "../../../utils/placeholders";
-import { getImageUrl } from "../../../utils/imageUrl";
+import { getImageUrl, resolveUrl } from "../../../utils/imageUrl";
 
 const POLL_INTERVAL = 3000;
 const MAX_POLLS = 60; // 3 min max
@@ -191,14 +191,19 @@ const ShareAccess = () => {
               style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(107,189,208,0.15)", backdropFilter: "blur(12px)" }}>
               <div className="row g-0">
                 {/* Cover image */}
-                <div className="col-md-5">
-                  <img
-                    src={resolveImage(shareData.media || (shareData.album?.media?.[0]) || shareData.album)}
-                    alt={shareData.media?.title || shareData.album?.name || "Shared"}
-                    className="w-100 h-100"
-                    style={{ objectFit: "cover", minHeight: "260px", maxHeight: "340px" }}
-                    onError={e => { e.target.src = placeholderMedium; }}
-                  />
+                <div className="col-md-5" style={{ background: "#0a1628", minHeight: "260px" }}>
+                  {(() => {
+                    const coverSrc = shareData.shareType === "album"
+                      ? (resolveUrl(shareData.album?.coverImage) || resolveImage(shareData.album?.media?.[0]))
+                      : resolveImage(shareData.media);
+                    return coverSrc && coverSrc !== placeholderMedium
+                      ? <img src={coverSrc} alt={shareData.media?.title || shareData.album?.name || "Shared"} className="w-100 h-100" style={{ objectFit: "cover", minHeight: "260px", maxHeight: "340px" }} onError={e => { e.target.style.display = "none"; }} />
+                      : <div className="w-100 h-100 d-flex flex-column align-items-center justify-content-center" style={{ minHeight: "260px", background: "linear-gradient(135deg,#0d2137,#0a1e32)" }}>
+                          <i className="fas fa-images" style={{ fontSize: "3rem", color: "rgba(107,189,208,0.3)", marginBottom: "0.75rem" }}></i>
+                          <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.8rem" }}>No cover image</span>
+                        </div>;
+                  })()}
+
                 </div>
 
                 {/* Details */}
@@ -283,44 +288,41 @@ const ShareAccess = () => {
             </div>
 
             {/* ── Album grid preview ── */}
-            {shareData.shareType === "album" && shareData.album?.media?.length > 0 && step === "view" && (
+            {shareData.shareType === "album" && step === "view" && (
               <div>
                 <h6 className="text-white-50 mb-3" style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "1px" }}>
-                  <i className="fas fa-images me-2"></i>Photos in this album
+                  <i className="fas fa-images me-2"></i>
+                  Photos in this album
+                  {shareData.album?.media?.length > 0 && <span className="ms-2">({shareData.album.media.length})</span>}
                 </h6>
-                <div className="row g-3">
-                  {shareData.album.media.slice(0, 6).map((item, idx) => (
-                    <div className="col-6 col-sm-4" key={item._id || idx}>
-                      <div className="rounded-3 overflow-hidden position-relative" style={{ aspectRatio: "4/3" }}>
-                        <img
-                          src={resolveImage(item)}
-                          alt={item.title || "Photo"}
-                          className="w-100 h-100"
-                          style={{ objectFit: "cover" }}
-                          onError={e => { e.target.src = placeholderMedium; }}
-                        />
-                        <div className="position-absolute bottom-0 start-0 end-0 p-2"
-                          style={{ background: "linear-gradient(transparent, rgba(0,0,0,0.75))" }}>
-                          <small className="text-white text-truncate d-block" style={{ fontSize: "0.7rem" }}>
-                            {item.title || "Untitled"}
-                          </small>
-                          <small style={{ color: "#6BBDD0", fontSize: "0.7rem" }}>KES {Number(item.price || 0).toLocaleString()}</small>
+
+                {(!shareData.album?.media || shareData.album.media.length === 0) ? (
+                  <div className="rounded-4 d-flex flex-column align-items-center justify-content-center py-5"
+                    style={{ background: "rgba(255,255,255,0.03)", border: "1px dashed rgba(107,189,208,0.2)" }}>
+                    <i className="fas fa-images mb-2" style={{ fontSize: "2rem", color: "rgba(107,189,208,0.3)" }}></i>
+                    <p className="text-white-50 mb-0" style={{ fontSize: "0.85rem" }}>No photos in this album yet.</p>
+                  </div>
+                ) : (
+                  <div style={{ columns: "3 160px", columnGap: "0.6rem" }}>
+                    {shareData.album.media.map((item, idx) => {
+                      const src = resolveImage(item);
+                      return (
+                        <div key={item._id || idx} style={{ breakInside: "avoid", marginBottom: "0.6rem", borderRadius: 10, overflow: "hidden", position: "relative" }}>
+                          {src && src !== placeholderMedium
+                            ? <img src={src} alt={item.title || "Photo"} style={{ width: "100%", display: "block", borderRadius: 10 }} loading="lazy" onError={e => { e.target.parentElement.style.background = "#0d2137"; e.target.style.display = "none"; }} />
+                            : <div style={{ width: "100%", aspectRatio: "4/3", background: "linear-gradient(135deg,#0d2137,#0a1628)", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                <i className="fas fa-image" style={{ color: "rgba(107,189,208,0.2)", fontSize: "1.5rem" }}></i>
+                              </div>
+                          }
+                          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0.4rem 0.5rem", background: "linear-gradient(transparent, rgba(0,0,0,0.8))", borderRadius: "0 0 10px 10px" }}>
+                            <div style={{ color: "#fff", fontSize: "0.65rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{item.title || "Untitled"}</div>
+                            {item.price > 0 && <div style={{ color: "#6BBDD0", fontSize: "0.65rem", fontWeight: 700 }}>KES {Number(item.price).toLocaleString()}</div>}
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  ))}
-                  {shareData.album.media.length > 6 && (
-                    <div className="col-6 col-sm-4">
-                      <div className="rounded-3 d-flex align-items-center justify-content-center"
-                        style={{ aspectRatio: "4/3", background: "rgba(107,189,208,0.1)", border: "1px solid rgba(107,189,208,0.2)" }}>
-                        <div className="text-center">
-                          <p className="text-white fw-bold mb-0" style={{ fontSize: "1.5rem" }}>+{shareData.album.media.length - 6}</p>
-                          <small className="text-white-50">more photos</small>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
 
