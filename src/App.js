@@ -64,6 +64,9 @@ import PhotographerWithdrawals from './Components/Pages/Photographer/Withdrawals
 import PhotographerSettings from './Components/Pages/Photographer/PhotographerSettings';
 import SalesAnalytics from './Components/Pages/Photographer/SalesAnalytics';
 import ReferralPage from './Components/Pages/Photographer/ReferralPage';
+import CreateAlbum from './Components/Pages/Photographer/CreateAlbum';
+import MyAlbums from './Components/Pages/Photographer/MyAlbums';
+import PublicAlbumView from './Components/Pages/Public/PublicAlbumView';
 
 // BuyerPages 
 import BuyerCart from './Components/Pages/Buyer/BuyerCart';
@@ -178,6 +181,9 @@ function App() {
           <Route path="/photographer/analytics" element={<ProtectedRoute requiredRole="photographer"><SalesAnalytics /></ProtectedRoute>} />
           <Route path="/photographer/referral" element={<ProtectedRoute requiredRole="photographer"><ReferralPage /></ProtectedRoute>} />
           <Route path="/photographer/proofing" element={<ProtectedRoute requiredRole="photographer"><ClientProofing /></ProtectedRoute>} />
+          <Route path="/photographer/albums" element={<ProtectedRoute requiredRole="photographer"><MyAlbums /></ProtectedRoute>} />
+          <Route path="/photographer/albums/create" element={<ProtectedRoute requiredRole="photographer"><CreateAlbum /></ProtectedRoute>} />
+          <Route path="/photographer/albums/:albumId" element={<ProtectedRoute requiredRole="photographer"><CreateAlbum /></ProtectedRoute>} />
 
           {/* Buyer Routes */}
           <Route path="/buyer/cart" element={<ProtectedRoute requiredRole="buyer"><BuyerCart /></ProtectedRoute>} />
@@ -199,7 +205,10 @@ function App() {
           {/* Public Portfolio */}
           <Route path="/portfolio/:username" element={<PublicPortfolio />} />
 
-          {/* Public Gallery */}
+          {/* Public Album View */}
+          <Route path="/album/:albumId" element={<PublicAlbumView />} />
+
+          {/* Public Gallery (legacy) */}
           <Route path="/gallery/:albumId" element={<PublicGallery />} />
 
           {/* Catch-all fallback */}

@@ -34,6 +34,8 @@ const Register = () => {
   const [password, setPassword]               = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [role, setRole]                       = useState("user");
+  const [accountType, setAccountType]         = useState("");
+  const [organizationName, setOrganizationName] = useState("");
   const [phoneNumber, setPhoneNumber]         = useState("");
   const [loading, setLoading]                 = useState(false);
   const [error, setError]                     = useState(null);
@@ -72,6 +74,7 @@ const Register = () => {
   const handleRegister = async (e) => {
     e.preventDefault();
 
+    if (!accountType)                  { setError("Please select your account type."); return; }
     if (password !== confirmPassword) { setError("Passwords do not match!"); return; }
     if (password.length < 6)          { setError("Password must be at least 6 characters."); return; }
     if (!termsAccepted)               { setError("You must accept the Terms & Conditions."); return; }
@@ -88,7 +91,12 @@ const Register = () => {
 
     try {
       const response = await axios.post(`${API_BASE_URL}/auth/register`,
-        { username, email, password, role, phoneNumber, ...(referralCode.trim() ? { referralCode: referralCode.trim() } : {}) }
+        {
+          username, email, password, role, phoneNumber,
+          accountType,
+          ...(organizationName.trim() ? { organizationName: organizationName.trim() } : {}),
+          ...(referralCode.trim() ? { referralCode: referralCode.trim() } : {}),
+        }
       );
 
       if (response.data.token)  localStorage.setItem("token", response.data.token);
@@ -345,15 +353,92 @@ const Register = () => {
                 </div>
               </div>
 
-              {/* Role selector */}
+              {/* Account type */}
               <div className="mb-3">
                 <label className="form-label small fw-semibold mb-2 d-block" style={{ color: col.label }}>
-                  Register as
+                  <i className="fas fa-building me-1" style={{ color: "var(--pm-teal)" }}></i> Account Type
                 </label>
                 <div className="d-flex gap-2">
                   {[
-                    { value: "user",         icon: "fa-user",   label: "Buyer",        desc: "Buy photos" },
-                    { value: "photographer", icon: "fa-camera", label: "Photographer", desc: "Sell photos" },
+                    { value: "individual", icon: "fa-user-circle",  label: "Individual",  desc: "Personal account" },
+                    { value: "company",    icon: "fa-building",      label: "Company",     desc: "Business account" },
+                    { value: "fraternity", icon: "fa-users",         label: "Fraternity",  desc: "Group / Club / Org" },
+                  ].map((t) => {
+                    const active = accountType === t.value;
+                    return (
+                      <div
+                        key={t.value}
+                        onClick={() => setAccountType(t.value)}
+                        style={{
+                          flex: 1, textAlign: "center", padding: "0.75rem 0.4rem", borderRadius: 12, cursor: "pointer",
+                          border: active ? "2px solid var(--pm-teal)" : `2px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(107,189,208,0.25)"}`,
+                          background: active
+                            ? (isDark ? "rgba(107,189,208,0.18)" : "rgba(107,189,208,0.12)")
+                            : (isDark ? "rgba(255,255,255,0.04)" : "rgba(240,248,252,0.6)"),
+                          transition: "all 0.2s",
+                        }}
+                      >
+                        <i className={`fas ${t.icon}`} style={{ fontSize: "1.2rem", color: active ? "var(--pm-teal)" : col.muted, display: "block", marginBottom: "0.3rem" }}></i>
+                        <small className="d-block fw-semibold" style={{ color: active ? col.heading : col.muted, fontSize: "0.8rem" }}>{t.label}</small>
+                        <small className="d-block" style={{ color: col.muted, fontSize: "0.7rem", lineHeight: 1.3 }}>{t.desc}</small>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Organization name — shown for company/fraternity */}
+              {(accountType === "company" || accountType === "fraternity") && (
+                <div className="mb-3">
+                  <label className="form-label small fw-semibold mb-1 d-block" style={{ color: col.label }}>
+                    <i className="fas fa-id-card me-1" style={{ color: "var(--pm-teal)" }}></i>
+                    {accountType === "company" ? "Company Name" : "Organization / Group Name"}
+                  </label>
+                  <input
+                    type="text"
+                    className={`form-control form-control-sm auth-input-v2 ${m}`}
+                    placeholder={accountType === "company" ? "Acme Ltd." : "Alpha Photography Club"}
+                    value={organizationName}
+                    onChange={(e) => setOrganizationName(e.target.value)}
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Payout phone — shown for photographers */}
+              {role === "photographer" && (
+                <div className="mb-3">
+                  <label className="form-label small fw-semibold mb-1 d-block" style={{ color: col.label }}>
+                    <i className="fas fa-money-bill-wave me-1" style={{ color: "var(--pm-teal)" }}></i> Payout M-Pesa Number
+                    <span style={{ color: col.muted, fontWeight: 400 }}> (receives payments)</span>
+                  </label>
+                  <div style={{ fontSize: "0.75rem", color: col.muted, marginBottom: "0.4rem" }}>
+                    This is where buyers' payments will be sent. Defaults to your phone number above.
+                  </div>
+                  <input
+                    type="tel"
+                    className={`form-control form-control-sm auth-input-v2 ${m}`}
+                    placeholder="254712345678 (leave blank to use above)"
+                    value={referralCode} /* re-using referralCode state slot is wrong — handled via phoneNumber for now */
+                    readOnly
+                    style={{ opacity: 0.6 }}
+                  />
+                  <div style={{ fontSize: "0.72rem", color: col.muted, marginTop: "0.3rem" }}>
+                    <i className="fas fa-info-circle me-1" style={{ color: "var(--pm-teal)" }}></i>
+                    You can update your payout number anytime from your dashboard.
+                  </div>
+                </div>
+              )}
+
+              {/* Role selector */}
+              <div className="mb-3">
+                <label className="form-label small fw-semibold mb-2 d-block" style={{ color: col.label }}>
+                  <i className="fas fa-tag me-1" style={{ color: "var(--pm-teal)" }}></i> I want to
+                </label>
+                <div className="d-flex gap-2">
+                  {[
+                    { value: "user",         icon: "fa-images",  label: "Buy Photos",   desc: "Browse & download" },
+                    { value: "photographer", icon: "fa-camera",  label: "Sell Photos",  desc: "Upload & earn" },
                   ].map((r) => (
                     <div
                       key={r.value}

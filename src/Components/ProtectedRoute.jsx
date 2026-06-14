@@ -100,19 +100,68 @@ const ProtectedRoute = ({ children, requiredRole }) => {
     checkAuth();
   }, [location.pathname]);
 
-  // Show loading spinner while checking authentication
   if (isLoading) {
     return (
-      <div className="min-vh-100 d-flex align-items-center justify-content-center bg-dark">
-        <div className="text-center">
-          <div className="spinner-border text-warning mb-3" role="status" style={{ width: '3rem', height: '3rem' }}>
-            <span className="visually-hidden">Loading...</span>
+      <div style={{
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "linear-gradient(135deg, #1A2E3B 0%, #0f1e28 100%)",
+      }}>
+        <div style={{ textAlign: "center" }}>
+          {/* Logo mark */}
+          <div style={{
+            width: 72,
+            height: 72,
+            borderRadius: "50%",
+            background: "rgba(107,189,208,0.12)",
+            border: "2px solid rgba(107,189,208,0.35)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            margin: "0 auto 1.25rem",
+          }}>
+            <i className="fas fa-camera" style={{ fontSize: "1.8rem", color: "#6BBDD0" }}></i>
           </div>
-          <h4 className="text-white">Checking authentication...</h4>
-          {authError && (
-            <p className="text-white-50 small mt-2">{authError}</p>
-          )}
+
+          {/* Wordmark */}
+          <div style={{
+            fontFamily: "Georgia, 'Times New Roman', serif",
+            fontWeight: 700,
+            fontSize: "1.9rem",
+            color: "#fff",
+            letterSpacing: "-0.02em",
+            marginBottom: "0.3rem",
+          }}>
+            Relic Snap
+          </div>
+          <div style={{ fontSize: "0.78rem", color: "rgba(107,189,208,0.7)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "2.5rem" }}>
+            Photography Marketplace
+          </div>
+
+          {/* Pulse dots */}
+          <div style={{ display: "flex", gap: "0.5rem", justifyContent: "center" }}>
+            {[0, 1, 2].map(i => (
+              <div key={i} style={{
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                background: "#6BBDD0",
+                animation: `splash-pulse 1.2s ease-in-out ${i * 0.2}s infinite`,
+                opacity: 0.7,
+              }} />
+            ))}
+          </div>
         </div>
+
+        <style>{`
+          @keyframes splash-pulse {
+            0%, 80%, 100% { transform: scale(0.6); opacity: 0.35; }
+            40% { transform: scale(1); opacity: 1; }
+          }
+        `}</style>
       </div>
     );
   }

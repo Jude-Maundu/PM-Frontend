@@ -129,7 +129,7 @@ const BuyerDashboard = () => {
                 fontSize: "0.95rem", display: "inline-flex", alignItems: "center", gap: "0.5rem",
                 boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
               }}>
-                <i className="fas fa-search"></i>Browse Photos
+                <i className="fas fa-images"></i>Browse Albums
               </Link>
               <Link to="/buyer/downloads" style={{
                 background: "rgba(255,255,255,0.18)", color: "#fff", fontWeight: 600,
@@ -222,7 +222,7 @@ const BuyerDashboard = () => {
           }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.1rem" }}>
               <h6 style={{ margin: 0, fontWeight: 700, color: "var(--mc-text)", fontSize: "1rem" }}>
-                <i className="fas fa-star me-2" style={{ color: "var(--mc-accent)" }}></i>Discover Photos
+                <i className="fas fa-layer-group me-2" style={{ color: "var(--mc-accent)" }}></i>Discover Albums
               </h6>
               <Link to="/explore" style={{ fontSize: "0.8rem", color: "var(--mc-accent)", textDecoration: "none", fontWeight: 600 }}>
                 Browse all

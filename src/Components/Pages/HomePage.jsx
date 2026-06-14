@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import { getAllMedia } from "../../api/API";
 import ThemeToggle from "../ThemeToggle";
 import { Helmet } from "react-helmet-async";
+import FaceSearchModal from "../FaceSearchModal";
 
 const HomePage = () => {
   const [loading, setLoading] = useState(true);
@@ -14,6 +15,7 @@ const HomePage = () => {
   const [apiError, setApiError] = useState(null);
   const [apiLoading, setApiLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showFaceSearch, setShowFaceSearch] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 1200);
@@ -44,14 +46,14 @@ const HomePage = () => {
   }, []);
 
   const categories = [
-    { name: "Wildlife",   icon: "fas fa-paw",           count: "8.4k"  },
-    { name: "Culture",    icon: "fas fa-drum",           count: "5.2k"  },
-    { name: "Nairobi",    icon: "fas fa-city",           count: "7.1k"  },
-    { name: "Coast",      icon: "fas fa-umbrella-beach", count: "4.6k"  },
-    { name: "Landscape",  icon: "fas fa-mountain",       count: "6.8k"  },
-    { name: "Sports",     icon: "fas fa-running",        count: "3.9k"  },
-    { name: "Markets",    icon: "fas fa-store",          count: "2.7k"  },
-    { name: "Portraits",  icon: "fas fa-user",           count: "5.5k"  },
+    { name: "Weddings",     icon: "fas fa-rings-wedding",  count: "3.2k", color: "#F06B8D"  },
+    { name: "Graduations",  icon: "fas fa-graduation-cap", count: "4.7k", color: "#6BBDD0"  },
+    { name: "Marathons",    icon: "fas fa-running",        count: "2.1k", color: "#F5A623"  },
+    { name: "Corporate",    icon: "fas fa-briefcase",      count: "1.8k", color: "#9D7FEB"  },
+    { name: "Wildlife",     icon: "fas fa-paw",            count: "8.4k", color: "#4CC9A6"  },
+    { name: "Culture",      icon: "fas fa-drum",           count: "5.2k", color: "#F06B8D"  },
+    { name: "Landscape",    icon: "fas fa-mountain",       count: "6.8k", color: "#6BBDD0"  },
+    { name: "Portraits",    icon: "fas fa-user",           count: "5.5k", color: "#1A2E3B"  },
   ];
 
   const howItWorks = [
@@ -66,15 +68,6 @@ const HomePage = () => {
     { name: "Amina Hassan",   role: "Brand Designer, Mombasa",      feedback: "Incredible Kenyan photography — from Maasai Mara sunsets to Nairobi street life. My go-to source.", avatar: "https://randomuser.me/api/portraits/women/68.jpg", rating: 5 },
   ];
 
-  const featuredPhotos = [
-    { id: 1, title: "Maasai Mara Elephants",  photographer: "Daniel Kariuki", price: "3,750", image: "https://images.unsplash.com/photo-1516426122078-c23e76319801?w=600&h=400&fit=crop", likes: 412 },
-    { id: 2, title: "Nairobi Skyline",        photographer: "Faith Mwangi",   price: "5,050", image: "https://images.unsplash.com/photo-1523805009345-7448845a9e53?w=600&h=400&fit=crop", likes: 287 },
-    { id: 3, title: "Diani Sunrise",          photographer: "Said Hamisi",    price: "4,400", image: "https://images.unsplash.com/photo-1590523277543-a94d2e4eb00b?w=600&h=400&fit=crop", likes: 334 },
-    { id: 4, title: "Savanna at Dusk",        photographer: "Grace Wambui",   price: "3,500", image: "https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=600&h=400&fit=crop", likes: 198 },
-    { id: 5, title: "Maasai Warrior",         photographer: "James Kimani",   price: "4,150", image: "https://images.unsplash.com/photo-1589308078059-be1415eab4c3?w=600&h=400&fit=crop", likes: 521 },
-    { id: 6, title: "Lions at Sunset",        photographer: "Sylvia Odhiambo",price: "5,850", image: "https://images.unsplash.com/photo-1579226905180-636b76d96082?w=600&h=400&fit=crop", likes: 378 },
-  ];
-
   const stats = [
     { value: "20K+",  label: "Photos"           },
     { value: "5K+",   label: "Buyers"           },
@@ -82,7 +75,7 @@ const HomePage = () => {
     { value: "47",    label: "Counties Covered" },
   ];
 
-  const displayedPhotos = apiMedia.length > 0 ? apiMedia.slice(0, 6) : featuredPhotos;
+  const displayedPhotos = apiMedia.slice(0, 6);
 
   const SkeletonBox = ({ width, height, className = "" }) => (
     <div className={`skeleton-box ${className}`} style={{ width: width || "100%", height: height || "20px" }} />
@@ -200,11 +193,13 @@ const HomePage = () => {
                         <i className="fas fa-compass me-2"></i>Explore Photos
                       </button>
                     </Link>
-                    <Link to="/register">
-                      <button className="btn px-4 py-2 rounded-pill" style={{ background: "rgba(255,255,255,0.18)", color: "#fff", border: "1.5px solid rgba(255,255,255,0.5)", backdropFilter: "blur(8px)", fontSize: "0.95rem" }}>
-                        <i className="fas fa-camera me-2"></i>Sell Your Photos
-                      </button>
-                    </Link>
+                    <button
+                      onClick={() => setShowFaceSearch(true)}
+                      className="btn px-4 py-2 rounded-pill"
+                      style={{ background: "rgba(255,255,255,0.18)", color: "#fff", border: "1.5px solid rgba(255,255,255,0.5)", backdropFilter: "blur(8px)", fontSize: "0.95rem" }}
+                    >
+                      <i className="fas fa-user-circle me-2"></i>Find My Photos
+                    </button>
                   </div>
 
                   {/* Stats */}
@@ -374,14 +369,14 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* ── Featured Photos Grid ── */}
+      {/* ── Featured Albums Grid ── */}
       <section className="py-5" style={{ paddingTop: "5rem", paddingBottom: "5rem", background: "var(--pm-white)" }}>
         <div className="container">
           <div className="text-center mb-5">
             <span className="section-label">Trending Now</span>
-            <h2 className="home-feature-heading" style={{ fontSize: "clamp(1.8rem,3.5vw,2.6rem)" }}>Featured Kenyan Photos</h2>
+            <h2 className="home-feature-heading" style={{ fontSize: "clamp(1.8rem,3.5vw,2.6rem)" }}>Featured Albums</h2>
             <p style={{ color: "var(--pm-text-muted)", maxWidth: 480, margin: "0 auto", fontSize: "0.95rem" }}>
-              Most popular photos this week — handpicked from across Kenya's 47 counties.
+              Curated photography albums from across Kenya — events, wildlife, portraits and more.
             </p>
           </div>
 
@@ -445,7 +440,7 @@ const HomePage = () => {
           <div className="text-center mt-5">
             <Link to="/explore">
               <button className="btn-pm-outline btn px-5 py-2">
-                View All Photos <i className="fas fa-arrow-right ms-2"></i>
+                Browse All Albums <i className="fas fa-arrow-right ms-2"></i>
               </button>
             </Link>
           </div>
@@ -479,6 +474,46 @@ const HomePage = () => {
         </div>
       </section>
 
+      {/* ── Find Your Photos — AI Face Search ── */}
+      <section style={{ background: "var(--pm-navy)", paddingTop: "5.5rem", paddingBottom: "5.5rem" }}>
+        <div className="container">
+          <div className="row align-items-center gy-5">
+            <div className="col-12 col-lg-6">
+              <span className="section-label" style={{ color: "rgba(107,189,208,0.85)" }}>AI Face Search</span>
+              <h2 style={{ fontFamily: "var(--font-serif)", fontWeight: 700, color: "#fff", fontSize: "clamp(1.8rem,3.5vw,2.8rem)", lineHeight: 1.2, margin: "0.75rem 0 1rem" }}>
+                Attended an event?<br /><em style={{ color: "var(--pm-teal, #6BBDD0)", fontStyle: "normal" }}>Find your photos instantly.</em>
+              </h2>
+              <p style={{ color: "rgba(255,255,255,0.65)", fontSize: "1rem", lineHeight: 1.7, marginBottom: "1.75rem", maxWidth: 480 }}>
+                Our AI-powered face search finds every photo of you from weddings, graduations, marathons, and more — just upload a selfie. No scrolling through hundreds of photos.
+              </p>
+              <button
+                onClick={() => setShowFaceSearch(true)}
+                style={{ background: "var(--pm-teal, #6BBDD0)", color: "#fff", border: "none", borderRadius: "var(--radius-pill, 999px)", padding: "0.85rem 2rem", fontWeight: 700, fontSize: "1rem", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "0.6rem", boxShadow: "0 4px 18px rgba(107,189,208,0.35)" }}
+              >
+                <i className="fas fa-camera"></i> Try Face Search — It's Free
+              </button>
+            </div>
+            <div className="col-12 col-lg-6">
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                {[
+                  { icon: "fa-rings-wedding", label: "Weddings", color: "#F06B8D" },
+                  { icon: "fa-graduation-cap", label: "Graduations", color: "#6BBDD0" },
+                  { icon: "fa-running", label: "Marathons", color: "#F5A623" },
+                  { icon: "fa-briefcase", label: "Corporate", color: "#9D7FEB" },
+                ].map(ev => (
+                  <div key={ev.label} style={{ background: "rgba(255,255,255,0.06)", borderRadius: 16, padding: "1.25rem", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", gap: "0.85rem" }}>
+                    <span style={{ width: 44, height: 44, borderRadius: 12, background: ev.color + "22", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <i className={`fas ${ev.icon}`} style={{ fontSize: "1.3rem", color: ev.color }}></i>
+                    </span>
+                    <span style={{ color: "#fff", fontWeight: 600, fontSize: "0.95rem" }}>{ev.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── Categories ── */}
       <section style={{ background: "var(--pm-white)", paddingTop: "5.5rem", paddingBottom: "5.5rem" }}>
         <div className="container">
@@ -493,7 +528,7 @@ const HomePage = () => {
             {categories.map((cat, idx) => (
               <div key={idx} className="col-6 col-sm-4 col-md-3">
                 <Link to={`/explore?category=${cat.name.toLowerCase()}`} className="home-cat-card">
-                  <div className="home-cat-icon"><i className={cat.icon}></i></div>
+                  <div className="home-cat-icon" style={{ color: cat.color }}><i className={cat.icon}></i></div>
                   <div className="home-cat-name">{cat.name}</div>
                   <div className="home-cat-count">{cat.count} photos</div>
                 </Link>
@@ -668,6 +703,13 @@ const HomePage = () => {
           </div>
         </div>
       </footer>
+
+      {showFaceSearch && (
+        <FaceSearchModal
+          onClose={() => setShowFaceSearch(false)}
+          onResults={() => {}}
+        />
+      )}
     </div>
   );
 };

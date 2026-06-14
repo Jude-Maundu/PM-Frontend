@@ -10,8 +10,9 @@ import { getAuthHeaders, getCurrentUserId, getDisplayName, getStoredUser } from 
 const API = API_BASE_URL;
 
 const PhotographerDashboard = () => {
-  const [stats, setStats]             = useState({ totalMedia: 0, totalSales: 0, totalEarnings: 0, pendingEarnings: 0 });
+  const [stats, setStats]             = useState({ totalAlbums: 0, totalMedia: 0, totalSales: 0, totalEarnings: 0, pendingEarnings: 0 });
   const [recentSales, setRecentSales] = useState([]);
+  const [myAlbums, setMyAlbums]       = useState([]);
   const [myMedia, setMyMedia]         = useState([]);
   const [imageUrls, setImageUrls]     = useState({});
   const [loading, setLoading]         = useState(true);
@@ -29,10 +30,11 @@ const PhotographerDashboard = () => {
     if (!photographerId) { setLoading(false); return; }
     try {
       setLoading(true);
-      const [mediaRes, earningsRes, salesRes] = await Promise.allSettled([
+      const [mediaRes, earningsRes, salesRes, albumsRes] = await Promise.allSettled([
         axios.get(`${API}/media/mine`, { headers }),
         axios.get(API_ENDPOINTS.PAYMENTS.EARNINGS_SUMMARY(photographerId), { headers }),
         axios.get(API_ENDPOINTS.PAYMENTS.TRANSACTIONS(photographerId), { headers }),
+        axios.get(API_ENDPOINTS.MEDIA.GET_ALBUMS, { headers }),
       ]);
 
       const media = mediaRes.status === "fulfilled"
@@ -42,9 +44,14 @@ const PhotographerDashboard = () => {
       const sales    = salesRes.status === "fulfilled"
         ? (Array.isArray(salesRes.value.data) ? salesRes.value.data : [])
         : [];
+      const albums   = albumsRes.status === "fulfilled"
+        ? (albumsRes.value.data?.albums || albumsRes.value.data || [])
+        : [];
 
       setMyMedia(media);
+      setMyAlbums(albums);
       setStats({
+        totalAlbums:     albums.length,
         totalMedia:      media.length,
         totalSales:      sales.length,
         totalEarnings:   earnings?.total || 0,
@@ -111,21 +118,21 @@ const PhotographerDashboard = () => {
                 : `You have ${stats.totalMedia} photo${stats.totalMedia !== 1 ? "s" : ""} on the marketplace.`}
             </p>
             <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-              <Link to="/photographer/upload" style={{
+              <Link to="/photographer/albums/create" style={{
                 background: "#fff", color: "var(--mc-hero-from)", fontWeight: 700,
                 padding: "0.7rem 1.5rem", borderRadius: 12, textDecoration: "none",
                 fontSize: "0.95rem", display: "inline-flex", alignItems: "center", gap: "0.5rem",
                 boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
               }}>
-                <i className="fas fa-cloud-upload-alt"></i>Upload Photo
+                <i className="fas fa-plus"></i>New Album
               </Link>
-              <Link to="/photographer/media" style={{
+              <Link to="/photographer/albums" style={{
                 background: "rgba(255,255,255,0.18)", color: "#fff", fontWeight: 600,
                 padding: "0.7rem 1.5rem", borderRadius: 12, textDecoration: "none",
                 fontSize: "0.95rem", display: "inline-flex", alignItems: "center", gap: "0.5rem",
                 border: "1px solid rgba(255,255,255,0.3)",
               }}>
-                <i className="fas fa-images"></i>My Photos
+                <i className="fas fa-images"></i>My Albums
               </Link>
             </div>
           </div>
@@ -147,8 +154,8 @@ const PhotographerDashboard = () => {
         {/* ── STATS ROW ── */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
           {[
-            { icon: "fa-images",       label: "Total Photos",     value: stats.totalMedia,                                        color: "#6BBDD0", bg: "rgba(107,189,208,0.12)" },
-            { icon: "fa-shopping-bag", label: "Photos Sold",      value: stats.totalSales,                                        color: "#4CC9A6", bg: "rgba(76,201,166,0.12)"  },
+            { icon: "fa-layer-group",  label: "Albums",           value: stats.totalAlbums,                                       color: "#6BBDD0", bg: "rgba(107,189,208,0.12)" },
+            { icon: "fa-shopping-bag", label: "Sales",            value: stats.totalSales,                                        color: "#4CC9A6", bg: "rgba(76,201,166,0.12)"  },
             { icon: "fa-coins",        label: "Total Earnings",   value: `KES ${Number(stats.totalEarnings).toLocaleString()}`,   color: "#F5A623", bg: "rgba(245,166,35,0.12)"  },
             { icon: "fa-wallet",       label: "Available Balance",value: `KES ${Number(stats.pendingEarnings).toLocaleString()}`, color: "#9D7FEB", bg: "rgba(157,127,235,0.12)" },
           ].map(stat => (
@@ -181,12 +188,12 @@ const PhotographerDashboard = () => {
           </h6>
           <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
             {[
-              { to: "/photographer/upload",    icon: "fa-cloud-upload-alt", label: "Upload",    color: "#6BBDD0" },
-              { to: "/photographer/media",     icon: "fa-photo-video",      label: "My Media",  color: "#4CC9A6" },
-              { to: "/photographer/earnings",  icon: "fa-coins",            label: "Earnings",  color: "#F5A623" },
-              { to: "/photographer/analytics", icon: "fa-chart-line",       label: "Analytics", color: "#9D7FEB" },
-              { to: "/photographer/profile",   icon: "fa-user",             label: "Profile",   color: "#F06B8D" },
-              { to: "/photographer/portfolio", icon: "fa-globe",            label: "Portfolio", color: "#1A2E3B" },
+              { to: "/photographer/albums/create", icon: "fa-plus-circle",  label: "New Album",  color: "#6BBDD0" },
+              { to: "/photographer/albums",        icon: "fa-layer-group",  label: "Albums",     color: "#4CC9A6" },
+              { to: "/photographer/earnings",      icon: "fa-coins",        label: "Earnings",   color: "#F5A623" },
+              { to: "/photographer/analytics",     icon: "fa-chart-line",   label: "Analytics",  color: "#9D7FEB" },
+              { to: "/photographer/profile",       icon: "fa-user",         label: "Profile",    color: "#F06B8D" },
+              { to: "/photographer/portfolio",     icon: "fa-globe",        label: "Portfolio",  color: "#1A2E3B" },
             ].map(action => (
               <Link key={action.to} to={action.to} style={{
                 display: "flex", flexDirection: "column", alignItems: "center", gap: "0.45rem",
@@ -203,51 +210,45 @@ const PhotographerDashboard = () => {
         {/* ── BOTTOM GRID: Recent Photos + Recent Sales ── */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1.5rem" }}>
 
-          {/* Recent Photos */}
+          {/* Recent Albums */}
           <div style={{
             background: "var(--mc-card-bg)", borderRadius: 16, padding: "1.5rem",
             border: "1px solid var(--mc-border)", boxShadow: "var(--mc-card-shadow)",
           }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.1rem" }}>
               <h6 style={{ margin: 0, fontWeight: 700, color: "var(--mc-text)", fontSize: "1rem" }}>
-                <i className="fas fa-images me-2" style={{ color: "var(--mc-accent)" }}></i>Recent Photos
+                <i className="fas fa-layer-group me-2" style={{ color: "var(--mc-accent)" }}></i>Recent Albums
               </h6>
-              <Link to="/photographer/media" style={{ fontSize: "0.8rem", color: "var(--mc-accent)", textDecoration: "none", fontWeight: 600 }}>
+              <Link to="/photographer/albums" style={{ fontSize: "0.8rem", color: "var(--mc-accent)", textDecoration: "none", fontWeight: 600 }}>
                 View all
               </Link>
             </div>
 
-            {myMedia.length === 0 ? (
+            {myAlbums.length === 0 ? (
               <div style={{ textAlign: "center", padding: "2.5rem 1rem" }}>
-                <i className="fas fa-camera fa-2x" style={{ color: "var(--mc-accent)", display: "block", marginBottom: "0.75rem", opacity: 0.45 }}></i>
-                <p style={{ color: "var(--mc-text-muted)", margin: "0 0 0.5rem", fontSize: "0.9rem" }}>No photos yet</p>
-                <Link to="/photographer/upload" style={{ color: "var(--mc-accent)", fontSize: "0.85rem", fontWeight: 600 }}>
-                  Upload your first photo →
+                <i className="fas fa-layer-group fa-2x" style={{ color: "var(--mc-accent)", display: "block", marginBottom: "0.75rem", opacity: 0.45 }}></i>
+                <p style={{ color: "var(--mc-text-muted)", margin: "0 0 0.5rem", fontSize: "0.9rem" }}>No albums yet</p>
+                <Link to="/photographer/albums/create" style={{ color: "var(--mc-accent)", fontSize: "0.85rem", fontWeight: 600 }}>
+                  Create your first album →
                 </Link>
               </div>
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.5rem" }}>
-                {myMedia.slice(0, 9).map((m, i) => {
-                  const url        = imageUrls[m._id] || getImageUrl(m, placeholderSmall);
-                  const isRejected = !!m.rejectionReason;
-                  const isApproved = m.isApproved === true && !isRejected;
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+                {myAlbums.slice(0, 5).map((album, i) => {
+                  const cover = album.coverImage
+                    ? (album.coverImage.startsWith("http") ? album.coverImage : `${API.replace("/api", "")}/${album.coverImage}`)
+                    : null;
                   return (
-                    <div key={i} style={{ position: "relative", borderRadius: 10, overflow: "hidden", aspectRatio: "1", background: "var(--mc-bg)" }}>
-                      <img
-                        src={url || placeholderSmall}
-                        alt={m.title || ""}
-                        onError={e => { e.target.src = placeholderSmall; }}
-                        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                      />
-                      <div style={{
-                        position: "absolute", top: 4, right: 4,
-                        background: isRejected ? "rgba(220,53,69,0.92)" : isApproved ? "rgba(76,201,166,0.92)" : "rgba(245,166,35,0.92)",
-                        color: "#fff", fontSize: "0.6rem", fontWeight: 700,
-                        padding: "2px 6px", borderRadius: 4,
-                      }}>
-                        {isRejected ? "Rejected" : isApproved ? "Live" : "Pending"}
+                    <Link key={i} to={`/photographer/albums/${album._id}`} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.6rem 0.75rem", borderRadius: 10, background: "var(--mc-bg)", border: "1px solid var(--mc-border)" }}>
+                      <div style={{ width: 42, height: 42, borderRadius: 8, overflow: "hidden", flexShrink: 0, background: "rgba(107,189,208,0.12)" }}>
+                        {cover ? <img src={cover} alt={album.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}><i className="fas fa-images" style={{ color: "var(--mc-accent)", fontSize: "1rem" }}></i></div>}
                       </div>
-                    </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 600, fontSize: "0.85rem", color: "var(--mc-text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{album.name}</div>
+                        <div style={{ fontSize: "0.72rem", color: "var(--mc-text-muted)" }}>{album.mediaCount || 0} photos · {album.isPrivate ? "Private" : "Public"}</div>
+                      </div>
+                      {album.price > 0 && <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#4CC9A6", flexShrink: 0 }}>KES {Number(album.price).toLocaleString()}</span>}
+                    </Link>
                   );
                 })}
               </div>
