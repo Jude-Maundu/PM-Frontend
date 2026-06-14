@@ -2134,6 +2134,7 @@ nav.navbar.home-navbar.scrolled {
 
 /* Page content wrapper (padding below topbar) */
 .mc-page { padding: 1.5rem 1.5rem; }
+.mc-content { flex: 1; overflow-y: auto; background: var(--mc-bg); min-height: 0; }
 
 /* ── Mobile bottom nav ── */
 .mc-bottom-nav {
@@ -2281,7 +2282,7 @@ nav.navbar.home-navbar.scrolled {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
-  padding: 0 1.5rem 1.25rem;
+  padding: 0 0 1.25rem;
 }
 
 .mc-stat-card {
@@ -2351,7 +2352,7 @@ nav.navbar.home-navbar.scrolled {
   display: grid;
   grid-template-columns: 1fr 1fr 240px;
   gap: 1rem;
-  padding: 0 1.5rem 2rem;
+  padding: 0 0 2rem;
   align-items: start;
 }
 
@@ -2757,7 +2758,7 @@ nav.navbar.home-navbar.scrolled {
   .mc-hero h2 { font-size: 1.15rem !important; }
   .mc-hero-art { font-size: 2.5rem; }
   .mc-topbar { padding: 0.75rem 1rem; gap: 0.6rem; }
-  .mc-stats-row, .mc-bottom-grid { padding-left: 1rem; padding-right: 1rem; }
+  .mc-stats-row, .mc-bottom-grid { padding-left: 0; padding-right: 0; }
   .mc-hero { margin: 0.5rem 1rem 1rem; }
   /* extra top gap between topbar and content; bottom padding clears the bottom nav */
   .mc-page { padding: 1rem 1rem 80px; }

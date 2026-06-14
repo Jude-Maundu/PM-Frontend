@@ -137,7 +137,7 @@ const AdminLayout = ({ children }) => {
         </div>
 
         {/* Page content */}
-        <div className="mc-page">
+        <div className="mc-content">
           {children}
         </div>
       </main>

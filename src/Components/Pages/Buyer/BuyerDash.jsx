@@ -96,7 +96,7 @@ const BuyerDashboard = () => {
 
   return (
     <BuyerLayout>
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "1.5rem 1rem 3rem" }}>
+      <div style={{ padding: "1.5rem 1.5rem 3rem" }}>
 
         {/* ── WELCOME HERO ── */}
         <div style={{
