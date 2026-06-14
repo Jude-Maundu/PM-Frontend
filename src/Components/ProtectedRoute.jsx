@@ -108,23 +108,22 @@ const ProtectedRoute = ({ children, requiredRole }) => {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        background: "linear-gradient(135deg, #1A2E3B 0%, #0f1e28 100%)",
+        backgroundImage: "url('/Splash%20.jpeg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        position: "relative",
       }}>
-        <div style={{ textAlign: "center" }}>
-          {/* Logo mark */}
-          <div style={{
-            width: 72,
-            height: 72,
-            borderRadius: "50%",
-            background: "rgba(107,189,208,0.12)",
-            border: "2px solid rgba(107,189,208,0.35)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            margin: "0 auto 1.25rem",
-          }}>
-            <i className="fas fa-camera" style={{ fontSize: "1.8rem", color: "#6BBDD0" }}></i>
-          </div>
+        {/* Dark overlay */}
+        <div style={{ position: "absolute", inset: 0, background: "rgba(10,20,28,0.6)" }} />
+
+        <div style={{ textAlign: "center", position: "relative", zIndex: 1 }}>
+          {/* Logo image */}
+          <img
+            src="/rs-logo.png"
+            alt="Relic Snap"
+            style={{ width: 90, height: 90, objectFit: "contain", marginBottom: "1.25rem", filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.5))" }}
+          />
 
           {/* Wordmark */}
           <div style={{
@@ -137,7 +136,7 @@ const ProtectedRoute = ({ children, requiredRole }) => {
           }}>
             Relic Snap
           </div>
-          <div style={{ fontSize: "0.78rem", color: "rgba(107,189,208,0.7)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "2.5rem" }}>
+          <div style={{ fontSize: "0.78rem", color: "rgba(107,189,208,0.85)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "2.5rem" }}>
             Photography Marketplace
           </div>
 

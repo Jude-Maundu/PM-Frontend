@@ -130,7 +130,7 @@ const ShareAccess = () => {
       <nav style={{ background: "rgba(10,22,40,0.95)", borderBottom: "1px solid rgba(107,189,208,0.2)", padding: "14px 24px" }}
         className="d-flex align-items-center justify-content-between">
         <span className="fw-bold text-white" style={{ fontFamily: "'Playfair Display', serif", fontSize: "1.2rem" }}>
-          <i className="fas fa-camera me-2" style={{ color: "#6BBDD0" }}></i>
+          <img src="/rs-logo.png" alt="Relic Snap" style={{ width: 28, height: 28, objectFit: "contain", marginRight: "0.5rem" }} />
           Relic Snap
         </span>
         <div className="d-flex gap-2">

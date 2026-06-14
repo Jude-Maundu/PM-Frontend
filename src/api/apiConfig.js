@@ -168,6 +168,7 @@ const API_ENDPOINTS = {
   // ==================== SHARE ====================
   SHARE: {
     GENERATE: `${API_BASE_URL}/share/generate`,
+    SHARE_ALBUM: (albumId) => `${API_BASE_URL}/share/album/${albumId}/share`,
     ACCESS: (token) => `${API_BASE_URL}/share/${token}`,
     DOWNLOAD: (token) => `${API_BASE_URL}/share/${token}/download`,
     LIST: `${API_BASE_URL}/share/list`,
@@ -175,6 +176,8 @@ const API_ENDPOINTS = {
     REVOKE: (token) => `${API_BASE_URL}/share/${token}/revoke`,
     PURCHASE: (token) => `${API_BASE_URL}/share/${token}/purchase`,
     PAYMENT_STATUS: (token, requestId) => `${API_BASE_URL}/share/${token}/payment/${requestId}`,
+    GUEST_BUY: `${API_BASE_URL}/share/guest-buy`,
+    GUEST_STATUS: (requestId) => `${API_BASE_URL}/share/guest-status/${requestId}`,
   },
 
   // ==================== NOTIFICATIONS ====================

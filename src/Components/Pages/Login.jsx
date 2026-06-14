@@ -151,7 +151,7 @@ const Login = () => {
           <img src="https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=300&h=200&fit=crop" alt="" />
         </div>
         <div className="auth-panel-brand">
-          <div className="auth-panel-logo-icon"><i className="fas fa-camera"></i></div>
+          <div className="auth-panel-logo-icon" style={{ background: "none", border: "none", padding: 0 }}><img src="/rs-logo.png" alt="Relic Snap" style={{ width: "100%", height: "100%", objectFit: "contain" }} /></div>
           <h2 className="auth-panel-heading">Relic Snap</h2>
           <p className="auth-panel-sub">Your gateway to stunning photography</p>
           <div className="auth-panel-stats">
@@ -166,9 +166,7 @@ const Login = () => {
       <div className="auth-form-panel">
         <div className="auth-form-inner">
           <div className="d-flex d-lg-none align-items-center gap-2 mb-4">
-            <div className="auth-panel-logo-icon" style={{ width: 40, height: 40, fontSize: "1rem", borderRadius: 10 }}>
-              <i className="fas fa-camera"></i>
-            </div>
+            <img src="/rs-logo.png" alt="Relic Snap" style={{ width: 40, height: 40, objectFit: "contain" }} />
             <span style={{ fontFamily: "var(--font-serif)", fontWeight: 700, fontSize: "1.3rem", color: col.heading }}>Relic Snap</span>
           </div>
 

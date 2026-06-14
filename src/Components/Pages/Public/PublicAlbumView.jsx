@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useParams, Link } from "react-router-dom";
 import axios from "axios";
 import { Helmet } from "react-helmet-async";
 import { API_ENDPOINTS, API_BASE_URL } from "../../../api/apiConfig";
@@ -23,16 +23,21 @@ const EVENT_LABELS = {
 
 export default function PublicAlbumView() {
   const { albumId } = useParams();
-  const navigate    = useNavigate();
 
   const [album, setAlbum]       = useState(null);
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState("");
-  const [lightbox, setLightbox] = useState(null); // media object
-  const [buying, setBuying]     = useState(null);  // 'album' | mediaId
-  const [phone, setPhone]       = useState("");
-  const [payStatus, setPayStatus] = useState(""); // '' | 'pending' | 'success' | 'error'
-  const [payMsg, setPayMsg]     = useState("");
+  const [lightbox, setLightbox]       = useState(null);
+  const [buying, setBuying]           = useState(null);   // 'album' | mediaId
+  const [phone, setPhone]             = useState("");
+  const [payStatus, setPayStatus]     = useState("");     // '' | 'pending' | 'polling' | 'success' | 'error'
+  const [payMsg, setPayMsg]           = useState("");
+  const [checkoutReqId, setCheckoutReqId] = useState(null);
+  const [downloadItems, setDownloadItems] = useState([]);
+  const pollRef = useRef(null);
+
+  const isLoggedIn = !!localStorage.getItem("token");
+  const authToken  = localStorage.getItem("token");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -48,13 +53,36 @@ export default function PublicAlbumView() {
 
   useEffect(() => { load(); }, [load]);
 
-  const isLoggedIn = !!localStorage.getItem("token");
-  const token      = localStorage.getItem("token");
+  // Clear polling on unmount
+  useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
 
-  const handleBuy = async (type, mediaItem) => {
-    if (!isLoggedIn) { navigate(`/login?next=/album/${albumId}`); return; }
+  const handleBuy = (type, mediaItem) => {
     setBuying(type === "album" ? "album" : mediaItem._id);
-    setPayStatus(""); setPayMsg(""); setPhone("");
+    setPayStatus(""); setPayMsg(""); setPhone(""); setCheckoutReqId(null); setDownloadItems([]);
+  };
+
+  const pollPaymentStatus = (reqId) => {
+    let attempts = 0;
+    pollRef.current = setInterval(async () => {
+      attempts++;
+      try {
+        const res = await axios.get(API_ENDPOINTS.SHARE.GUEST_STATUS(reqId));
+        if (res.data.status === "completed") {
+          clearInterval(pollRef.current);
+          setDownloadItems(res.data.downloadItems || []);
+          setPayStatus("success");
+          setPayMsg("Payment confirmed! Your photos are ready.");
+        } else if (res.data.status === "failed") {
+          clearInterval(pollRef.current);
+          setPayStatus("error");
+          setPayMsg("Payment was declined. Please try again.");
+        } else if (attempts >= 60) {
+          clearInterval(pollRef.current);
+          setPayStatus("error");
+          setPayMsg("Payment timed out. Please try again.");
+        }
+      } catch { /* keep polling */ }
+    }, 3000);
   };
 
   const submitPayment = async () => {
@@ -62,13 +90,25 @@ export default function PublicAlbumView() {
     setPayStatus("pending"); setPayMsg("Initiating M-Pesa payment…");
     try {
       const payload = buying === "album"
-        ? { albumId, phone, type: "album" }
-        : { mediaId: buying, phone, type: "photo" };
-      await axios.post(`${API_BASE_URL}/payments/buy`, payload, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setPayStatus("success");
+        ? { albumId, phone }
+        : { mediaId: buying, phone };
+
+      let res;
+      if (isLoggedIn) {
+        res = await axios.post(`${API_BASE_URL}/payments/buy`,
+          { ...payload, type: buying === "album" ? "album" : "photo" },
+          { headers: { Authorization: `Bearer ${authToken}` } }
+        );
+      } else {
+        res = await axios.post(API_ENDPOINTS.SHARE.GUEST_BUY, payload);
+      }
+
+      const reqId = res.data.checkoutRequestID;
+      setCheckoutReqId(reqId);
+      setPayStatus("polling");
       setPayMsg("Check your phone for the M-Pesa prompt and enter your PIN.");
+      if (reqId) pollPaymentStatus(reqId);
+      else { setPayStatus("success"); setPayMsg("Payment initiated! Check your phone."); }
     } catch (e) {
       setPayStatus("error");
       setPayMsg(e.response?.data?.message || "Payment failed. Please try again.");
@@ -113,7 +153,7 @@ export default function PublicAlbumView() {
       {/* Navbar */}
       <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, background: "rgba(26,46,59,0.96)", backdropFilter: "blur(12px)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.85rem 1.5rem" }}>
         <Link to="/explore" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <i className="fas fa-camera" style={{ color: teal }}></i>
+          <img src="/rs-logo.png" alt="Relic Snap" style={{ width: 32, height: 32, objectFit: "contain" }} />
           <span style={{ color: "#fff", fontFamily: "var(--font-serif)", fontWeight: 700, fontSize: "1.1rem" }}>Relic Snap</span>
         </Link>
         <div style={{ display: "flex", gap: "0.75rem" }}>
@@ -174,10 +214,18 @@ export default function PublicAlbumView() {
                         onMouseLeave={e => e.currentTarget.querySelector(".ph-overlay").style.opacity = "0"}
                       >
                         <img src={src} alt={m.title} style={{ width: "100%", display: "block", borderRadius: 12 }} loading="lazy" />
-                        <div className="ph-overlay" style={{ position: "absolute", inset: 0, background: "rgba(26,46,59,0.7)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "0.5rem", opacity: 0, transition: "opacity 0.2s", borderRadius: 12 }}>
-                          <i className="fas fa-expand" style={{ color: "#fff", fontSize: "1.25rem" }}></i>
-                          {m.price > 0 && <span style={{ color: "#fff", fontWeight: 700, fontSize: "0.85rem" }}>{formatKES(m.price)}</span>}
-                          {m.price === 0 && <span style={{ color: "#fff", fontSize: "0.8rem" }}>Free with album</span>}
+                        <div className="ph-overlay" style={{ position: "absolute", inset: 0, background: "rgba(26,46,59,0.7)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "0.4rem", opacity: 0, transition: "opacity 0.2s", borderRadius: 12 }}>
+                          <i className="fas fa-expand" style={{ color: "rgba(255,255,255,0.7)", fontSize: "1rem" }}></i>
+                          {m.price > 0 && <span style={{ color: "#fff", fontWeight: 700, fontSize: "0.82rem" }}>{formatKES(m.price)}</span>}
+                          {m.price === 0 && <span style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.75rem" }}>Free with album</span>}
+                          {m.price > 0 && (
+                            <button
+                              onClick={e => { e.stopPropagation(); handleBuy("photo", m); }}
+                              style={{ background: teal, color: "#fff", border: "none", borderRadius: 8, padding: "0.3rem 0.75rem", fontWeight: 700, fontSize: "0.75rem", cursor: "pointer", marginTop: "0.1rem" }}
+                            >
+                              <i className="fas fa-shopping-bag me-1"></i>Buy
+                            </button>
+                          )}
                         </div>
                       </div>
                     );
@@ -204,6 +252,10 @@ export default function PublicAlbumView() {
                     <button onClick={() => handleBuy("album")} style={{ width: "100%", padding: "0.85rem", background: teal, color: "#fff", border: "none", borderRadius: 12, fontWeight: 700, fontSize: "1rem", cursor: "pointer" }}>
                       <i className="fas fa-shopping-bag me-2"></i>Buy Full Album
                     </button>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem", marginTop: "0.75rem", fontSize: "0.75rem", color: "rgba(255,255,255,0.55)" }}>
+                      <i className="fas fa-shield-alt" style={{ color: "#4CC9A6" }}></i>
+                      No account required · Pay with M-Pesa
+                    </div>
                   </div>
                 )}
 
@@ -256,9 +308,14 @@ export default function PublicAlbumView() {
                   {lightbox.price > 0 ? formatKES(lightbox.price) : "Free with album"}
                 </span>
                 {lightbox.price > 0 && (
-                  <button onClick={() => handleBuy("photo", lightbox)} style={{ background: teal, color: "#fff", border: "none", borderRadius: 10, padding: "0.6rem 1.4rem", fontWeight: 700, cursor: "pointer" }}>
-                    Buy Photo
-                  </button>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.3rem" }}>
+                    <button onClick={() => handleBuy("photo", lightbox)} style={{ background: teal, color: "#fff", border: "none", borderRadius: 10, padding: "0.6rem 1.4rem", fontWeight: 700, cursor: "pointer" }}>
+                      <i className="fas fa-shopping-bag me-1"></i>Buy Photo
+                    </button>
+                    <span style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.5)" }}>
+                      <i className="fas fa-shield-alt me-1" style={{ color: "#4CC9A6" }}></i>No account required
+                    </span>
+                  </div>
                 )}
               </div>
             </div>
@@ -270,34 +327,78 @@ export default function PublicAlbumView() {
       {buying && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(10,15,20,0.7)", zIndex: 9100, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
           <div style={{ background: "#fff", borderRadius: 20, padding: "2rem", maxWidth: 420, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
-            <h5 style={{ fontWeight: 700, color: nav, marginBottom: "0.25rem" }}>Complete Purchase</h5>
-            <p style={{ color: "var(--pm-text-muted)", fontSize: "0.85rem", marginBottom: "1.5rem" }}>
-              {buying === "album" ? `Full album — ${formatKES(album?.price)}` : `Photo — ${formatKES(media.find(m => m._id === buying)?.price || 0)}`}
-            </p>
 
-            {payStatus !== "success" && (
+            {/* Success state */}
+            {payStatus === "success" ? (
               <>
-                <label style={{ fontWeight: 600, fontSize: "0.85rem", color: nav, marginBottom: "0.4rem", display: "block" }}>
-                  <i className="fas fa-phone me-1" style={{ color: teal }}></i> M-Pesa Number (254XXXXXXXXX)
-                </label>
-                <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="254712345678" className="form-control mb-3" style={{ borderRadius: 10 }} />
+                <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
+                  <i className="fas fa-check-circle" style={{ fontSize: "3rem", color: "#4CC9A6", display: "block", marginBottom: "0.75rem" }}></i>
+                  <h5 style={{ fontWeight: 700, color: nav, margin: "0 0 0.25rem" }}>Payment Confirmed!</h5>
+                  <p style={{ color: "var(--pm-text-muted)", fontSize: "0.85rem", margin: 0 }}>Your photos are ready to download.</p>
+                </div>
+                {downloadItems.length > 0 && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", marginBottom: "1.25rem" }}>
+                    {downloadItems.map((item, i) => (
+                      <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.6rem 0.85rem", background: "rgba(76,201,166,0.07)", borderRadius: 10, border: "1px solid rgba(76,201,166,0.2)" }}>
+                        <span style={{ fontSize: "0.85rem", color: nav, fontWeight: 600 }}>{item.title || "Photo"}</span>
+                        {item.fileUrl && (
+                          <a href={item.fileUrl} download target="_blank" rel="noopener noreferrer" style={{ background: teal, color: "#fff", padding: "0.3rem 0.75rem", borderRadius: 8, fontSize: "0.78rem", fontWeight: 700, textDecoration: "none" }}>
+                            <i className="fas fa-download me-1"></i>Download
+                          </a>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <button onClick={() => { setBuying(null); setPayStatus(""); setDownloadItems([]); }} style={{ width: "100%", padding: "0.8rem", background: nav, color: "#fff", border: "none", borderRadius: 12, fontWeight: 700, cursor: "pointer" }}>Done</button>
+              </>
+            ) : (
+              <>
+                <h5 style={{ fontWeight: 700, color: nav, marginBottom: "0.25rem" }}>
+                  {payStatus === "polling" ? "Waiting for payment…" : "Complete Purchase"}
+                </h5>
+                <p style={{ color: "var(--pm-text-muted)", fontSize: "0.85rem", marginBottom: "1.5rem" }}>
+                  {buying === "album" ? `Full album — ${formatKES(album?.price)}` : `Photo — ${formatKES(media.find(m => m._id === buying)?.price || 0)}`}
+                </p>
+
+                {payStatus === "polling" ? (
+                  <div style={{ textAlign: "center", padding: "1.5rem 0" }}>
+                    <div className="spinner-border" style={{ color: teal, width: "2.5rem", height: "2.5rem" }} role="status"></div>
+                    <p style={{ color: "var(--pm-text-muted)", fontSize: "0.85rem", marginTop: "0.75rem", marginBottom: 0 }}>
+                      <i className="fas fa-mobile-alt me-1" style={{ color: teal }}></i>{payMsg}
+                    </p>
+                    <p style={{ fontSize: "0.75rem", color: "var(--pm-text-muted)", marginTop: "0.25rem" }}>Auto-checking every 3 seconds…</p>
+                  </div>
+                ) : (
+                  <>
+                    {!isLoggedIn && (
+                      <p style={{ fontSize: "0.78rem", color: "var(--pm-text-muted)", marginBottom: "0.75rem" }}>
+                        <i className="fas fa-shield-alt me-1" style={{ color: "#4CC9A6" }}></i>
+                        No account required — pay directly with M-Pesa
+                      </p>
+                    )}
+                    <label style={{ fontWeight: 600, fontSize: "0.85rem", color: nav, marginBottom: "0.4rem", display: "block" }}>
+                      <i className="fas fa-phone me-1" style={{ color: teal }}></i> M-Pesa Number
+                    </label>
+                    <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="0712 345 678" className="form-control mb-3" style={{ borderRadius: 10 }} autoFocus />
+                    {payMsg && (
+                      <div style={{ padding: "0.7rem 1rem", borderRadius: 10, marginBottom: "1rem", fontSize: "0.82rem", background: "rgba(232,85,85,0.08)", color: "#c0392b", border: "1px solid rgba(232,85,85,0.25)" }}>
+                        <i className="fas fa-exclamation-circle me-2"></i>{payMsg}
+                      </div>
+                    )}
+                  </>
+                )}
+
+                <div style={{ display: "flex", gap: "0.75rem" }}>
+                  <button onClick={() => { setBuying(null); setPayStatus(""); setPayMsg(""); if (pollRef.current) clearInterval(pollRef.current); }} style={{ flex: 1, padding: "0.8rem", background: "transparent", border: "1.5px solid var(--pm-gray-200)", color: nav, borderRadius: 12, fontWeight: 600, cursor: "pointer" }}>Cancel</button>
+                  {payStatus !== "polling" && (
+                    <button onClick={submitPayment} disabled={payStatus === "pending"} style={{ flex: 2, padding: "0.8rem", background: nav, color: "#fff", border: "none", borderRadius: 12, fontWeight: 700, cursor: "pointer" }}>
+                      {payStatus === "pending" ? <span className="spinner-border spinner-border-sm"></span> : <><i className="fas fa-mobile-alt me-1"></i>Pay via M-Pesa</>}
+                    </button>
+                  )}
+                </div>
               </>
             )}
-
-            {payMsg && (
-              <div style={{ padding: "0.75rem 1rem", borderRadius: 10, marginBottom: "1rem", fontSize: "0.85rem", background: payStatus === "success" ? "rgba(76,201,166,0.1)" : payStatus === "error" ? "rgba(232,85,85,0.1)" : "rgba(107,189,208,0.1)", color: payStatus === "success" ? "#0F7B52" : payStatus === "error" ? "#c0392b" : nav, border: `1px solid ${payStatus === "success" ? "rgba(76,201,166,0.3)" : payStatus === "error" ? "rgba(232,85,85,0.3)" : "rgba(107,189,208,0.3)"}` }}>
-                <i className={`fas fa-${payStatus === "success" ? "check-circle" : payStatus === "error" ? "exclamation-circle" : "spinner fa-spin"} me-2`}></i>{payMsg}
-              </div>
-            )}
-
-            <div style={{ display: "flex", gap: "0.75rem" }}>
-              <button onClick={() => { setBuying(null); setPayStatus(""); setPayMsg(""); }} style={{ flex: 1, padding: "0.8rem", background: "transparent", border: "1.5px solid var(--pm-gray-200)", color: nav, borderRadius: 12, fontWeight: 600, cursor: "pointer" }}>Cancel</button>
-              {payStatus !== "success" && (
-                <button onClick={submitPayment} disabled={payStatus === "pending"} style={{ flex: 2, padding: "0.8rem", background: nav, color: "#fff", border: "none", borderRadius: 12, fontWeight: 700, cursor: "pointer" }}>
-                  {payStatus === "pending" ? <span className="spinner-border spinner-border-sm"></span> : <><i className="fas fa-mobile-alt me-1"></i>Pay via M-Pesa</>}
-                </button>
-              )}
-            </div>
           </div>
         </div>
       )}

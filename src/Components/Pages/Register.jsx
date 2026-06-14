@@ -191,9 +191,7 @@ const Register = () => {
 
           {/* Mobile brand */}
           <div className="d-flex d-lg-none align-items-center gap-2 mb-3">
-            <div className="auth-panel-logo-icon" style={{ width: 40, height: 40, fontSize: "1rem", borderRadius: 10 }}>
-              <i className="fas fa-camera"></i>
-            </div>
+            <img src="/rs-logo.png" alt="Relic Snap" style={{ width: 40, height: 40, objectFit: "contain" }} />
             <span style={{ fontFamily: "var(--font-serif)", fontWeight: 700, fontSize: "1.3rem", color: col.heading }}>
               Relic Snap
             </span>

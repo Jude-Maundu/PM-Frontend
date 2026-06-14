@@ -104,8 +104,8 @@ const HomePage = () => {
 
           {/* Brand */}
           <Link to="/" className="navbar-brand">
-            <div className="home-nav-logo-icon">
-              <i className="fas fa-camera"></i>
+            <div className="home-nav-logo-icon" style={{ background: "none", border: "none", padding: 0 }}>
+              <img src="/rs-logo.png" alt="Relic Snap" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
             </div>
             <span className="home-nav-brand-text">
               Relic<span className="home-nav-brand-accent"> Snap</span>
@@ -617,7 +617,7 @@ const HomePage = () => {
             {/* Brand */}
             <div className="col-12 col-md-4">
               <div className="home-footer-brand d-flex align-items-center gap-2 mb-3">
-                <i className="fas fa-camera" style={{ color: "var(--pm-teal)", fontSize: "1.1rem" }}></i>
+                <img src="/rs-logo.png" alt="Relic Snap" style={{ width: 28, height: 28, objectFit: "contain" }} />
                 Relic Snap
               </div>
               <p style={{ fontSize: "0.88rem", color: "var(--pm-text-muted)", maxWidth: 260, lineHeight: 1.7 }}>

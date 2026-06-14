@@ -59,7 +59,7 @@ const SecretaryLayout = ({ children }) => {
       >
         <div className="mc-sidebar-brand">
           <Link to="/secretary/dashboard" className="mc-brand-logo-wrap" onClick={closeMobile}>
-            <img src="/Pasted%20image.png" alt="RS" className="mc-sidebar-logo" />
+            <img src="/rs-logo.png" alt="RS" className="mc-sidebar-logo" />
             <span className="mc-brand-name">Relic Snap</span>
           </Link>
           <button className="mc-toggle-btn d-none d-md-flex" onClick={toggleSidebar}>

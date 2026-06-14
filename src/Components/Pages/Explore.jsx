@@ -144,7 +144,7 @@ export default function Explore() {
       {/* Navbar */}
       <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 200, background: scrolled ? "rgba(26,46,59,0.97)" : "transparent", backdropFilter: scrolled ? "blur(12px)" : "none", transition: "all 0.3s", padding: "0.85rem 1.5rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <i className="fas fa-camera" style={{ color: TEAL }}></i>
+          <img src="/rs-logo.png" alt="Relic Snap" style={{ width: 32, height: 32, objectFit: "contain" }} />
           <span style={{ color: "#fff", fontFamily: "var(--font-serif)", fontWeight: 700, fontSize: "1.1rem" }}>Relic Snap</span>
         </Link>
         <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
