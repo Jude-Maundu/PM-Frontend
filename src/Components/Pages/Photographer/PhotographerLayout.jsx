@@ -30,6 +30,7 @@ const PhotographerLayout = ({ children }) => {
 
   const navItems = [
     { path: "/photographer/dashboard",   icon: "fa-chart-pie",        label: "Dashboard"      },
+    { path: "/photographer/albums",      icon: "fa-layer-group",      label: "My Albums"      },
     { path: "/photographer/analytics",   icon: "fa-chart-line",       label: "Analytics"      },
     { path: "/photographer/media",       icon: "fa-photo-video",      label: "My Media"       },
     { path: "/photographer/upload",      icon: "fa-cloud-upload-alt", label: "Upload"         },
