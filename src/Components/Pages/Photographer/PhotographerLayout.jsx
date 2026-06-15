@@ -127,8 +127,8 @@ const PhotographerLayout = ({ children }) => {
             </div>
             <div className="mc-icon-btn"><ThemeToggle /></div>
             <NotificationBell />
-            <NavLink to="/photographer/upload" className="mc-topbar-action-btn d-none d-sm-flex">
-              <i className="fas fa-plus"></i>Create
+            <NavLink to="/photographer/albums/create" className="mc-topbar-action-btn d-none d-sm-flex">
+              <i className="fas fa-plus"></i>New Album
             </NavLink>
           </div>
         </div>
