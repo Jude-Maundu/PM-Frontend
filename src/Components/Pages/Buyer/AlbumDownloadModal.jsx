@@ -88,7 +88,7 @@ export default function AlbumDownloadModal({ albums, onClose }) {
       }}>
         {/* Header */}
         <div style={{
-          padding: "1.5rem 1.75rem 1.25rem", borderBottom: "1px solid rgba(255,255,255,0.08)",
+          padding: "1.5rem 1.75rem 1.25rem", borderBottom: "1px solid var(--mc-border)",
           display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky",
           top: 0, background: "var(--mc-card-bg, #1a2535)", zIndex: 2, borderRadius: "20px 20px 0 0",
         }}>
@@ -97,15 +97,15 @@ export default function AlbumDownloadModal({ albums, onClose }) {
               <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(76,201,166,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <i className="fas fa-check" style={{ color: "#4CC9A6", fontSize: "0.9rem" }}></i>
               </div>
-              <h5 style={{ margin: 0, color: "#fff", fontWeight: 700 }}>Purchase Successful!</h5>
+              <h5 style={{ margin: 0, color: "var(--mc-text)", fontWeight: 700 }}>Purchase Successful!</h5>
             </div>
-            <p style={{ margin: 0, color: "rgba(255,255,255,0.45)", fontSize: "0.82rem" }}>
+            <p style={{ margin: 0, color: "var(--mc-text-muted)", fontSize: "0.82rem" }}>
               Download your photos below — as a ZIP folder or individually
             </p>
           </div>
           <button
             onClick={onClose}
-            style={{ background: "rgba(255,255,255,0.08)", border: "none", color: "rgba(255,255,255,0.6)", width: 36, height: 36, borderRadius: "50%", cursor: "pointer", fontSize: "1rem" }}
+            style={{ background: "var(--mc-bg)", border: "1px solid var(--mc-border)", color: "var(--mc-text-muted)", width: 36, height: 36, borderRadius: "50%", cursor: "pointer", fontSize: "1rem" }}
           >
             <i className="fas fa-times"></i>
           </button>
@@ -124,11 +124,11 @@ export default function AlbumDownloadModal({ albums, onClose }) {
                   marginBottom: "0.85rem", gap: "0.75rem", flexWrap: "wrap",
                 }}>
                   <div>
-                    <h6 style={{ color: "#fff", fontWeight: 700, margin: "0 0 0.2rem", fontSize: "0.95rem" }}>
+                    <h6 style={{ color: "var(--mc-text)", fontWeight: 700, margin: "0 0 0.2rem", fontSize: "0.95rem" }}>
                       <i className="fas fa-images me-2" style={{ color: "#6BBDD0" }}></i>
                       {album.albumName}
                     </h6>
-                    <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.78rem" }}>
+                    <span style={{ color: "var(--mc-text-muted)", fontSize: "0.78rem" }}>
                       {photos.length} photo{photos.length !== 1 ? "s" : ""}
                     </span>
                   </div>
@@ -161,14 +161,14 @@ export default function AlbumDownloadModal({ albums, onClose }) {
 
                 {/* ZIP progress bar */}
                 {isZipping && (
-                  <div style={{ height: 4, background: "rgba(255,255,255,0.08)", borderRadius: 2, marginBottom: "0.85rem", overflow: "hidden" }}>
+                  <div style={{ height: 4, background: "var(--mc-border)", borderRadius: 2, marginBottom: "0.85rem", overflow: "hidden" }}>
                     <div style={{ height: "100%", width: `${zipProgress}%`, background: "linear-gradient(90deg, #6BBDD0, #4CC9A6)", transition: "width 0.3s", borderRadius: 2 }} />
                   </div>
                 )}
 
                 {/* Photos list */}
                 {photos.length === 0 ? (
-                  <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.82rem", fontStyle: "italic" }}>
+                  <p style={{ color: "var(--mc-text-sub)", fontSize: "0.82rem", fontStyle: "italic" }}>
                     No downloadable photos found for this album.
                   </p>
                 ) : (
@@ -181,11 +181,11 @@ export default function AlbumDownloadModal({ albums, onClose }) {
                           key={photo.mediaId || i}
                           style={{
                             display: "flex", alignItems: "center", justifyContent: "space-between",
-                            padding: "0.6rem 0.85rem", background: "rgba(255,255,255,0.04)",
-                            borderRadius: 10, border: "1px solid rgba(255,255,255,0.07)", gap: "0.5rem",
+                            padding: "0.6rem 0.85rem", background: "var(--mc-bg)",
+                            borderRadius: 10, border: "1px solid var(--mc-border)", gap: "0.5rem",
                           }}
                         >
-                          <span style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.7)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
+                          <span style={{ fontSize: "0.8rem", color: "var(--mc-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
                             <i className="fas fa-image me-1" style={{ color: "rgba(107,189,208,0.5)", fontSize: "0.7rem" }}></i>
                             {photo.title || `Photo ${i + 1}`}
                           </span>
@@ -216,16 +216,16 @@ export default function AlbumDownloadModal({ albums, onClose }) {
 
         {/* Footer */}
         <div style={{
-          padding: "1rem 1.75rem 1.5rem", borderTop: "1px solid rgba(255,255,255,0.07)",
+          padding: "1rem 1.75rem 1.5rem", borderTop: "1px solid var(--mc-border)",
           display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.75rem", flexWrap: "wrap",
         }}>
-          <p style={{ margin: 0, fontSize: "0.75rem", color: "rgba(255,255,255,0.35)" }}>
+          <p style={{ margin: 0, fontSize: "0.75rem", color: "var(--mc-text-sub)" }}>
             <i className="fas fa-info-circle me-1"></i>
-            Downloads are also saved to your <strong style={{ color: "rgba(255,255,255,0.5)" }}>My Downloads</strong> section.
+            Downloads are also saved to your <strong style={{ color: "var(--mc-text-muted)" }}>My Downloads</strong> section.
           </p>
           <button
             onClick={onClose}
-            style={{ background: "rgba(255,255,255,0.08)", color: "#fff", border: "none", borderRadius: 10, padding: "0.6rem 1.25rem", fontWeight: 600, fontSize: "0.85rem", cursor: "pointer" }}
+            style={{ background: "var(--mc-bg)", color: "var(--mc-text)", border: "1px solid var(--mc-border)", borderRadius: 10, padding: "0.6rem 1.25rem", fontWeight: 600, fontSize: "0.85rem", cursor: "pointer" }}
           >
             Done
           </button>

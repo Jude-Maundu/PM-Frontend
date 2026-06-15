@@ -8,9 +8,9 @@ import { showConfirm } from "../../../utils/confirm";
 import PageHeader from "../../PageHeader";
 
 const inputStyle = {
-  background: "rgba(255,255,255,0.06)",
+  background: "var(--mc-card-bg)",
   border: "1px solid rgba(107,189,208,0.3)",
-  color: "#fff",
+  color: "var(--mc-text)",
 };
 
 const NOTIF_KEY = "buyer_notifications";
@@ -115,7 +115,7 @@ const BuyerSettings = () => {
               className="btn rounded-pill px-4"
               style={activeTab === t.id
                 ? { background: "rgba(255,193,7,0.15)", color: "#ffc107", border: "1px solid rgba(255,193,7,0.4)" }
-                : { background: "transparent", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.1)" }
+                : { background: "transparent", color: "var(--mc-text-muted)", border: "1px solid var(--mc-border)" }
               }>
               <i className={`fas ${t.icon} me-2`}></i>{t.label}
             </button>
@@ -127,31 +127,31 @@ const BuyerSettings = () => {
           <div className="row g-4">
             <div className="col-lg-6">
               <div className="mc-card">
-                <h6 className="text-white-50 mb-4 text-uppercase" style={{ fontSize: "0.75rem", letterSpacing: "0.1em" }}>Change Password</h6>
+                <h6 className="mb-4 text-uppercase" style={{ fontSize: "0.75rem", letterSpacing: "0.1em", color: "var(--mc-text-muted)" }}>Change Password</h6>
                 <form onSubmit={handleChangePassword}>
                   <div className="mb-3">
-                    <label className="form-label text-white-50 small">Current Password</label>
+                    <label className="form-label small" style={{ color: "var(--mc-text-muted)" }}>Current Password</label>
                     <div className="position-relative">
                       <input type={showPass ? "text" : "password"} className="form-control rounded-3" style={inputStyle}
                         value={passwords.currentPassword}
                         onChange={e => setPasswords(p => ({ ...p, currentPassword: e.target.value }))}
                         placeholder="Enter current password" required />
-                      <button type="button" className="btn position-absolute end-0 top-0 h-100 px-3 text-white-50"
-                        style={{ background: "transparent", border: "none" }}
+                      <button type="button" className="btn position-absolute end-0 top-0 h-100 px-3"
+                        style={{ background: "transparent", border: "none", color: "var(--mc-text-muted)" }}
                         onClick={() => setShowPass(s => !s)}>
                         <i className={`fas fa-eye${showPass ? "-slash" : ""}`}></i>
                       </button>
                     </div>
                   </div>
                   <div className="mb-3">
-                    <label className="form-label text-white-50 small">New Password</label>
+                    <label className="form-label small" style={{ color: "var(--mc-text-muted)" }}>New Password</label>
                     <input type={showPass ? "text" : "password"} className="form-control rounded-3" style={inputStyle}
                       value={passwords.newPassword}
                       onChange={e => setPasswords(p => ({ ...p, newPassword: e.target.value }))}
                       placeholder="At least 6 characters" required />
                   </div>
                   <div className="mb-3">
-                    <label className="form-label text-white-50 small">Confirm New Password</label>
+                    <label className="form-label small" style={{ color: "var(--mc-text-muted)" }}>Confirm New Password</label>
                     <input type={showPass ? "text" : "password"} className="form-control rounded-3"
                       style={{ ...inputStyle, borderColor: passwords.confirmPassword && passwords.confirmPassword !== passwords.newPassword ? "#dc3545" : "rgba(107,189,208,0.3)" }}
                       value={passwords.confirmPassword}
@@ -171,22 +171,22 @@ const BuyerSettings = () => {
 
             <div className="col-lg-6">
               <div className="mc-card h-100">
-                <h6 className="text-white-50 mb-4 text-uppercase" style={{ fontSize: "0.75rem", letterSpacing: "0.1em" }}>Account Info</h6>
+                <h6 className="mb-4 text-uppercase" style={{ fontSize: "0.75rem", letterSpacing: "0.1em", color: "var(--mc-text-muted)" }}>Account Info</h6>
                 <div className="mb-3 d-flex justify-content-between">
-                  <span className="text-white-50 small">Username</span>
-                  <span className="text-white small">{stored.username || "—"}</span>
+                  <span className="small" style={{ color: "var(--mc-text-muted)" }}>Username</span>
+                  <span className="small" style={{ color: "var(--mc-text)" }}>{stored.username || "—"}</span>
                 </div>
                 <div className="mb-3 d-flex justify-content-between">
-                  <span className="text-white-50 small">Email</span>
-                  <span className="text-white small">{stored.email || "—"}</span>
+                  <span className="small" style={{ color: "var(--mc-text-muted)" }}>Email</span>
+                  <span className="small" style={{ color: "var(--mc-text)" }}>{stored.email || "—"}</span>
                 </div>
                 <div className="mb-3 d-flex justify-content-between">
-                  <span className="text-white-50 small">Role</span>
+                  <span className="small" style={{ color: "var(--mc-text-muted)" }}>Role</span>
                   <span className="badge rounded-pill px-3" style={{ background: "rgba(255,193,7,0.15)", color: "#ffc107" }}>
                     Buyer
                   </span>
                 </div>
-                <hr style={{ borderColor: "rgba(255,255,255,0.1)" }} />
+                <hr style={{ borderColor: "var(--mc-border)" }} />
                 <Link to="/buyer/profile" className="btn btn-sm rounded-pill px-4 w-100"
                   style={{ background: "rgba(255,193,7,0.1)", color: "#ffc107", border: "1px solid rgba(255,193,7,0.3)" }}>
                   <i className="fas fa-user-edit me-2"></i>Edit Profile
@@ -199,7 +199,7 @@ const BuyerSettings = () => {
         {/* Notifications Tab */}
         {activeTab === "notifications" && (
           <div className="mc-card" style={{ maxWidth: 600 }}>
-            <h6 className="text-white-50 mb-4 text-uppercase" style={{ fontSize: "0.75rem", letterSpacing: "0.1em" }}>Notification Preferences</h6>
+            <h6 className="mb-4 text-uppercase" style={{ fontSize: "0.75rem", letterSpacing: "0.1em", color: "var(--mc-text-muted)" }}>Notification Preferences</h6>
 
             {[
               { key: "purchaseConfirmation", label: "Purchase confirmation", desc: "When a purchase is completed" },
@@ -209,10 +209,10 @@ const BuyerSettings = () => {
               { key: "systemAnnouncements", label: "System announcements", desc: "Platform updates and announcements" },
             ].map(({ key, label, desc }) => (
               <div key={key} className="d-flex justify-content-between align-items-center py-3"
-                style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+                style={{ borderBottom: "1px solid var(--mc-border)" }}>
                 <div>
-                  <div className="text-white small fw-semibold">{label}</div>
-                  <div className="text-white-50" style={{ fontSize: "0.75rem" }}>{desc}</div>
+                  <div className="small fw-semibold" style={{ color: "var(--mc-text)" }}>{label}</div>
+                  <div style={{ fontSize: "0.75rem", color: "var(--mc-text-muted)" }}>{desc}</div>
                 </div>
                 <div className="form-check form-switch mb-0">
                   <input className="form-check-input" type="checkbox" style={{ cursor: "pointer" }}
@@ -236,22 +236,22 @@ const BuyerSettings = () => {
           <div className="row g-4">
             <div className="col-lg-6">
               <div className="mc-card">
-                <h6 className="text-white-50 mb-3 text-uppercase" style={{ fontSize: "0.75rem", letterSpacing: "0.1em" }}>Quick Links</h6>
+                <h6 className="mb-3 text-uppercase" style={{ fontSize: "0.75rem", letterSpacing: "0.1em", color: "var(--mc-text-muted)" }}>Quick Links</h6>
                 <div className="d-flex flex-column gap-2">
                   <Link to="/buyer/transactions" className="btn rounded-3 text-start px-3"
-                    style={{ background: "rgba(255,255,255,0.05)", color: "#fff", border: "1px solid rgba(255,255,255,0.08)" }}>
+                    style={{ background: "var(--mc-card-bg)", color: "var(--mc-text)", border: "1px solid var(--mc-border)" }}>
                     <i className="fas fa-history me-2 text-warning"></i>Transaction History
                   </Link>
                   <Link to="/buyer/downloads" className="btn rounded-3 text-start px-3"
-                    style={{ background: "rgba(255,255,255,0.05)", color: "#fff", border: "1px solid rgba(255,255,255,0.08)" }}>
+                    style={{ background: "var(--mc-card-bg)", color: "var(--mc-text)", border: "1px solid var(--mc-border)" }}>
                     <i className="fas fa-download me-2 text-warning"></i>My Downloads
                   </Link>
                   <Link to="/buyer/wallet" className="btn rounded-3 text-start px-3"
-                    style={{ background: "rgba(255,255,255,0.05)", color: "#fff", border: "1px solid rgba(255,255,255,0.08)" }}>
+                    style={{ background: "var(--mc-card-bg)", color: "var(--mc-text)", border: "1px solid var(--mc-border)" }}>
                     <i className="fas fa-wallet me-2 text-warning"></i>Wallet
                   </Link>
                   <Link to="/buyer/favorites" className="btn rounded-3 text-start px-3"
-                    style={{ background: "rgba(255,255,255,0.05)", color: "#fff", border: "1px solid rgba(255,255,255,0.08)" }}>
+                    style={{ background: "var(--mc-card-bg)", color: "var(--mc-text)", border: "1px solid var(--mc-border)" }}>
                     <i className="fas fa-heart me-2 text-warning"></i>Favorites
                   </Link>
                 </div>
@@ -263,7 +263,7 @@ const BuyerSettings = () => {
                 <h6 className="mb-3 text-uppercase" style={{ fontSize: "0.75rem", letterSpacing: "0.1em", color: "#dc3545" }}>
                   <i className="fas fa-exclamation-triangle me-2"></i>Danger Zone
                 </h6>
-                <p className="text-white-50 small mb-3">
+                <p className="small mb-3" style={{ color: "var(--mc-text-muted)" }}>
                   Deleting your account will permanently remove all your data, purchase history, and favorites. This cannot be undone.
                 </p>
                 <button className="btn mc-btn mc-btn-danger rounded-pill px-4"

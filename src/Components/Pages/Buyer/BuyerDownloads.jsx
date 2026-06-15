@@ -353,8 +353,8 @@ const BuyerDownloads = () => {
       <BuyerLayout>
         <div className="text-center py-5">
           <i className="fas fa-lock text-warning fa-4x mb-3"></i>
-          <h4 className="text-white mb-3">Authentication Required</h4>
-          <p className="text-white-50 mb-4">Please login to view your downloads</p>
+          <h4 className="mb-3" style={{ color: "var(--mc-text)" }}>Authentication Required</h4>
+          <p className="mb-4" style={{ color: "var(--mc-text-muted)" }}>Please login to view your downloads</p>
           <Link to="/login" className="mc-btn mc-btn-primary">
             <i className="fas fa-sign-in-alt me-2"></i>Go to Login
           </Link>
@@ -392,7 +392,7 @@ const BuyerDownloads = () => {
         {loading ? (
           <div style={{ padding: "2rem", textAlign: "center" }}>
             <div className="spinner-border" style={{ color: "var(--mc-accent)" }}></div>
-            <p className="text-white-50 mt-3">Loading your downloads...</p>
+            <p className="mt-3" style={{ color: "var(--mc-text-muted)" }}>Loading your downloads...</p>
           </div>
         ) : downloads.length === 0 ? (
           <div className="mc-empty">
@@ -440,17 +440,17 @@ const BuyerDownloads = () => {
                         </span>
                       </div>
                       <div style={{ padding: "1rem" }} className="d-flex flex-column h-100">
-                        <h5 className="fw-bold mb-1 text-truncate text-white">{title}</h5>
-                        <p className="text-white-50 small mb-2">
+                        <h5 className="fw-bold mb-1 text-truncate" style={{ color: "var(--mc-text)" }}>{title}</h5>
+                        <p className="small mb-2" style={{ color: "var(--mc-text-muted)" }}>
                           <i className="fas fa-camera me-1"></i>{photographer}
                         </p>
                         <div className="mt-auto">
                           <div className="d-flex justify-content-between align-items-center mb-3">
-                            <small className="text-white-50">
+                            <small style={{ color: "var(--mc-text-muted)" }}>
                               <i className="fas fa-calendar me-1"></i>
                               {new Date(purchaseDate).toLocaleDateString()}
                             </small>
-                            <small className="text-white-50">
+                            <small style={{ color: "var(--mc-text-muted)" }}>
                               <i className="fas fa-receipt me-1"></i>{receiptId}
                             </small>
                           </div>

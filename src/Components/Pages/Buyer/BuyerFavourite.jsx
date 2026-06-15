@@ -256,8 +256,8 @@ const BuyerFavorites = () => {
       <BuyerLayout>
         <div className="text-center py-5">
           <i className="fas fa-heart text-warning fa-4x mb-3"></i>
-          <h4 className="text-white mb-3">Authentication Required</h4>
-          <p className="text-white-50 mb-4">Please login to view your favorites</p>
+          <h4 className="mb-3" style={{ color: "var(--mc-text)" }}>Authentication Required</h4>
+          <p className="mb-4" style={{ color: "var(--mc-text-muted)" }}>Please login to view your favorites</p>
           <Link to="/login" className="mc-btn mc-btn-primary">
             <i className="fas fa-sign-in-alt me-2"></i>Go to Login
           </Link>
@@ -304,7 +304,7 @@ const BuyerFavorites = () => {
         {loading ? (
           <div style={{ padding: "2rem", textAlign: "center" }}>
             <div className="spinner-border" style={{ color: "var(--mc-accent)" }}></div>
-            <p className="text-white-50 mt-3">Loading your favorites...</p>
+            <p className="mt-3" style={{ color: "var(--mc-text-muted)" }}>Loading your favorites...</p>
           </div>
         ) : favorites.length === 0 ? (
           <div className="mc-empty">
@@ -362,14 +362,14 @@ const BuyerFavorites = () => {
 
                     <div style={{ padding: "1rem" }} className="d-flex flex-column flex-grow-1">
                       <h6 className="fw-bold text-truncate mb-1" title={title}>{title}</h6>
-                      <small className="text-white-50 d-block mb-2 text-truncate">
+                      <small className="d-block mb-2 text-truncate" style={{ color: "var(--mc-text-muted)" }}>
                         <i className="fas fa-camera me-1"></i>{photographer}
                       </small>
 
                       <div className="mt-auto pt-2">
                         <div className="d-flex justify-content-between align-items-center mb-2">
                           <span className="text-warning fw-bold fs-6">
-                            {price > 0 ? `KES ${price.toLocaleString()}` : <span className="text-white-50">Free</span>}
+                            {price > 0 ? `KES ${price.toLocaleString()}` : <span style={{ color: "var(--mc-text-muted)" }}>Free</span>}
                           </span>
                         </div>
                         <div className="d-flex gap-2">
@@ -408,7 +408,7 @@ const BuyerFavorites = () => {
         {/* Quick Stats Footer */}
         {favorites.length > 0 && (
           <div className="mc-card mt-4 text-center" style={{ padding: "0.75rem 1rem" }}>
-            <small className="text-white-50">
+            <small style={{ color: "var(--mc-text-muted)" }}>
               <i className="fas fa-info-circle me-2" style={{ color: "var(--mc-accent)" }}></i>
               Your wishlist has <strong style={{ color: "var(--mc-accent)" }}>{favorites.length}</strong> item
               {favorites.length !== 1 ? 's' : ''}. Click the heart icon to remove.

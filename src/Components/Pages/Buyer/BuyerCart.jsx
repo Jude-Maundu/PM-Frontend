@@ -594,11 +594,11 @@ const BuyerCart = () => {
   const totalAmount = mediaTotal + albumTotal;
   const totalItemCount = cartItems.length + albumItems.length;
   const glassStyle = {
-    background: "rgba(255, 255, 255, 0.08)",
+    background: "var(--mc-card-bg)",
     backdropFilter: "blur(12px)",
     WebkitBackdropFilter: "blur(12px)",
-    border: "1px solid rgba(255, 255, 255, 0.15)",
-    boxShadow: "0 8px 32px rgba(0, 0, 0, 0.4)",
+    border: "1px solid var(--mc-border)",
+    boxShadow: "0 8px 32px rgba(0, 0, 0, 0.15)",
   };
 
   return (
@@ -620,7 +620,7 @@ const BuyerCart = () => {
             <div className="d-flex align-items-center justify-content-between mb-2">
               <div>
                 <strong>{checkoutStep === 'success' ? 'Purchase Completed' : 'Processing Checkout'}</strong>
-                <p className="mb-0 small text-white-50">
+                <p className="mb-0 small" style={{ color: "var(--mc-text-muted)" }}>
                   {checkoutStep === 'success'
                     ? 'Your cart purchase has been recorded and is being downloaded.'
                     : mpesaStatus === 'sending' ? 'Sending payment request...' : 'Waiting for payment confirmation...'}
@@ -645,7 +645,7 @@ const BuyerCart = () => {
                         e.target.src = placeholderMedium;
                       }}
                     />
-                    <p className="text-white-75 fs-7 mb-0 text-truncate" style={{ maxWidth: '72px' }}>
+                    <p className="fs-7 mb-0 text-truncate" style={{ maxWidth: '72px', color: "var(--mc-text-muted)" }}>
                       {media?.title || item.title || 'Untitled'}
                     </p>
                   </div>
@@ -674,13 +674,13 @@ const BuyerCart = () => {
         {loading ? (
           <div className="text-center py-4 py-md-5">
             <div className="spinner-border text-warning" style={{ width: '2.5rem', height: '2.5rem' }}></div>
-            <p className="text-white-50 mt-3 small">Loading your cart...</p>
+            <p className="mt-3 small" style={{ color: "var(--mc-text-muted)" }}>Loading your cart...</p>
           </div>
         ) : cartItems.length === 0 && albumItems.length === 0 ? (
           <div className="text-center py-4 py-md-5 px-3 rounded-4 p-3 p-md-5" style={glassStyle}>
-            <i className="fas fa-shopping-cart fa-4x fa-md-5x text-white-50 mb-3 mb-md-4"></i>
-            <h3 className="text-white mb-3 fs-5 fs-md-3">Your cart is empty</h3>
-            <p className="text-white-50 mb-4 small">Discover albums and add them to your cart</p>
+            <i className="fas fa-shopping-cart fa-4x fa-md-5x mb-3 mb-md-4" style={{ color: "var(--mc-text-muted)" }}></i>
+            <h3 className="mb-3 fs-5 fs-md-3" style={{ color: "var(--mc-text)" }}>Your cart is empty</h3>
+            <p className="mb-4 small" style={{ color: "var(--mc-text-muted)" }}>Discover albums and add them to your cart</p>
             <Link to="/buyer/explore" className="btn btn-warning btn-lg px-3 px-md-4">
               <i className="fas fa-compass me-2"></i>
               Browse Albums
@@ -710,8 +710,8 @@ const BuyerCart = () => {
                               </div>
                             </div>
                             <div className="col-8 col-sm-6 col-md-6 col-lg-6">
-                              <h5 className="text-white fw-bold mb-1 fs-6">{album.name || "Album"}</h5>
-                              <p className="text-white-50 mb-1 small">
+                              <h5 className="fw-bold mb-1 fs-6" style={{ color: "var(--mc-text)" }}>{album.name || "Album"}</h5>
+                              <p className="mb-1 small" style={{ color: "var(--mc-text-muted)" }}>
                                 <i className="fas fa-images me-1"></i>
                                 {album.mediaCount || 0} photos
                                 {album.eventType && <span className="ms-2 badge" style={{ background: "rgba(107,189,208,0.2)", color: "#6BBDD0", fontSize: "0.65rem", textTransform: "capitalize" }}>{album.eventType}</span>}
@@ -762,14 +762,14 @@ const BuyerCart = () => {
                               </div>
                             </div>
                             <div className="col-8 col-sm-6 col-md-6 col-lg-6">
-                              <h5 className="text-white fw-bold mb-1 mb-md-2 fs-6 fs-md-5">{mediaEntity?.title || item.title || 'Untitled'}</h5>
-                              <p className="text-white-50 mb-1 mb-md-2 small">
+                              <h5 className="fw-bold mb-1 mb-md-2 fs-6 fs-md-5" style={{ color: "var(--mc-text)" }}>{mediaEntity?.title || item.title || 'Untitled'}</h5>
+                              <p className="mb-1 mb-md-2 small" style={{ color: "var(--mc-text-muted)" }}>
                                 <i className="fas fa-user me-1"></i>
                                 {resolvePhotographerName(mediaEntity?.photographer || item.media?.photographer)}
                               </p>
                               <div className="d-flex align-items-center flex-wrap gap-1">
                                 <span className="badge bg-warning text-dark small me-1 me-md-2">Photo</span>
-                                <small className="text-white-50" style={{ fontSize: '0.7rem' }}>
+                                <small style={{ fontSize: '0.7rem', color: "var(--mc-text-muted)" }}>
                                   <i className="fas fa-calendar me-1"></i>
                                   Added to cart
                                 </small>
@@ -812,18 +812,18 @@ const BuyerCart = () => {
                   </div>
                   <div className="card-body p-3 p-md-4">
                     <div className="d-flex justify-content-between mb-2 small">
-                      <span className="text-white-50">Photos ({cartItems.length})</span>
-                      <span className="text-white fw-medium">KES {mediaTotal.toLocaleString()}</span>
+                      <span style={{ color: "var(--mc-text-muted)" }}>Photos ({cartItems.length})</span>
+                      <span className="fw-medium" style={{ color: "var(--mc-text)" }}>KES {mediaTotal.toLocaleString()}</span>
                     </div>
                     {albumItems.length > 0 && (
                       <div className="d-flex justify-content-between mb-2 small">
-                        <span className="text-white-50">Albums ({albumItems.length})</span>
-                        <span className="text-white fw-medium">KES {albumTotal.toLocaleString()}</span>
+                        <span style={{ color: "var(--mc-text-muted)" }}>Albums ({albumItems.length})</span>
+                        <span className="fw-medium" style={{ color: "var(--mc-text)" }}>KES {albumTotal.toLocaleString()}</span>
                       </div>
                     )}
-                    <hr className="border-secondary my-2 my-md-3" />
+                    <hr className="my-2 my-md-3" style={{ borderColor: "var(--mc-border)" }} />
                     <div className="d-flex justify-content-between align-items-center mb-3">
-                      <span className="text-white fw-bold fs-6 fs-md-5">Total Amount</span>
+                      <span className="fw-bold fs-6 fs-md-5" style={{ color: "var(--mc-text)" }}>Total Amount</span>
                       <span className="text-warning fw-bold fs-5 fs-md-4">
                         KES {totalAmount.toLocaleString()}
                       </span>
@@ -837,7 +837,7 @@ const BuyerCart = () => {
 
                 <div className="mc-card mb-3 mb-md-4">
                   <div className="card-header bg-transparent border-0 py-2 py-md-3">
-                    <h6 className="mb-0 text-white fw-bold fs-6 fs-md-6">
+                    <h6 className="mb-0 fw-bold fs-6 fs-md-6" style={{ color: "var(--mc-text)" }}>
                       <i className="fas fa-credit-card me-2"></i>
                       Payment Method
                     </h6>
@@ -854,7 +854,7 @@ const BuyerCart = () => {
                           checked={paymentMethod === 'mpesa'}
                           onChange={(e) => setPaymentMethod(e.target.value)}
                         />
-                        <label className="form-check-label text-white small fw-medium" htmlFor="mpesa">
+                        <label className="form-check-label small fw-medium" style={{ color: "var(--mc-text)" }} htmlFor="mpesa">
                           <i className="fas fa-mobile-alt me-2 text-success"></i>
                           M-Pesa (Mobile Money)
                         </label>
@@ -869,7 +869,7 @@ const BuyerCart = () => {
                           checked={paymentMethod === 'wallet'}
                           onChange={(e) => setPaymentMethod(e.target.value)}
                         />
-                        <label className="form-check-label text-white small fw-medium" htmlFor="wallet">
+                        <label className="form-check-label small fw-medium" style={{ color: "var(--mc-text)" }} htmlFor="wallet">
                           <i className="fas fa-wallet me-2 text-warning"></i>
                           Wallet Balance
                         </label>
@@ -878,7 +878,7 @@ const BuyerCart = () => {
 
                     {paymentMethod === 'mpesa' && (
                       <div className="mb-3">
-                        <label className="form-label text-white-50 small fw-medium">
+                        <label className="form-label small fw-medium" style={{ color: "var(--mc-text-muted)" }}>
                           <i className="fas fa-phone me-1"></i>
                           M-Pesa Phone Number
                         </label>
@@ -896,7 +896,7 @@ const BuyerCart = () => {
                             {phoneError}
                           </div>
                         )}
-                        <small className="text-white-50 mt-1 d-block" style={{ fontSize: '0.75rem' }}>
+                        <small className="mt-1 d-block" style={{ fontSize: '0.75rem', color: "var(--mc-text-muted)" }}>
                           Enter your M-Pesa registered number
                         </small>
                       </div>
