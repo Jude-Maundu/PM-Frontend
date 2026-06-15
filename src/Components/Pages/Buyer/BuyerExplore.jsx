@@ -46,8 +46,8 @@ function AlbumCard({ album, userId, onBuy, onAddToCart, buying, cartAlbumIds }) 
       style={{
         borderRadius: 18, overflow: "hidden",
         background: "var(--mc-card-bg, #1a2535)",
-        border: "1px solid rgba(255,255,255,0.07)",
-        boxShadow: hovered ? "0 16px 40px rgba(0,0,0,0.4)" : "0 2px 12px rgba(0,0,0,0.2)",
+        border: "1px solid var(--mc-border)",
+        boxShadow: hovered ? "0 16px 40px rgba(0,0,0,0.25)" : "var(--mc-card-shadow, 0 2px 12px rgba(0,0,0,0.2))",
         transform: hovered ? "translateY(-4px)" : "none",
         transition: "all 0.22s ease", cursor: "pointer",
         display: "flex", flexDirection: "column",
@@ -94,7 +94,7 @@ function AlbumCard({ album, userId, onBuy, onAddToCart, buying, cartAlbumIds }) 
       {/* Body */}
       <div style={{ padding: "1rem", display: "flex", flexDirection: "column", flex: 1 }}>
         <h6 onClick={() => navigate(`/album/${album._id}`)}
-          style={{ fontWeight: 700, color: "#fff", margin: "0 0 0.35rem", fontSize: "0.95rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", cursor: "pointer" }}
+          style={{ fontWeight: 700, color: "var(--mc-text)", margin: "0 0 0.35rem", fontSize: "0.95rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", cursor: "pointer" }}
         >{album.name}</h6>
 
         <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.75rem" }}>
@@ -102,9 +102,9 @@ function AlbumCard({ album, userId, onBuy, onAddToCart, buying, cartAlbumIds }) 
             src={imgUrl(album.photographer?.profilePicture) || `https://ui-avatars.com/api/?name=${album.photographer?.username || "P"}&background=6BBDD0&color=fff&size=24`}
             alt="" style={{ width: 22, height: 22, borderRadius: "50%", objectFit: "cover" }}
           />
-          <span style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.5)" }}>{album.photographer?.username || "Photographer"}</span>
+          <span style={{ fontSize: "0.75rem", color: "var(--mc-text-muted)" }}>{album.photographer?.username || "Photographer"}</span>
           {album.location && (
-            <span style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.35)", marginLeft: "auto", display: "flex", alignItems: "center", gap: "0.2rem" }}>
+            <span style={{ fontSize: "0.7rem", color: "var(--mc-text-sub)", marginLeft: "auto", display: "flex", alignItems: "center", gap: "0.2rem" }}>
               <i className="fas fa-map-marker-alt"></i>{album.location}
             </span>
           )}
@@ -331,10 +331,10 @@ export default function BuyerExplore() {
 
         {/* Page header */}
         <div style={{ marginBottom: "1.5rem" }}>
-          <h2 style={{ fontWeight: 700, color: "#fff", margin: "0 0 0.25rem", fontSize: "clamp(1.3rem,3vw,1.7rem)" }}>
+          <h2 style={{ fontWeight: 700, color: "var(--mc-text)", margin: "0 0 0.25rem", fontSize: "clamp(1.3rem,3vw,1.7rem)" }}>
             <i className="fas fa-compass me-2" style={{ color: "#6BBDD0" }}></i>Explore Albums
           </h2>
-          <p style={{ color: "rgba(255,255,255,0.45)", margin: 0, fontSize: "0.88rem" }}>
+          <p style={{ color: "var(--mc-text-muted)", margin: 0, fontSize: "0.88rem" }}>
             Browse photography collections — click any album to explore and purchase photos inside
           </p>
         </div>
@@ -342,30 +342,30 @@ export default function BuyerExplore() {
         {/* Search + sort bar */}
         <div style={{ display: "flex", gap: "0.75rem", marginBottom: "1.25rem", flexWrap: "wrap", alignItems: "center" }}>
           <div style={{ flex: "1 1 220px", position: "relative" }}>
-            <i className="fas fa-search" style={{ position: "absolute", left: "0.9rem", top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.35)", fontSize: "0.82rem" }}></i>
+            <i className="fas fa-search" style={{ position: "absolute", left: "0.9rem", top: "50%", transform: "translateY(-50%)", color: "var(--mc-text-muted)", fontSize: "0.82rem" }}></i>
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search albums or photographer…"
-              style={{ width: "100%", paddingLeft: "2.4rem", padding: "0.65rem 1rem 0.65rem 2.4rem", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 999, color: "#fff", fontSize: "0.85rem", outline: "none" }}
+              style={{ width: "100%", paddingLeft: "2.4rem", padding: "0.65rem 1rem 0.65rem 2.4rem", background: "var(--mc-card-bg)", border: "1px solid var(--mc-border)", borderRadius: 999, color: "var(--mc-text)", fontSize: "0.85rem", outline: "none" }}
             />
           </div>
           <select
             value={albumType}
             onChange={e => setAlbumType(e.target.value)}
-            style={{ padding: "0.65rem 1rem", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 999, color: "#fff", fontSize: "0.82rem", outline: "none", cursor: "pointer" }}
+            style={{ padding: "0.65rem 1rem", background: "var(--mc-card-bg)", border: "1px solid var(--mc-border)", borderRadius: 999, color: "var(--mc-text)", fontSize: "0.82rem", outline: "none", cursor: "pointer" }}
           >
-            {ALBUM_TYPES.map(t => <option key={t.value} value={t.value} style={{ background: "#1a2535" }}>{t.label}</option>)}
+            {ALBUM_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
           </select>
           <select
             value={sortBy}
             onChange={e => setSortBy(e.target.value)}
-            style={{ padding: "0.65rem 1rem", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 999, color: "#fff", fontSize: "0.82rem", outline: "none", cursor: "pointer" }}
+            style={{ padding: "0.65rem 1rem", background: "var(--mc-card-bg)", border: "1px solid var(--mc-border)", borderRadius: 999, color: "var(--mc-text)", fontSize: "0.82rem", outline: "none", cursor: "pointer" }}
           >
-            <option value="newest" style={{ background: "#1a2535" }}>Newest</option>
-            <option value="popular" style={{ background: "#1a2535" }}>Most Viewed</option>
-            <option value="price_low" style={{ background: "#1a2535" }}>Price: Low</option>
-            <option value="price_high" style={{ background: "#1a2535" }}>Price: High</option>
+            <option value="newest">Newest</option>
+            <option value="popular">Most Viewed</option>
+            <option value="price_low">Price: Low</option>
+            <option value="price_high">Price: High</option>
           </select>
         </div>
 
@@ -376,9 +376,10 @@ export default function BuyerExplore() {
               key={et.value}
               onClick={() => setEventType(et.value)}
               style={{
-                flexShrink: 0, padding: "0.38rem 0.9rem", borderRadius: 999, border: `1.5px solid ${eventType === et.value ? (et.color || "#6BBDD0") : "rgba(255,255,255,0.1)"}`,
-                background: eventType === et.value ? (et.color ? et.color + "22" : "rgba(107,189,208,0.15)") : "transparent",
-                color: eventType === et.value ? (et.color || "#6BBDD0") : "rgba(255,255,255,0.5)",
+                flexShrink: 0, padding: "0.38rem 0.9rem", borderRadius: 999,
+                border: `1.5px solid ${eventType === et.value ? (et.color || "#6BBDD0") : "var(--mc-border)"}`,
+                background: eventType === et.value ? (et.color ? et.color + "22" : "rgba(107,189,208,0.15)") : "var(--mc-card-bg)",
+                color: eventType === et.value ? (et.color || "#6BBDD0") : "var(--mc-text-muted)",
                 fontWeight: 600, fontSize: "0.78rem", cursor: "pointer", whiteSpace: "nowrap",
                 display: "inline-flex", alignItems: "center", gap: "0.3rem", transition: "all 0.18s",
               }}
@@ -391,7 +392,7 @@ export default function BuyerExplore() {
 
         {/* Results count */}
         {!loading && (
-          <div style={{ marginBottom: "1rem", fontSize: "0.82rem", color: "rgba(255,255,255,0.38)" }}>
+          <div style={{ marginBottom: "1rem", fontSize: "0.82rem", color: "var(--mc-text-muted)" }}>
             {sorted.length} album{sorted.length !== 1 ? "s" : ""} found
           </div>
         )}
