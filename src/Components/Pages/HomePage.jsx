@@ -46,14 +46,14 @@ const HomePage = () => {
   }, []);
 
   const categories = [
-    { name: "Weddings",     icon: "fas fa-rings-wedding",  count: "3.2k", color: "#F06B8D"  },
-    { name: "Graduations",  icon: "fas fa-graduation-cap", count: "4.7k", color: "#6BBDD0"  },
-    { name: "Marathons",    icon: "fas fa-running",        count: "2.1k", color: "#F5A623"  },
-    { name: "Corporate",    icon: "fas fa-briefcase",      count: "1.8k", color: "#9D7FEB"  },
-    { name: "Wildlife",     icon: "fas fa-paw",            count: "8.4k", color: "#4CC9A6"  },
-    { name: "Culture",      icon: "fas fa-drum",           count: "5.2k", color: "#F06B8D"  },
-    { name: "Landscape",    icon: "fas fa-mountain",       count: "6.8k", color: "#6BBDD0"  },
-    { name: "Portraits",    icon: "fas fa-user",           count: "5.5k", color: "#1A2E3B"  },
+    { name: "Weddings",     icon: "fas fa-rings-wedding",  count: "3.2k", color: "#F06B8D",  event: "wedding"    },
+    { name: "Graduations",  icon: "fas fa-graduation-cap", count: "4.7k", color: "#6BBDD0",  event: "graduation" },
+    { name: "Marathons",    icon: "fas fa-running",        count: "2.1k", color: "#F5A623",  event: "marathon"   },
+    { name: "Corporate",    icon: "fas fa-briefcase",      count: "1.8k", color: "#9D7FEB",  event: "corporate"  },
+    { name: "Wildlife",     icon: "fas fa-paw",            count: "8.4k", color: "#4CC9A6",  event: "wildlife"   },
+    { name: "Culture",      icon: "fas fa-drum",           count: "5.2k", color: "#F06B8D",  event: "other"      },
+    { name: "Landscape",    icon: "fas fa-mountain",       count: "6.8k", color: "#6BBDD0",  event: "landscape"  },
+    { name: "Portraits",    icon: "fas fa-user",           count: "5.5k", color: "#1A2E3B",  event: "portrait"   },
   ];
 
   const howItWorks = [
@@ -527,7 +527,7 @@ const HomePage = () => {
           <div className="row g-3">
             {categories.map((cat, idx) => (
               <div key={idx} className="col-6 col-sm-4 col-md-3">
-                <Link to={`/explore?category=${cat.name.toLowerCase()}`} className="home-cat-card">
+                <Link to={`/explore?event=${cat.event}`} className="home-cat-card">
                   <div className="home-cat-icon" style={{ color: cat.color }}><i className={cat.icon}></i></div>
                   <div className="home-cat-name">{cat.name}</div>
                   <div className="home-cat-count">{cat.count} photos</div>

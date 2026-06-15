@@ -123,7 +123,7 @@ const BuyerDashboard = () => {
                 : `You've purchased ${stats.purchases} photo${stats.purchases !== 1 ? "s" : ""}. Keep exploring!`}
             </p>
             <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-              <Link to="/explore" style={{
+              <Link to="/buyer/explore" style={{
                 background: "#fff", color: "var(--mc-hero-from)", fontWeight: 700,
                 padding: "0.7rem 1.5rem", borderRadius: 12, textDecoration: "none",
                 fontSize: "0.95rem", display: "inline-flex", alignItems: "center", gap: "0.5rem",
@@ -224,7 +224,7 @@ const BuyerDashboard = () => {
               <h6 style={{ margin: 0, fontWeight: 700, color: "var(--mc-text)", fontSize: "1rem" }}>
                 <i className="fas fa-layer-group me-2" style={{ color: "var(--mc-accent)" }}></i>Discover Albums
               </h6>
-              <Link to="/explore" style={{ fontSize: "0.8rem", color: "var(--mc-accent)", textDecoration: "none", fontWeight: 600 }}>
+              <Link to="/buyer/explore" style={{ fontSize: "0.8rem", color: "var(--mc-accent)", textDecoration: "none", fontWeight: 600 }}>
                 Browse all
               </Link>
             </div>
@@ -233,7 +233,7 @@ const BuyerDashboard = () => {
               <div style={{ textAlign: "center", padding: "2.5rem 1rem" }}>
                 <i className="fas fa-images fa-2x" style={{ color: "var(--mc-accent)", display: "block", marginBottom: "0.75rem", opacity: 0.45 }}></i>
                 <p style={{ color: "var(--mc-text-muted)", margin: "0 0 0.5rem", fontSize: "0.9rem" }}>No photos yet</p>
-                <Link to="/explore" style={{ color: "var(--mc-accent)", fontSize: "0.85rem", fontWeight: 600 }}>
+                <Link to="/buyer/explore" style={{ color: "var(--mc-accent)", fontSize: "0.85rem", fontWeight: 600 }}>
                   Start exploring →
                 </Link>
               </div>
@@ -242,7 +242,7 @@ const BuyerDashboard = () => {
                 {featuredMedia.slice(0, 6).map((m, i) => {
                   const url = getImageUrl(m, placeholderMedium);
                   return (
-                    <Link key={i} to="/explore" style={{ display: "block", borderRadius: 10, overflow: "hidden", aspectRatio: "1", background: "var(--mc-bg)", textDecoration: "none" }}>
+                    <Link key={i} to="/buyer/explore" style={{ display: "block", borderRadius: 10, overflow: "hidden", aspectRatio: "1", background: "var(--mc-bg)", textDecoration: "none" }}>
                       <img
                         src={url || placeholderMedium}
                         alt={m.title || ""}
@@ -274,8 +274,8 @@ const BuyerDashboard = () => {
               <div style={{ textAlign: "center", padding: "2.5rem 1rem" }}>
                 <i className="fas fa-shopping-bag fa-2x" style={{ color: "var(--mc-accent)", display: "block", marginBottom: "0.75rem", opacity: 0.45 }}></i>
                 <p style={{ color: "var(--mc-text-muted)", margin: "0 0 0.5rem", fontSize: "0.9rem" }}>No purchases yet</p>
-                <Link to="/explore" style={{ color: "var(--mc-accent)", fontSize: "0.85rem", fontWeight: 600 }}>
-                  Start browsing photos →
+                <Link to="/buyer/explore" style={{ color: "var(--mc-accent)", fontSize: "0.85rem", fontWeight: 600 }}>
+                  Browse albums →
                 </Link>
               </div>
             ) : (
