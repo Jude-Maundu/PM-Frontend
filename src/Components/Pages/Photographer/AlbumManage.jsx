@@ -47,7 +47,8 @@ export default function AlbumManage() {
         headers: headers(),
       });
       const a = res.data?.album || res.data;
-      setAlbum(a);
+      const mediaArr = res.data?.media || a.media || [];
+      setAlbum({ ...a, media: mediaArr });
       setEditName(a.name || "");
       setEditDesc(a.description || "");
       setEditPrice(String(a.price ?? 0));
