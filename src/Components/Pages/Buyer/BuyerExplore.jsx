@@ -916,115 +916,157 @@ const BuyerExplore = () => {
         </div>
       </div>
 
-      {/* Protected Modal with Anti-Screenshot Measures */}
+      {/* Lightbox Modal */}
       {showModal && selectedPhoto && (
-        <div 
-          className="modal show d-block" 
-          style={{ 
-            backgroundColor: "rgba(0,0,0,0.95)", 
-            zIndex: 1060,
-            backdropFilter: "blur(5px)"
-          }} 
+        <div
           onClick={() => setShowModal(false)}
-          onContextMenu={(e) => {
-            e.preventDefault();
-            setShowProtectionWarning(true);
-            setTimeout(() => setShowProtectionWarning(false), 2000);
-            return false;
-          }}
+          onContextMenu={(e) => { e.preventDefault(); setShowProtectionWarning(true); setTimeout(() => setShowProtectionWarning(false), 2000); }}
+          style={{ position: "fixed", inset: 0, zIndex: 1060, background: "rgba(8,12,18,0.92)", backdropFilter: "blur(16px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}
         >
-          <div className="modal-dialog modal-dialog-centered m-0 mx-auto" style={{ maxWidth: "90vw", minHeight: "100vh", display: "flex", alignItems: "center" }}>
-            <div className="modal-content bg-transparent border-0" onClick={(e) => e.stopPropagation()}>
-              <button 
-                className="btn-close btn-close-white position-absolute top-0 end-0 m-3" 
-                style={{ zIndex: 1061 }}
-                onClick={() => setShowModal(false)}
-              ></button>
-              <div className="text-center position-relative">
-                {/* Watermark Overlay */}
-                <div 
-                  style={{
-                    position: "absolute",
-                    top: "50%",
-                    left: "50%",
-                    transform: "translate(-50%, -50%) rotate(-25deg)",
-                    fontSize: "clamp(24px, 5vw, 48px)",
-                    fontWeight: "bold",
-                    color: "rgba(107,189,208,0.3)",
-                    textShadow: "2px 2px 4px rgba(0,0,0,0.5)",
-                    pointerEvents: "none",
-                    zIndex: 10,
-                    whiteSpace: "nowrap",
-                    width: "100%",
-                    textAlign: "center"
-                  }}
-                >
-                  © Relic Snap
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ display: "flex", flexDirection: "row", width: "min(1100px, 96vw)", maxHeight: "92vh", borderRadius: 24, overflow: "hidden", boxShadow: "0 32px 80px rgba(0,0,0,0.6)", background: "#0f1923" }}
+            className="lightbox-inner"
+          >
+            {/* ── Left: Image Panel ── */}
+            <div style={{ flex: "1 1 60%", minWidth: 0, background: "#080c11", position: "relative", display: "flex", alignItems: "center", justifyContent: "center", minHeight: 340 }}>
+              {/* Watermark */}
+              <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none", zIndex: 4 }}>
+                <span style={{ fontSize: "clamp(1.1rem,3vw,2rem)", fontWeight: 800, color: "rgba(107,189,208,0.18)", transform: "rotate(-28deg)", whiteSpace: "nowrap", letterSpacing: "0.12em", textShadow: "0 1px 4px rgba(0,0,0,0.5)", userSelect: "none" }}>
+                  © RELIC SNAP
+                </span>
+              </div>
+              {/* Image */}
+              <img
+                ref={imageRef}
+                src={imageUrls[selectedPhoto._id] || resolveImage(selectedPhoto) || placeholderMedium}
+                alt={selectedPhoto.title}
+                style={{ width: "100%", height: "100%", objectFit: "contain", maxHeight: "92vh", display: "block", pointerEvents: "none", userSelect: "none", WebkitUserSelect: "none" }}
+                onDragStart={e => e.preventDefault()}
+                onContextMenu={e => { e.preventDefault(); setShowProtectionWarning(true); setTimeout(() => setShowProtectionWarning(false), 2000); }}
+              />
+              {/* Protective overlay */}
+              <div style={{ position: "absolute", inset: 0, zIndex: 3, pointerEvents: "none" }} />
+            </div>
+
+            {/* ── Right: Info Panel ── */}
+            <div style={{ width: 300, flexShrink: 0, display: "flex", flexDirection: "column", background: "#0f1923", overflowY: "auto" }}>
+              {/* Header */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1.25rem 1.25rem 0" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <img src="/rs-logo.png" alt="Relic Snap" style={{ width: 22, height: 22, objectFit: "contain", opacity: 0.7 }} />
+                  <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "rgba(107,189,208,0.7)", letterSpacing: "0.1em", textTransform: "uppercase" }}>Relic Snap</span>
                 </div>
-                
-                {/* Image with protection */}
-                <img 
-                  ref={imageRef}
-                  src={imageUrls[selectedPhoto._id] || resolveImage(selectedPhoto) || placeholderMedium} 
-                  alt={selectedPhoto.title} 
-                  className="img-fluid rounded-3 protected-image"
-                  style={{ 
-                    maxHeight: "80vh", 
-                    maxWidth: "100%", 
-                    objectFit: "contain",
-                    pointerEvents: "none",
-                    userSelect: "none",
-                    WebkitUserSelect: "none",
-                    MozUserSelect: "none",
-                    msUserSelect: "none"
-                  }} 
-                  onDragStart={(e) => {
-                    e.preventDefault();
-                    return false;
-                  }}
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    setShowProtectionWarning(true);
-                    setTimeout(() => setShowProtectionWarning(false), 2000);
-                    return false;
-                  }}
+                <button onClick={() => setShowModal(false)} style={{ background: "rgba(255,255,255,0.07)", border: "none", color: "rgba(255,255,255,0.6)", borderRadius: "50%", width: 32, height: 32, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.85rem", transition: "background 0.2s" }}
+                  onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.14)"}
+                  onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.07)"}
+                >
+                  <i className="fas fa-times"></i>
+                </button>
+              </div>
+
+              {/* Photographer */}
+              <div style={{ padding: "1.25rem 1.25rem 0", display: "flex", alignItems: "center", gap: "0.65rem" }}>
+                <img
+                  src={`https://ui-avatars.com/api/?name=${selectedPhoto.photographer?.username || "P"}&background=6BBDD0&color=fff&size=40`}
+                  alt=""
+                  style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
                 />
-                
-                {/* Protective overlay to block screenshot tools */}
-                <div 
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: "transparent",
-                    pointerEvents: "none",
-                    zIndex: 5
-                  }}
-                />
-                
-                <div className="mt-3">
-                  <h5 className="fw-bold mb-1">{selectedPhoto.title}</h5>
-                  <p className="text-white-50 small mb-2">By {selectedPhoto.photographer?.username || "Anonymous"}</p>
-                  <div className="d-flex justify-content-center gap-2">
-                    <button className="btn btn-warning btn-sm rounded-pill px-3" onClick={() => addToCart(selectedPhoto._id, selectedPhoto)}>
-                      <i className="fas fa-cart-plus me-1"></i>Add to Cart
-                    </button>
-                    <button className="btn btn-outline-light btn-sm rounded-pill px-3" onClick={() => handleLike(selectedPhoto._id)}>
-                      <i className="fas fa-heart me-1"></i>Like ({selectedPhoto.likes || 0})
-                    </button>
+                <div>
+                  <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#fff" }}>{selectedPhoto.photographer?.username || "Anonymous"}</div>
+                  <div style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.4)" }}>Photographer</div>
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div style={{ margin: "1.1rem 1.25rem", borderTop: "1px solid rgba(255,255,255,0.07)" }} />
+
+              {/* Title & meta */}
+              <div style={{ padding: "0 1.25rem" }}>
+                <h5 style={{ color: "#fff", fontWeight: 700, fontSize: "clamp(0.95rem,2vw,1.1rem)", margin: "0 0 0.5rem", lineHeight: 1.35 }}>
+                  {selectedPhoto.title || "Untitled"}
+                </h5>
+                {selectedPhoto.description && (
+                  <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.8rem", lineHeight: 1.6, margin: "0 0 1rem" }}>
+                    {selectedPhoto.description}
+                  </p>
+                )}
+
+                {/* Stats row */}
+                <div style={{ display: "flex", gap: "1rem", marginBottom: "1.25rem" }}>
+                  <div style={{ textAlign: "center" }}>
+                    <div style={{ fontSize: "1rem", fontWeight: 700, color: "#fff" }}>{selectedPhoto.likes || 0}</div>
+                    <div style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.38)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Likes</div>
                   </div>
-                  <div className="mt-2">
-                    <small className="text-white-50">
-                      <i className="fas fa-shield-alt me-1"></i>
-                      Protected content - Screenshots disabled
-                    </small>
+                  <div style={{ textAlign: "center" }}>
+                    <div style={{ fontSize: "1rem", fontWeight: 700, color: "#fff" }}>{selectedPhoto.downloads || 0}</div>
+                    <div style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.38)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Sales</div>
+                  </div>
+                  {selectedPhoto.price > 0 && (
+                    <div style={{ textAlign: "center" }}>
+                      <div style={{ fontSize: "1rem", fontWeight: 700, color: "#6BBDD0" }}>KES {Number(selectedPhoto.price).toLocaleString()}</div>
+                      <div style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.38)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Price</div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Price badge */}
+                {selectedPhoto.price > 0 ? (
+                  <div style={{ background: "linear-gradient(135deg, #1a6b8a 0%, #6BBDD0 100%)", borderRadius: 12, padding: "0.75rem 1rem", marginBottom: "1rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <div>
+                      <div style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.65)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Price</div>
+                      <div style={{ fontSize: "1.2rem", fontWeight: 800, color: "#fff" }}>KES {Number(selectedPhoto.price).toLocaleString()}</div>
+                    </div>
+                    <i className="fas fa-tag" style={{ fontSize: "1.4rem", color: "rgba(255,255,255,0.3)" }}></i>
+                  </div>
+                ) : (
+                  <div style={{ background: "rgba(76,201,166,0.12)", border: "1px solid rgba(76,201,166,0.3)", borderRadius: 12, padding: "0.65rem 1rem", marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                    <i className="fas fa-unlock" style={{ color: "#4CC9A6" }}></i>
+                    <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "#4CC9A6" }}>Free Photo</span>
+                  </div>
+                )}
+
+                {/* Action buttons */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem", marginBottom: "1.25rem" }}>
+                  <button
+                    onClick={() => addToCart(selectedPhoto._id, selectedPhoto)}
+                    style={{ width: "100%", padding: "0.75rem", background: "#F5A623", color: "#1A2E3B", border: "none", borderRadius: 12, fontWeight: 700, fontSize: "0.9rem", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}
+                  >
+                    <i className="fas fa-shopping-cart"></i> Add to Cart
+                  </button>
+                  <div style={{ display: "flex", gap: "0.6rem" }}>
+                    <button
+                      onClick={() => handleLike(selectedPhoto._id)}
+                      style={{ flex: 1, padding: "0.65rem", background: likedItems.has(selectedPhoto._id) ? "rgba(232,85,85,0.15)" : "rgba(255,255,255,0.06)", color: likedItems.has(selectedPhoto._id) ? "#e85555" : "rgba(255,255,255,0.6)", border: `1px solid ${likedItems.has(selectedPhoto._id) ? "rgba(232,85,85,0.4)" : "rgba(255,255,255,0.1)"}`, borderRadius: 12, fontWeight: 600, fontSize: "0.83rem", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem" }}
+                    >
+                      <i className={`fas fa-heart${likedItems.has(selectedPhoto._id) ? "" : "-o"}`}></i>
+                      {likedItems.has(selectedPhoto._id) ? "Liked" : "Like"}
+                    </button>
+                    <button
+                      onClick={() => handleMessage(selectedPhoto.photographer?._id)}
+                      style={{ flex: 1, padding: "0.65rem", background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, fontWeight: 600, fontSize: "0.83rem", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem" }}
+                    >
+                      <i className="fas fa-envelope"></i> Message
+                    </button>
                   </div>
                 </div>
               </div>
+
+              {/* Footer protection notice */}
+              <div style={{ marginTop: "auto", padding: "1rem 1.25rem", borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <i className="fas fa-shield-alt" style={{ color: "#6BBDD0", fontSize: "0.75rem" }}></i>
+                <span style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.3)" }}>Protected content · Screenshots disabled</span>
+              </div>
             </div>
           </div>
+
+          <style>{`
+            @media (max-width: 640px) {
+              .lightbox-inner { flex-direction: column !important; width: 100% !important; max-height: 96vh !important; border-radius: 16px !important; }
+              .lightbox-inner > div:first-child { min-height: 240px !important; max-height: 50vh !important; }
+              .lightbox-inner > div:last-child { width: 100% !important; }
+            }
+          `}</style>
         </div>
       )}
 
