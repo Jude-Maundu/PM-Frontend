@@ -66,6 +66,7 @@ import SalesAnalytics from './Components/Pages/Photographer/SalesAnalytics';
 import ReferralPage from './Components/Pages/Photographer/ReferralPage';
 import CreateAlbum from './Components/Pages/Photographer/CreateAlbum';
 import MyAlbums from './Components/Pages/Photographer/MyAlbums';
+import AlbumManage from './Components/Pages/Photographer/AlbumManage';
 import PublicAlbumView from './Components/Pages/Public/PublicAlbumView';
 
 // BuyerPages 
@@ -183,7 +184,7 @@ function App() {
           <Route path="/photographer/proofing" element={<ProtectedRoute requiredRole="photographer"><ClientProofing /></ProtectedRoute>} />
           <Route path="/photographer/albums" element={<ProtectedRoute requiredRole="photographer"><MyAlbums /></ProtectedRoute>} />
           <Route path="/photographer/albums/create" element={<ProtectedRoute requiredRole="photographer"><CreateAlbum /></ProtectedRoute>} />
-          <Route path="/photographer/albums/:albumId" element={<ProtectedRoute requiredRole="photographer"><CreateAlbum /></ProtectedRoute>} />
+          <Route path="/photographer/albums/:albumId" element={<ProtectedRoute requiredRole="photographer"><AlbumManage /></ProtectedRoute>} />
 
           {/* Buyer Routes */}
           <Route path="/buyer/cart" element={<ProtectedRoute requiredRole="buyer"><BuyerCart /></ProtectedRoute>} />
