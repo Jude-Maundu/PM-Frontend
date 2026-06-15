@@ -124,6 +124,7 @@ const API_ENDPOINTS = {
     ADD_FUNDS: `${API_BASE_URL}/payments/wallet/add`,
     BUY_ALBUM: (albumId) => `${API_BASE_URL}/payments/album/${albumId}/buy`,
     CHECK_ALBUM_PURCHASED: (albumId) => `${API_BASE_URL}/payments/album/${albumId}/purchased`,
+    ALBUM_DOWNLOAD_INFO: (albumId) => `${API_BASE_URL}/payments/album/${albumId}/download-info`,
   },
 
   // ==================== ADMIN ====================

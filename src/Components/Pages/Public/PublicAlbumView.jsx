@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import axios from "axios";
 import { Helmet } from "react-helmet-async";
 import { API_ENDPOINTS, API_BASE_URL } from "../../../api/apiConfig";
+import AlbumDownloadModal from "../Buyer/AlbumDownloadModal";
 
 function imageUrl(raw) {
   if (!raw) return null;
@@ -28,6 +29,7 @@ export default function PublicAlbumView() {
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState("");
   const [lightbox, setLightbox]       = useState(null);
+  const [downloadModalData, setDownloadModalData] = useState(null);
   const [buying, setBuying]           = useState(null);   // 'album' | mediaId
   const [phone, setPhone]             = useState("");
   const [payStatus, setPayStatus]     = useState("");     // '' | 'pending' | 'polling' | 'success' | 'error'
@@ -56,9 +58,54 @@ export default function PublicAlbumView() {
   // Clear polling on unmount
   useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
 
+  const [walletBuying, setWalletBuying] = useState(false);
+
   const handleBuy = (type, mediaItem) => {
     setBuying(type === "album" ? "album" : mediaItem._id);
     setPayStatus(""); setPayMsg(""); setPhone(""); setCheckoutReqId(null); setDownloadItems([]);
+  };
+
+  const handleWalletBuyAlbum = async () => {
+    if (!isLoggedIn) { handleBuy("album"); return; }
+    setWalletBuying(true);
+    try {
+      const res = await axios.post(
+        API_ENDPOINTS.WALLET.BUY_ALBUM(albumId),
+        {},
+        { headers: { Authorization: `Bearer ${authToken}` } }
+      );
+      if (res.data.downloadInfo) {
+        setDownloadModalData([{
+          albumId,
+          albumName: res.data.albumName || album?.name || "Album",
+          downloadInfo: res.data.downloadInfo,
+        }]);
+      } else {
+        // Fetch download info separately
+        try {
+          const infoRes = await axios.get(
+            API_ENDPOINTS.WALLET.ALBUM_DOWNLOAD_INFO(albumId),
+            { headers: { Authorization: `Bearer ${authToken}` } }
+          );
+          setDownloadModalData([{
+            albumId,
+            albumName: infoRes.data.albumName || album?.name || "Album",
+            downloadInfo: infoRes.data.downloadInfo || [],
+          }]);
+        } catch { /* silently skip download modal */ }
+      }
+      // Refresh album so purchasedBy shows
+      load();
+    } catch (err) {
+      if (err.response?.status === 402) {
+        // Not enough wallet — fall back to M-Pesa
+        handleBuy("album");
+      } else {
+        alert(err.response?.data?.message || "Purchase failed. Please try again.");
+      }
+    } finally {
+      setWalletBuying(false);
+    }
   };
 
   const pollPaymentStatus = (reqId) => {
@@ -251,12 +298,15 @@ export default function PublicAlbumView() {
                         </li>
                       ))}
                     </ul>
-                    <button onClick={() => handleBuy("album")} style={{ width: "100%", padding: "0.85rem", background: teal, color: "#fff", border: "none", borderRadius: 12, fontWeight: 700, fontSize: "1rem", cursor: "pointer" }}>
-                      <i className="fas fa-shopping-bag me-2"></i>Buy Full Album
+                    <button onClick={handleWalletBuyAlbum} disabled={walletBuying} style={{ width: "100%", padding: "0.85rem", background: teal, color: "#fff", border: "none", borderRadius: 12, fontWeight: 700, fontSize: "1rem", cursor: "pointer" }}>
+                      {walletBuying
+                        ? <><span className="spinner-border spinner-border-sm me-2"></span>Processing…</>
+                        : <><i className="fas fa-shopping-bag me-2"></i>Buy Full Album</>
+                      }
                     </button>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem", marginTop: "0.75rem", fontSize: "0.75rem", color: "rgba(255,255,255,0.55)" }}>
                       <i className="fas fa-shield-alt" style={{ color: "#4CC9A6" }}></i>
-                      No account required · Pay with M-Pesa
+                      {isLoggedIn ? "Pay from wallet · Instant download" : "No account required · Pay with M-Pesa"}
                     </div>
                   </div>
                 )}
@@ -403,6 +453,13 @@ export default function PublicAlbumView() {
             )}
           </div>
         </div>
+      )}
+
+      {downloadModalData && (
+        <AlbumDownloadModal
+          albums={downloadModalData}
+          onClose={() => setDownloadModalData(null)}
+        />
       )}
     </>
   );

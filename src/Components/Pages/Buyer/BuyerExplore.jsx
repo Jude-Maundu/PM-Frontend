@@ -4,6 +4,7 @@ import BuyerLayout from "./BuyerLayout";
 import axios from "axios";
 import { API_ENDPOINTS } from "../../../api/apiConfig";
 import { toast } from "../../../utils/toast";
+import AlbumDownloadModal from "./AlbumDownloadModal";
 
 const EVENT_TYPES = [
   { value: "",           label: "All",        icon: "fa-th-large" },
@@ -30,11 +31,12 @@ function imgUrl(raw) {
   return `https://pm-backend-f3b6.onrender.com/${raw.replace(/^\//, "")}`;
 }
 
-function AlbumCard({ album, userId, onBuy, buying }) {
+function AlbumCard({ album, userId, onBuy, onAddToCart, buying, cartAlbumIds }) {
   const navigate = useNavigate();
   const cover = imgUrl(album.coverImage);
   const alreadyPurchased = (album.purchasedBy || []).map(id => id.toString()).includes(userId?.toString());
   const isFree = !album.price || album.price <= 0;
+  const inCart = cartAlbumIds?.includes(album._id);
   const [hovered, setHovered] = useState(false);
 
   return (
@@ -42,21 +44,17 @@ function AlbumCard({ album, userId, onBuy, buying }) {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        borderRadius: 18,
-        overflow: "hidden",
+        borderRadius: 18, overflow: "hidden",
         background: "var(--mc-card-bg, #1a2535)",
         border: "1px solid rgba(255,255,255,0.07)",
         boxShadow: hovered ? "0 16px 40px rgba(0,0,0,0.4)" : "0 2px 12px rgba(0,0,0,0.2)",
         transform: hovered ? "translateY(-4px)" : "none",
-        transition: "all 0.22s ease",
-        cursor: "pointer",
-        display: "flex",
-        flexDirection: "column",
+        transition: "all 0.22s ease", cursor: "pointer",
+        display: "flex", flexDirection: "column",
       }}
     >
       {/* Cover */}
-      <div
-        onClick={() => navigate(`/album/${album._id}`)}
+      <div onClick={() => navigate(`/album/${album._id}`)}
         style={{ position: "relative", height: 200, overflow: "hidden", flexShrink: 0 }}
       >
         {cover
@@ -67,7 +65,6 @@ function AlbumCard({ album, userId, onBuy, buying }) {
         }
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0) 45%, rgba(0,0,0,0.72))" }} />
 
-        {/* Event type badge */}
         {album.eventType && album.eventType !== "other" && (
           <div style={{ position: "absolute", top: 10, left: 10 }}>
             <span style={{ background: "rgba(107,189,208,0.85)", backdropFilter: "blur(6px)", color: "#fff", borderRadius: 999, padding: "0.2rem 0.65rem", fontSize: "0.68rem", fontWeight: 700, textTransform: "capitalize" }}>
@@ -76,7 +73,6 @@ function AlbumCard({ album, userId, onBuy, buying }) {
           </div>
         )}
 
-        {/* Photo count + price */}
         <div style={{ position: "absolute", bottom: 10, left: 10, right: 10, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <span style={{ background: "rgba(26,46,59,0.8)", color: "#fff", borderRadius: 999, padding: "0.2rem 0.6rem", fontSize: "0.7rem", fontWeight: 600 }}>
             <i className="fas fa-images me-1"></i>{album.mediaCount || 0} photos
@@ -86,9 +82,8 @@ function AlbumCard({ album, userId, onBuy, buying }) {
           </span>
         </div>
 
-        {/* View overlay on hover */}
         {hovered && (
-          <div style={{ position: "absolute", inset: 0, background: "rgba(107,189,208,0.1)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ position: "absolute", inset: 0, background: "rgba(107,189,208,0.08)", display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
             <div style={{ background: "rgba(107,189,208,0.9)", color: "#fff", borderRadius: 999, padding: "0.5rem 1.25rem", fontSize: "0.82rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "0.4rem" }}>
               <i className="fas fa-images"></i> View Album
             </div>
@@ -98,14 +93,10 @@ function AlbumCard({ album, userId, onBuy, buying }) {
 
       {/* Body */}
       <div style={{ padding: "1rem", display: "flex", flexDirection: "column", flex: 1 }}>
-        <h6
-          onClick={() => navigate(`/album/${album._id}`)}
+        <h6 onClick={() => navigate(`/album/${album._id}`)}
           style={{ fontWeight: 700, color: "#fff", margin: "0 0 0.35rem", fontSize: "0.95rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", cursor: "pointer" }}
-        >
-          {album.name}
-        </h6>
+        >{album.name}</h6>
 
-        {/* Photographer */}
         <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.75rem" }}>
           <img
             src={imgUrl(album.photographer?.profilePicture) || `https://ui-avatars.com/api/?name=${album.photographer?.username || "P"}&background=6BBDD0&color=fff&size=24`}
@@ -119,34 +110,53 @@ function AlbumCard({ album, userId, onBuy, buying }) {
           )}
         </div>
 
-        {/* Buy / View button */}
+        {/* Action buttons */}
         <div style={{ marginTop: "auto" }}>
-          {isFree || alreadyPurchased ? (
-            <button
-              onClick={() => navigate(`/album/${album._id}`)}
+          {alreadyPurchased ? (
+            <button onClick={() => navigate(`/album/${album._id}`)}
+              style={{ width: "100%", padding: "0.6rem", background: "rgba(76,201,166,0.12)", color: "#4CC9A6", border: "1px solid rgba(76,201,166,0.3)", borderRadius: 10, fontWeight: 700, fontSize: "0.83rem", cursor: "pointer" }}
+            >
+              <i className="fas fa-check me-1"></i>Purchased — View Album
+            </button>
+          ) : isFree ? (
+            <button onClick={() => navigate(`/album/${album._id}`)}
               style={{ width: "100%", padding: "0.6rem", background: "rgba(107,189,208,0.12)", color: "#6BBDD0", border: "1px solid rgba(107,189,208,0.3)", borderRadius: 10, fontWeight: 700, fontSize: "0.83rem", cursor: "pointer" }}
             >
-              <i className={`fas ${alreadyPurchased ? "fa-check" : "fa-images"} me-1`}></i>
-              {alreadyPurchased ? "View Purchased" : "View Album"}
+              <i className="fas fa-images me-1"></i>View Free Album
             </button>
           ) : (
-            <div style={{ display: "flex", gap: "0.5rem" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+              {/* Add to Cart */}
               <button
-                onClick={() => navigate(`/album/${album._id}`)}
-                style={{ flex: 1, padding: "0.6rem", background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, fontWeight: 600, fontSize: "0.78rem", cursor: "pointer" }}
+                onClick={() => onAddToCart(album)}
+                disabled={inCart}
+                style={{
+                  width: "100%", padding: "0.55rem", borderRadius: 10, fontWeight: 700, fontSize: "0.78rem", cursor: inCart ? "default" : "pointer",
+                  background: inCart ? "rgba(107,189,208,0.08)" : "rgba(107,189,208,0.14)",
+                  color: inCart ? "rgba(107,189,208,0.5)" : "#6BBDD0",
+                  border: `1px solid ${inCart ? "rgba(107,189,208,0.15)" : "rgba(107,189,208,0.35)"}`,
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: "0.35rem",
+                }}
               >
-                <i className="fas fa-eye me-1"></i>Preview
+                <i className={`fas ${inCart ? "fa-check" : "fa-cart-plus"}`}></i>
+                {inCart ? "In Cart" : "Add to Cart"}
               </button>
-              <button
-                onClick={() => onBuy(album)}
-                disabled={buying === album._id}
-                style={{ flex: 1, padding: "0.6rem", background: "#F5A623", color: "#1a1a00", border: "none", borderRadius: 10, fontWeight: 700, fontSize: "0.78rem", cursor: "pointer" }}
-              >
-                {buying === album._id
-                  ? <span className="spinner-border spinner-border-sm"></span>
-                  : <><i className="fas fa-shopping-bag me-1"></i>Buy</>
-                }
-              </button>
+              {/* Buy now row */}
+              <div style={{ display: "flex", gap: "0.4rem" }}>
+                <button onClick={() => navigate(`/album/${album._id}`)}
+                  style={{ flex: 1, padding: "0.55rem", background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.55)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, fontWeight: 600, fontSize: "0.75rem", cursor: "pointer" }}
+                >
+                  <i className="fas fa-eye me-1"></i>Preview
+                </button>
+                <button onClick={() => onBuy(album)} disabled={buying === album._id}
+                  style={{ flex: 1, padding: "0.55rem", background: "#F5A623", color: "#1a1a00", border: "none", borderRadius: 10, fontWeight: 700, fontSize: "0.75rem", cursor: "pointer" }}
+                >
+                  {buying === album._id
+                    ? <span className="spinner-border spinner-border-sm"></span>
+                    : <><i className="fas fa-bolt me-1"></i>Buy Now</>
+                  }
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -169,6 +179,8 @@ export default function BuyerExplore() {
   const [albumType, setAlbumType] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [buyingAlbum, setBuyingAlbum] = useState(null);
+  const [cartAlbumIds, setCartAlbumIds] = useState([]);
+  const [downloadModalData, setDownloadModalData] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -191,6 +203,29 @@ export default function BuyerExplore() {
 
   useEffect(() => { load(); }, [load]);
 
+  // Load cart album IDs so cards show "In Cart" state
+  useEffect(() => {
+    if (!token || !userId) return;
+    axios.get(API_ENDPOINTS.CART.GET(userId), { headers })
+      .then(res => {
+        const albumItems = res.data?.albumItems || [];
+        setCartAlbumIds(albumItems.map(i => (i.album?._id || i.album)?.toString?.()));
+      })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
+
+  const handleAddToCart = async (album) => {
+    if (!token || !userId) { navigate("/login"); return; }
+    try {
+      await axios.post(API_ENDPOINTS.CART.ADD, { albumId: album._id }, { headers: { Authorization: `Bearer ${token}` } });
+      setCartAlbumIds(prev => [...prev, album._id]);
+      toast.success(`"${album.name}" added to cart`);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Could not add to cart");
+    }
+  };
+
   const handleBuyAlbum = async (album) => {
     if (!token || !userId) { navigate("/login"); return; }
     if (album.price <= 0) { toast.info("This album is free"); return; }
@@ -199,6 +234,14 @@ export default function BuyerExplore() {
       const res = await axios.post(API_ENDPOINTS.WALLET.BUY_ALBUM(album._id), {}, { headers: { Authorization: `Bearer ${token}` } });
       toast.success(res.data.message || "Album purchased!");
       setAlbums(prev => prev.map(a => a._id === album._id ? { ...a, purchasedBy: [...(a.purchasedBy || []), userId] } : a));
+      // Show download modal
+      if (res.data.downloadInfo) {
+        setDownloadModalData([{
+          albumId: album._id,
+          albumName: res.data.albumName || album.name,
+          downloadInfo: res.data.downloadInfo,
+        }]);
+      }
     } catch (err) {
       toast.error(err.response?.data?.message || "Purchase failed");
     } finally {
@@ -317,12 +360,21 @@ export default function BuyerExplore() {
                 album={album}
                 userId={userId}
                 onBuy={handleBuyAlbum}
+                onAddToCart={handleAddToCart}
                 buying={buyingAlbum}
+                cartAlbumIds={cartAlbumIds}
               />
             ))}
           </div>
         )}
       </div>
+
+      {downloadModalData && (
+        <AlbumDownloadModal
+          albums={downloadModalData}
+          onClose={() => setDownloadModalData(null)}
+        />
+      )}
 
       <style>{`
         @keyframes pulse {

@@ -6,6 +6,7 @@ import axios from "axios";
 import { API_BASE_URL, API_ENDPOINTS } from "../../../api/apiConfig";
 import { toast } from "../../../utils/toast";
 import { showConfirm } from "../../../utils/confirm";
+import AlbumDownloadModal from "./AlbumDownloadModal";
 import { placeholderMedium } from "../../../utils/placeholders";
 import { getImageUrl, fetchProtectedUrl } from "../../../utils/imageUrl";
 import {
@@ -23,6 +24,7 @@ const API = API_BASE_URL;
 
 const BuyerCart = () => {
   const [cartItems, setCartItems] = useState([]);
+  const [albumItems, setAlbumItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [mpesaProcessing, setMpesaProcessing] = useState(false);
@@ -35,6 +37,7 @@ const BuyerCart = () => {
   const [phoneError, setPhoneError] = useState('');
   const [mpesaPhone, setMpesaPhone] = useState('');
   const [cartImageUrls, setCartImageUrls] = useState({});
+  const [downloadModalData, setDownloadModalData] = useState(null);
 
   const navigate = useNavigate();
 
@@ -218,6 +221,7 @@ const BuyerCart = () => {
           else if (res.data?.cart && Array.isArray(res.data.cart)) cartData = res.data.cart;
           else if (res.data?.data && Array.isArray(res.data.data)) cartData = res.data.data;
           setCartItems(Array.isArray(cartData) ? cartData : []);
+          setAlbumItems(res.data?.albumItems || []);
           await preloadCartImages(cartData);
         } catch (err) {
           if (err.response?.status === 404 || err.response?.status === 400) {
@@ -292,6 +296,18 @@ const BuyerCart = () => {
     }
   };
 
+  const removeAlbumFromCart = async (albumId) => {
+    try {
+      setUpdating(true);
+      await axios.post(`${API}/payments/cart/remove`, { albumId }, { headers });
+      setAlbumItems(prev => prev.filter(i => (i.album?._id || i.album) !== albumId));
+    } catch {
+      setError("Failed to remove album");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   const clearCart = async () => {
     const ok = await showConfirm("Remove all items from your cart?", { title: "Clear Cart", confirmText: "Clear" });
     if (!ok) return;
@@ -301,11 +317,13 @@ const BuyerCart = () => {
       if (!isApiAvailable(feature)) {
         clearLocalCart();
         setCartItems([]);
+        setAlbumItems([]);
         setCartImageUrls({});
         return;
       }
       await axios.delete(`${API}/payments/cart/${userId}`, { headers });
       setCartItems([]);
+      setAlbumItems([]);
       setCartImageUrls({});
     } catch (err) {
       const status = err.response?.status;
@@ -313,6 +331,7 @@ const BuyerCart = () => {
         disableApi(feature);
         clearLocalCart();
         setCartItems([]);
+        setAlbumItems([]);
         setCartImageUrls({});
       } else {
         setError("Failed to clear cart");
@@ -448,12 +467,17 @@ const BuyerCart = () => {
   };
 
   const handleWalletCheckout = async () => {
-    if (cartItems.length === 0) {
+    const hasMedia = cartItems.length > 0;
+    const hasAlbums = albumItems.length > 0;
+
+    if (!hasMedia && !hasAlbums) {
       toast.warning("Your cart is empty");
       return;
     }
 
-    const total = cartItems.reduce((sum, item) => sum + (item.price || 0), 0);
+    const mediaTotal = cartItems.reduce((sum, item) => sum + (item.price || 0), 0);
+    const albumTotal = albumItems.reduce((sum, item) => sum + (item.price || 0), 0);
+    const total = mediaTotal + albumTotal;
 
     if (total > walletBalance) {
       toast.error("Insufficient wallet balance. Please top up and try again.");
@@ -469,8 +493,10 @@ const BuyerCart = () => {
 
     try {
       setUpdating(true);
+      const purchasedAlbumDownloads = [];
 
-      if (useApi) {
+      // Buy media items
+      if (useApi && hasMedia) {
         for (const item of cartItems) {
           try {
             await axios.post(API_ENDPOINTS.PAYMENTS.BUY, {
@@ -483,7 +509,7 @@ const BuyerCart = () => {
             throw itemErr;
           }
         }
-      } else {
+      } else if (!useApi && hasMedia) {
         cartItems.forEach((item) => {
           addLocalPurchase({
             mediaId: item.mediaId,
@@ -495,11 +521,43 @@ const BuyerCart = () => {
         });
       }
 
-      await clearCart();
-      await downloadPurchasedItems(cartItems);
+      // Buy album items
+      for (const albumItem of albumItems) {
+        const albumId = albumItem.album?._id || albumItem.album;
+        try {
+          const res = await axios.post(
+            API_ENDPOINTS.WALLET.BUY_ALBUM(albumId),
+            {},
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          if (res.data.downloadInfo) {
+            purchasedAlbumDownloads.push({
+              albumId,
+              albumName: res.data.albumName || albumItem.album?.name || "Album",
+              downloadInfo: res.data.downloadInfo,
+            });
+          }
+        } catch (albumErr) {
+          console.error("Error buying album:", albumId, albumErr.message);
+          throw albumErr;
+        }
+      }
+
+      // Clear cart and kick off downloads
+      await axios.delete(`${API}/payments/cart/${userId}`, { headers }).catch(() => {});
+      setCartItems([]);
+      setAlbumItems([]);
+
+      if (hasMedia) await downloadPurchasedItems(cartItems);
+
       setCheckoutStep('success');
-      toast.success("Purchase successful! Your downloads are starting.");
-      navigate("/buyer/downloads");
+      toast.success("Purchase successful!");
+
+      if (purchasedAlbumDownloads.length > 0) {
+        setDownloadModalData(purchasedAlbumDownloads);
+      } else {
+        navigate("/buyer/downloads");
+      }
     } catch (err) {
       const status = err.response?.status;
       if (status === 404 || status === 400) {
@@ -513,13 +571,16 @@ const BuyerCart = () => {
             purchasedAt: new Date().toISOString(),
           });
         });
-        await clearCart();
+        await axios.delete(`${API}/payments/cart/${userId}`, { headers }).catch(() => {});
+        setCartItems([]);
+        setAlbumItems([]);
         await downloadPurchasedItems(cartItems);
         setCheckoutStep('success');
         toast.success("Purchase successful! Your downloads are starting.");
         navigate("/buyer/downloads");
       } else {
         setError(err.response?.data?.message || "Checkout failed");
+        setCheckoutStep('cart');
       }
     } finally {
       setUpdating(false);
@@ -528,7 +589,10 @@ const BuyerCart = () => {
 
   if (!token || !userId) return null;
 
-  const totalAmount = cartItems.reduce((sum, item) => sum + (item.price || 0), 0);
+  const mediaTotal = cartItems.reduce((sum, item) => sum + (item.price || 0), 0);
+  const albumTotal = albumItems.reduce((sum, item) => sum + (item.price || 0), 0);
+  const totalAmount = mediaTotal + albumTotal;
+  const totalItemCount = cartItems.length + albumItems.length;
   const glassStyle = {
     background: "rgba(255, 255, 255, 0.08)",
     backdropFilter: "blur(12px)",
@@ -612,14 +676,14 @@ const BuyerCart = () => {
             <div className="spinner-border text-warning" style={{ width: '2.5rem', height: '2.5rem' }}></div>
             <p className="text-white-50 mt-3 small">Loading your cart...</p>
           </div>
-        ) : cartItems.length === 0 ? (
+        ) : cartItems.length === 0 && albumItems.length === 0 ? (
           <div className="text-center py-4 py-md-5 px-3 rounded-4 p-3 p-md-5" style={glassStyle}>
             <i className="fas fa-shopping-cart fa-4x fa-md-5x text-white-50 mb-3 mb-md-4"></i>
             <h3 className="text-white mb-3 fs-5 fs-md-3">Your cart is empty</h3>
-            <p className="text-white-50 mb-4 small">Discover amazing photos and add them to your cart</p>
+            <p className="text-white-50 mb-4 small">Discover albums and add them to your cart</p>
             <Link to="/buyer/explore" className="btn btn-warning btn-lg px-3 px-md-4">
-              <i className="fas fa-search me-2"></i>
-              Explore Photos
+              <i className="fas fa-compass me-2"></i>
+              Browse Albums
             </Link>
           </div>
         ) : (
@@ -627,6 +691,52 @@ const BuyerCart = () => {
             {/* Cart Items */}
             <div className="col-12 col-lg-8">
               <div className="row g-2 g-md-3">
+                {/* Album items */}
+                {albumItems.map((item, index) => {
+                  const album = item.album || {};
+                  const albumId = album._id || album;
+                  const coverUrl = album.coverImage?.startsWith?.("http") ? album.coverImage : album.coverImage ? `https://pm-backend-f3b6.onrender.com/${album.coverImage}` : null;
+                  return (
+                    <div key={albumId || index} className="col-12">
+                      <div className="mc-card h-100">
+                        <div className="card-body p-3 p-md-4">
+                          <div className="row align-items-center g-3">
+                            <div className="col-4 col-sm-3 col-md-3 col-lg-3">
+                              <div style={{ height: 80, borderRadius: 10, overflow: "hidden", background: "rgba(107,189,208,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                {coverUrl
+                                  ? <img src={coverUrl} alt={album.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                  : <i className="fas fa-images" style={{ fontSize: "1.5rem", color: "rgba(107,189,208,0.6)" }}></i>
+                                }
+                              </div>
+                            </div>
+                            <div className="col-8 col-sm-6 col-md-6 col-lg-6">
+                              <h5 className="text-white fw-bold mb-1 fs-6">{album.name || "Album"}</h5>
+                              <p className="text-white-50 mb-1 small">
+                                <i className="fas fa-images me-1"></i>
+                                {album.mediaCount || 0} photos
+                                {album.eventType && <span className="ms-2 badge" style={{ background: "rgba(107,189,208,0.2)", color: "#6BBDD0", fontSize: "0.65rem", textTransform: "capitalize" }}>{album.eventType}</span>}
+                              </p>
+                              <span className="badge" style={{ background: "rgba(107,189,208,0.15)", color: "#6BBDD0", fontSize: "0.7rem" }}>
+                                <i className="fas fa-folder me-1"></i>Album
+                              </span>
+                            </div>
+                            <div className="col-12 col-sm-3 col-md-3 text-end">
+                              <div className="text-warning fw-bold fs-5 mb-2">KES {(item.price || 0).toLocaleString()}</div>
+                              <button className="btn mc-btn mc-btn-danger btn-sm w-100 w-sm-auto"
+                                onClick={() => removeAlbumFromCart(albumId?.toString?.() || albumId)}
+                                disabled={updating}
+                              >
+                                <i className="fas fa-trash me-1 d-none d-sm-inline"></i>Remove
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Media items */}
                 {cartItems.map((item, index) => {
                   const mediaEntity = getMediaFromCartItem(item);
                   return (
@@ -702,9 +812,15 @@ const BuyerCart = () => {
                   </div>
                   <div className="card-body p-3 p-md-4">
                     <div className="d-flex justify-content-between mb-2 small">
-                      <span className="text-white-50">Items ({cartItems.length})</span>
-                      <span className="text-white fw-medium">{cartItems.length}</span>
+                      <span className="text-white-50">Photos ({cartItems.length})</span>
+                      <span className="text-white fw-medium">KES {mediaTotal.toLocaleString()}</span>
                     </div>
+                    {albumItems.length > 0 && (
+                      <div className="d-flex justify-content-between mb-2 small">
+                        <span className="text-white-50">Albums ({albumItems.length})</span>
+                        <span className="text-white fw-medium">KES {albumTotal.toLocaleString()}</span>
+                      </div>
+                    )}
                     <hr className="border-secondary my-2 my-md-3" />
                     <div className="d-flex justify-content-between align-items-center mb-3">
                       <span className="text-white fw-bold fs-6 fs-md-5">Total Amount</span>
@@ -841,6 +957,13 @@ const BuyerCart = () => {
           </div>
         )}
       </div>
+
+      {downloadModalData && (
+        <AlbumDownloadModal
+          albums={downloadModalData}
+          onClose={() => { setDownloadModalData(null); navigate("/buyer/downloads"); }}
+        />
+      )}
     </BuyerLayout>
   );
 };
