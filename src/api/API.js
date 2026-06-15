@@ -101,7 +101,6 @@ export const likeMedia = (id) => post(`${API_BASE_URL}/media/${id}/like`, {});
 export const unlikeMedia = (id) => post(`${API_BASE_URL}/media/${id}/unlike`, {});
 export const uploadMedia = (formData, config = {}) =>
   api.post(API_ENDPOINTS.MEDIA.CREATE, formData, {
-    headers: { "Content-Type": "multipart/form-data" },
     ...config,
   });
 
@@ -128,7 +127,6 @@ export const getAlbumMedia = async (albumId) => {
 
 export const bulkUpload = (formData, config = {}) =>
   api.post(API_ENDPOINTS.MEDIA.BULK_UPLOAD, formData, {
-    headers: { "Content-Type": "multipart/form-data" },
     ...config,
   });
 

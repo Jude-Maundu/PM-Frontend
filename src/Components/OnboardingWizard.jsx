@@ -58,7 +58,6 @@ const OnboardingWizard = () => {
       const res = await axios.put(API_ENDPOINTS.AUTH.UPDATE_USER(user._id), formData, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
-          "Content-Type": "multipart/form-data",
         },
         timeout: 15000,
       });

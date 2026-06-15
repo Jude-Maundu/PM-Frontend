@@ -142,7 +142,7 @@ export default function CreateAlbum() {
       });
 
       await axios.post(API_ENDPOINTS.MEDIA.BULK_UPLOAD, fd, {
-        headers: { ...headers(), "Content-Type": "multipart/form-data" },
+        headers: headers(),
         onUploadProgress: (e) => setUploadProgress(Math.round((e.loaded * 100) / e.total)),
       });
       setStep(2);
