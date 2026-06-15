@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import AdminLayout from "./AdminLayout";
 import { Link } from "react-router-dom";
-import { API_BASE_URL } from "../../../api/apiConfig";
+import { API_BASE_URL, API_ENDPOINTS } from "../../../api/apiConfig";
 import { getAuthHeaders, getStoredUser, getDisplayName } from "../../../utils/auth";
 
 const API = API_BASE_URL;
@@ -16,6 +16,7 @@ export default function AdminDash() {
   const [health,     setHealth]     = useState(null);
   const [recentTxns, setRecentTxns] = useState([]);
   const [recentLogs, setRecentLogs] = useState([]);
+  const [albumCount, setAlbumCount] = useState(0);
   const [loading,    setLoading]    = useState(true);
 
   const hour     = new Date().getHours();
@@ -24,14 +25,17 @@ export default function AdminDash() {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const [healthRes, receiptsRes, logsRes] = await Promise.all([
+      const [healthRes, receiptsRes, logsRes, albumsRes] = await Promise.all([
         axios.get(`${API}/admin/health`,            { headers }).catch(() => ({ data: {} })),
         axios.get(`${API}/payments/admin/receipts`, { headers }).catch(() => ({ data: [] })),
         axios.get(`${API}/admin/logs?limit=6`,      { headers }).catch(() => ({ data: { data: [] } })),
+        axios.get(API_ENDPOINTS.ADMIN.GET_ALBUMS,   { headers }).catch(() => ({ data: [] })),
       ]);
       setHealth(healthRes.data || {});
       setRecentTxns((receiptsRes.data || []).slice(0, 6));
       setRecentLogs((logsRes.data?.data || []).slice(0, 6));
+      const albumArr = albumsRes.data?.data || albumsRes.data || [];
+      setAlbumCount(Array.isArray(albumArr) ? albumArr.length : 0);
     } catch (e) {
       console.error("AdminDash fetch error:", e);
     } finally {
@@ -43,11 +47,10 @@ export default function AdminDash() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const totalUsers          = health?.totalUsers         ?? 0;
-  const pendingMedia        = health?.pendingMedia        ?? 0;
   const salesToday          = health?.salesToday          ?? 0;
   const pendingWithdrawals  = health?.pendingWithdrawals  ?? 0;
   const pendingApplications = health?.pendingApplications ?? 0;
-  const totalUrgent         = pendingWithdrawals + pendingApplications + pendingMedia;
+  const totalUrgent         = pendingWithdrawals + pendingApplications;
 
   if (loading) {
     return (
@@ -89,18 +92,13 @@ export default function AdminDash() {
                 : "Everything looks great — no pending actions right now!"}
             </p>
             <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-              <Link to="/admin/media-approval" style={{
+              <Link to="/admin/albums" style={{
                 background: "#fff", color: "var(--mc-hero-from)", fontWeight: 700,
                 padding: "0.7rem 1.5rem", borderRadius: 12, textDecoration: "none",
                 fontSize: "0.95rem", display: "inline-flex", alignItems: "center", gap: "0.5rem",
                 boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
               }}>
-                <i className="fas fa-camera-retro"></i>Photo Approval
-                {pendingMedia > 0 && (
-                  <span style={{ background: "#F06B8D", color: "#fff", borderRadius: 99, padding: "1px 7px", fontSize: "0.75rem", fontWeight: 700 }}>
-                    {pendingMedia}
-                  </span>
-                )}
+                <i className="fas fa-folder-open"></i>Manage Albums
               </Link>
               <Link to="/admin/users" style={{
                 background: "rgba(255,255,255,0.18)", color: "#fff", fontWeight: 600,
@@ -131,7 +129,7 @@ export default function AdminDash() {
         <div className="dash-stats" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
           {[
             { icon: "fa-users",         label: "Total Users",          value: totalUsers,                                      color: "#6BBDD0", bg: "rgba(107,189,208,0.12)", to: "/admin/users" },
-            { icon: "fa-camera",        label: "Pending Approval",     value: pendingMedia,                                    color: "#F5A623", bg: "rgba(245,166,35,0.12)",  to: "/admin/media-approval" },
+            { icon: "fa-folder-open",   label: "Total Albums",         value: albumCount,                                      color: "#F5A623", bg: "rgba(245,166,35,0.12)",  to: "/admin/albums" },
             { icon: "fa-coins",         label: "Revenue Today",        value: `KES ${Number(salesToday).toLocaleString()}`,   color: "#4CC9A6", bg: "rgba(76,201,166,0.12)",  to: "/admin/transactions" },
             { icon: "fa-money-bill-alt",label: "Pending Withdrawals",  value: pendingWithdrawals,                              color: "#9D7FEB", bg: "rgba(157,127,235,0.12)", to: "/admin/withdrawals" },
           ].map(stat => (
@@ -158,30 +156,12 @@ export default function AdminDash() {
         </div>
 
         {/* ── URGENT ACTIONS (show only if there are pending items) ── */}
-        {(pendingMedia > 0 || pendingApplications > 0 || pendingWithdrawals > 0) && (
+        {(pendingApplications > 0 || pendingWithdrawals > 0) && (
           <div style={{ marginBottom: "2rem" }}>
             <h6 style={{ margin: "0 0 0.75rem", fontSize: "0.78rem", fontWeight: 700, color: "var(--mc-text-muted)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
               Needs Your Attention
             </h6>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.65rem" }}>
-              {pendingMedia > 0 && (
-                <Link to="/admin/media-approval" style={{
-                  display: "flex", alignItems: "center", gap: "1rem",
-                  padding: "1rem 1.25rem", borderRadius: 12, textDecoration: "none",
-                  background: "rgba(245,166,35,0.08)", border: "1px solid rgba(245,166,35,0.28)",
-                }}>
-                  <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(245,166,35,0.18)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <i className="fas fa-camera-retro" style={{ color: "#F5A623", fontSize: "1.1rem" }}></i>
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 700, color: "var(--mc-text)", fontSize: "0.95rem" }}>
-                      {pendingMedia} photo{pendingMedia !== 1 ? "s" : ""} waiting for approval
-                    </div>
-                    <div style={{ fontSize: "0.82rem", color: "var(--mc-text-muted)" }}>Photographers submitted new photos — review before they go live</div>
-                  </div>
-                  <i className="fas fa-chevron-right" style={{ color: "var(--mc-text-muted)" }}></i>
-                </Link>
-              )}
               {pendingApplications > 0 && (
                 <Link to="/admin/applications" style={{
                   display: "flex", alignItems: "center", gap: "1rem",
@@ -232,9 +212,9 @@ export default function AdminDash() {
           </h6>
           <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
             {[
-              { to: "/admin/media-approval", icon: "fa-camera-retro",  label: "Approvals",   color: "#F5A623" },
+              { to: "/admin/albums",         icon: "fa-folder-open",    label: "Albums",      color: "#F5A623" },
               { to: "/admin/users",          icon: "fa-users",          label: "Users",       color: "#6BBDD0" },
-              { to: "/admin/media",          icon: "fa-photo-video",    label: "All Media",   color: "#4CC9A6" },
+              { to: "/admin/portfolios",     icon: "fa-globe",          label: "Portfolios",  color: "#4CC9A6" },
               { to: "/admin/analytics",      icon: "fa-chart-bar",      label: "Analytics",   color: "#9D7FEB" },
               { to: "/admin/withdrawals",    icon: "fa-money-bill-wave",label: "Withdrawals", color: "#F06B8D" },
               { to: "/admin/moderation",     icon: "fa-shield-alt",     label: "Moderation",  color: "#1A2E3B" },

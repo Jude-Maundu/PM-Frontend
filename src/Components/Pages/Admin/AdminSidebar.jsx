@@ -19,10 +19,10 @@ const AdminSidebar = ({ isOpen, onToggle, onNav }) => {
       badge: null,
     },
     {
-      path: "/admin/media",
-      icon: "fa-photo-video",
-      label: "Media",
-      badge: "24",
+      path: "/admin/albums",
+      icon: "fa-folder-open",
+      label: "Albums",
+      badge: null,
     },
     {
       path: "/admin/users",
@@ -52,12 +52,6 @@ const AdminSidebar = ({ isOpen, onToggle, onNav }) => {
       path: "/admin/withdrawals",
       icon: "fa-money-check-alt",
       label: "Withdrawals",
-      badge: null,
-    },
-    {
-      path: "/admin/albums",
-      icon: "fa-folder-open",
-      label: "Albums",
       badge: null,
     },
     {

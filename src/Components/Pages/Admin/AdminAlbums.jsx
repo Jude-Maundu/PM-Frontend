@@ -69,25 +69,25 @@ const AdminAlbums = () => {
         {/* Stats */}
         <div className="mc-stats-row-sm mb-4">
           <div className="mc-card p-3">
-            <div className="fw-bold fs-4 text-white">{albums.length}</div>
-            <small className="text-white-50">Total Albums</small>
+            <div className="fw-bold fs-4" style={{ color: "var(--mc-text)" }}>{albums.length}</div>
+            <small style={{ color: "var(--mc-text-muted)" }}>Total Albums</small>
           </div>
           <div className="mc-card p-3">
-            <div className="fw-bold fs-4 text-white">{albums.filter(a => !a.isPrivate).length}</div>
-            <small className="text-white-50">Public</small>
+            <div className="fw-bold fs-4" style={{ color: "var(--mc-text)" }}>{albums.filter(a => !a.isPrivate).length}</div>
+            <small style={{ color: "var(--mc-text-muted)" }}>Public</small>
           </div>
           <div className="mc-card p-3">
-            <div className="fw-bold fs-4 text-white">{albums.filter(a => a.isPrivate).length}</div>
-            <small className="text-white-50">Private</small>
+            <div className="fw-bold fs-4" style={{ color: "var(--mc-text)" }}>{albums.filter(a => a.isPrivate).length}</div>
+            <small style={{ color: "var(--mc-text-muted)" }}>Private</small>
           </div>
         </div>
 
         {/* Search */}
         <div className="mc-card mb-4">
           <div className="position-relative">
-            <i className="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-white-50"></i>
+            <i className="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3" style={{ color: "var(--mc-text-muted)" }}></i>
             <input type="text" className="form-control"
-              style={{ paddingLeft: 40, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}
+              style={{ paddingLeft: 40, background: "var(--mc-card-bg)", border: "1px solid var(--mc-border)", color: "var(--mc-text)" }}
               placeholder="Search by album name or photographer..."
               value={search} onChange={e => setSearch(e.target.value)} />
           </div>
@@ -96,12 +96,12 @@ const AdminAlbums = () => {
         {loading ? (
           <div className="mc-card text-center py-5">
             <div className="spinner-border mb-3" style={{ color: "#6BBDD0" }}></div>
-            <p className="text-white-50">Loading albums...</p>
+            <p style={{ color: "var(--mc-text-muted)" }}>Loading albums...</p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="mc-card text-center py-5">
-            <i className="fas fa-folder-open fa-4x text-white-50 mb-3"></i>
-            <p className="text-white-50">No albums found</p>
+            <i className="fas fa-folder-open fa-4x mb-3" style={{ color: "var(--mc-text-muted)" }}></i>
+            <p style={{ color: "var(--mc-text-muted)" }}>No albums found</p>
           </div>
         ) : (
           <div className="row g-3">
@@ -129,14 +129,14 @@ const AdminAlbums = () => {
                   </div>
 
                   <div className="p-3">
-                    <h6 className="text-white fw-bold mb-1 text-truncate">{album.name || "Unnamed Album"}</h6>
-                    <p className="text-white-50 small mb-2 text-truncate">{album.description || "No description"}</p>
+                    <h6 className="fw-bold mb-1 text-truncate" style={{ color: "var(--mc-text)" }}>{album.name || "Unnamed Album"}</h6>
+                    <p className="small mb-2 text-truncate" style={{ color: "var(--mc-text-muted)" }}>{album.description || "No description"}</p>
 
                     <div className="d-flex gap-2 flex-wrap mb-3">
                       <span className="badge rounded-pill px-2 py-1" style={{ background: "rgba(107,189,208,0.15)", color: "#6BBDD0", fontSize: "0.7rem" }}>
                         <i className="fas fa-camera me-1"></i>{album.photographer?.username || "Unknown"}
                       </span>
-                      <span className="badge rounded-pill px-2 py-1" style={{ background: "rgba(255,255,255,0.08)", color: "#ccc", fontSize: "0.7rem" }}>
+                      <span className="badge rounded-pill px-2 py-1" style={{ background: "var(--mc-bg)", color: "var(--mc-text-muted)", fontSize: "0.7rem", border: "1px solid var(--mc-border)" }}>
                         <i className="fas fa-images me-1"></i>{album.mediaCount || 0} photos
                       </span>
                       {album.price > 0 && (
@@ -147,7 +147,7 @@ const AdminAlbums = () => {
                     </div>
 
                     <div className="d-flex justify-content-between align-items-center">
-                      <small className="text-white-50">
+                      <small style={{ color: "var(--mc-text-muted)" }}>
                         {album.createdAt ? new Date(album.createdAt).toLocaleDateString() : ""}
                       </small>
                       <button
