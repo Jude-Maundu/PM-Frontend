@@ -33,17 +33,12 @@ const BuyerDownloads = () => {
   const getCloudinaryUrl = useCallback((item) => {
     const mediaObj = item.mediaDetails || item.media || item;
 
-    if (mediaObj.fileUrl && mediaObj.fileUrl.includes('cloudinary')) {
-      return mediaObj.fileUrl;
-    }
-    if (mediaObj.url && mediaObj.url.includes('cloudinary')) {
-      return mediaObj.url;
-    }
-    if (mediaObj.imageUrl && mediaObj.imageUrl.includes('cloudinary')) {
-      return mediaObj.imageUrl;
-    }
-    if (mediaObj.thumbnail && mediaObj.thumbnail.includes('cloudinary')) {
-      return mediaObj.thumbnail;
+    const candidates = [
+      mediaObj.fileUrl, mediaObj.watermarkedUrl, mediaObj.url,
+      mediaObj.imageUrl, mediaObj.coverImage, mediaObj.thumbnail,
+    ];
+    for (const url of candidates) {
+      if (url && (url.includes('cloudinary') || url.startsWith('http'))) return url;
     }
     return null;
   }, []);
@@ -438,6 +433,11 @@ const BuyerDownloads = () => {
                         <span className="position-absolute top-0 end-0 m-2 badge bg-success rounded-pill px-3 py-2">
                           <i className="fas fa-check-circle me-1"></i>Purchased
                         </span>
+                        {item.isAlbum && (
+                          <span className="position-absolute top-0 start-0 m-2 badge rounded-pill px-3 py-2" style={{ background: "rgba(107,189,208,0.85)", color: "#fff" }}>
+                            <i className="fas fa-folder-open me-1"></i>Album
+                          </span>
+                        )}
                       </div>
                       <div style={{ padding: "1rem" }} className="d-flex flex-column h-100">
                         <h5 className="fw-bold mb-1 text-truncate" style={{ color: "var(--mc-text)" }}>{title}</h5>
