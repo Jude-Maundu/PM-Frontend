@@ -27,7 +27,7 @@ const ALBUM_TYPES = [
 
 function imgUrl(raw) {
   if (!raw) return null;
-  if (raw.startsWith("http")) return raw;
+  if (raw.startsWith("http") || raw.startsWith("data:") || raw.startsWith("blob:")) return raw;
   return `https://pm-backend-f3b6.onrender.com/${raw.replace(/^\//, "")}`;
 }
 

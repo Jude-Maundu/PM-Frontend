@@ -10,7 +10,7 @@ const headers = () => ({ Authorization: `Bearer ${token()}` });
 
 function resolveUrl(url) {
   if (!url) return null;
-  if (url.startsWith("http")) return url;
+  if (url.startsWith("http") || url.startsWith("data:") || url.startsWith("blob:")) return url;
   return `${process.env.REACT_APP_API_URL || "https://pm-backend-f3b6.onrender.com"}/${url.replace(/^\//, "")}`;
 }
 

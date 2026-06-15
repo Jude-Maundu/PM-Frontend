@@ -37,7 +37,7 @@ const EVENT_LABELS = {
 
 function imgUrl(raw) {
   if (!raw) return null;
-  if (raw.startsWith("http")) return raw;
+  if (raw.startsWith("http") || raw.startsWith("data:") || raw.startsWith("blob:")) return raw;
   return `${API_BASE_URL.replace("/api", "")}/${raw}`;
 }
 
