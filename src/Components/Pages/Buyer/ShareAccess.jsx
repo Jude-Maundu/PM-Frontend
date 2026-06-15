@@ -129,15 +129,15 @@ const ShareAccess = () => {
       {/* Minimal brand navbar */}
       <nav style={{ background: "rgba(10,22,40,0.95)", borderBottom: "1px solid rgba(107,189,208,0.2)", padding: "14px 24px" }}
         className="d-flex align-items-center justify-content-between">
-        <span className="fw-bold text-white" style={{ fontFamily: "'Playfair Display', serif", fontSize: "1.2rem" }}>
-          <img src="/rs-logo.png" alt="Relic Snap" style={{ width: 28, height: 28, objectFit: "contain", marginRight: "0.5rem" }} />
-          Relic Snap
+        <span className="fw-bold text-white d-flex align-items-center gap-2" style={{ fontFamily: "'Playfair Display', serif", fontSize: "1.1rem" }}>
+          <img src="/rs-logo.png" alt="Relic Snap" style={{ width: 28, height: 28, objectFit: "contain" }} />
+          <span className="pm-nav-brand-text">Relic Snap</span>
         </span>
         <div className="d-flex gap-2">
-          <Link to="/explore" className="btn btn-sm btn-outline-light rounded-pill px-3" style={{ opacity: 0.7 }}>
+          <Link to="/explore" className="btn btn-sm btn-outline-light rounded-pill px-3 pm-nav-label" style={{ opacity: 0.7 }}>
             Explore
           </Link>
-          <Link to="/login" className="btn btn-sm rounded-pill px-3"
+          <Link to="/login" className="btn btn-sm rounded-pill px-3 pm-nav-sign-in"
             style={{ background: "#6BBDD0", color: "#fff", border: "none" }}>
             Sign In
           </Link>
@@ -191,7 +191,7 @@ const ShareAccess = () => {
               style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(107,189,208,0.15)", backdropFilter: "blur(12px)" }}>
               <div className="row g-0">
                 {/* Cover image */}
-                <div className="col-md-5" style={{ background: "#0a1628", minHeight: "260px" }}>
+                <div className="col-md-5 pm-share-cover" style={{ background: "#0a1628", minHeight: "260px" }}>
                   {(() => {
                     const coverSrc = shareData.shareType === "album"
                       ? (resolveUrl(shareData.album?.coverImage) || resolveImage(shareData.album?.media?.[0]))

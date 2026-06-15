@@ -154,16 +154,18 @@ export default function PublicAlbumView() {
       <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, background: "rgba(26,46,59,0.96)", backdropFilter: "blur(12px)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.85rem 1.5rem" }}>
         <Link to="/explore" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "0.5rem" }}>
           <img src="/rs-logo.png" alt="Relic Snap" style={{ width: 32, height: 32, objectFit: "contain" }} />
-          <span style={{ color: "#fff", fontFamily: "var(--font-serif)", fontWeight: 700, fontSize: "1.1rem" }}>Relic Snap</span>
+          <span className="pm-nav-brand-text" style={{ color: "#fff", fontFamily: "var(--font-serif)", fontWeight: 700, fontSize: "1.1rem" }}>Relic Snap</span>
         </Link>
-        <div style={{ display: "flex", gap: "0.75rem" }}>
-          {!isLoggedIn && <Link to="/login" style={{ color: "rgba(255,255,255,0.7)", textDecoration: "none", fontSize: "0.9rem", padding: "0.4rem 1rem" }}>Sign In</Link>}
-          <Link to="/explore" style={{ color: "#fff", textDecoration: "none", fontSize: "0.9rem", padding: "0.4rem 1rem", background: "rgba(255,255,255,0.1)", borderRadius: 8 }}>Browse Albums</Link>
+        <div style={{ display: "flex", gap: "0.5rem" }}>
+          {!isLoggedIn && <Link to="/login" className="pm-nav-sign-in" style={{ color: "rgba(255,255,255,0.7)", textDecoration: "none", fontSize: "0.9rem", padding: "0.4rem 0.75rem" }}>Sign In</Link>}
+          <Link to="/explore" style={{ color: "#fff", textDecoration: "none", fontSize: "0.9rem", padding: "0.4rem 0.75rem", background: "rgba(255,255,255,0.1)", borderRadius: 8, display: "flex", alignItems: "center", gap: "0.35rem" }}>
+            <i className="fas fa-compass"></i><span className="pm-nav-label">Browse</span>
+          </Link>
         </div>
       </nav>
 
       {/* Hero */}
-      <div style={{ marginTop: 56, position: "relative", height: "360px", overflow: "hidden", background: "linear-gradient(135deg, #1A2E3B 0%, #0f1e28 100%)" }}>
+      <div className="pm-album-hero" style={{ marginTop: 56, position: "relative", height: "360px", overflow: "hidden", background: "linear-gradient(135deg, #1A2E3B 0%, #0f1e28 100%)" }}>
         {cover && <img src={cover} alt={album?.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(26,46,59,0.2) 0%, rgba(26,46,59,0.85) 100%)" }} />
         <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "2rem 2rem 2.5rem" }}>
@@ -298,7 +300,7 @@ export default function PublicAlbumView() {
           </button>
           <div onClick={e => e.stopPropagation()} style={{ maxWidth: 700, width: "100%", display: "flex", flexDirection: "column", gap: "1rem", alignItems: "center" }}>
             <img src={imageUrl(lightbox.watermarkedUrl || lightbox.fileUrl)} alt={lightbox.title} style={{ maxWidth: "100%", maxHeight: "65vh", objectFit: "contain", borderRadius: 14 }} />
-            <div style={{ background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", borderRadius: 14, padding: "1.25rem 1.5rem", width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem" }}>
+            <div className="pm-lightbox-bar" style={{ background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", borderRadius: 14, padding: "1.25rem 1.5rem", width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem" }}>
               <div>
                 <div style={{ fontWeight: 700, color: "#fff", fontSize: "1rem" }}>{lightbox.title}</div>
                 {lightbox.description && <div style={{ color: "rgba(255,255,255,0.55)", fontSize: "0.8rem", marginTop: "0.2rem" }}>{lightbox.description}</div>}
@@ -326,7 +328,7 @@ export default function PublicAlbumView() {
       {/* Payment modal */}
       {buying && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(10,15,20,0.7)", zIndex: 9100, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
-          <div style={{ background: "#fff", borderRadius: 20, padding: "2rem", maxWidth: 420, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
+          <div className="pm-pay-modal" style={{ background: "#fff", borderRadius: 20, padding: "2rem", maxWidth: 420, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
 
             {/* Success state */}
             {payStatus === "success" ? (

@@ -96,10 +96,10 @@ const BuyerDashboard = () => {
 
   return (
     <BuyerLayout>
-      <div style={{ padding: "1.5rem 1.5rem 3rem" }}>
+      <div className="dash-outer">
 
         {/* ── WELCOME HERO ── */}
-        <div style={{
+        <div className="dash-hero" style={{
           background: "linear-gradient(135deg, var(--mc-hero-from) 0%, var(--mc-hero-to) 100%)",
           borderRadius: 20, padding: "2rem 2.5rem", marginBottom: "2rem",
           display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -141,7 +141,7 @@ const BuyerDashboard = () => {
               </Link>
             </div>
           </div>
-          <div style={{ flexShrink: 0 }}>
+          <div className="dash-hero-avatar" style={{ flexShrink: 0 }}>
             <div style={{
               width: 96, height: 96, borderRadius: "50%",
               border: "4px solid rgba(255,255,255,0.4)", overflow: "hidden",
@@ -157,7 +157,7 @@ const BuyerDashboard = () => {
         </div>
 
         {/* ── STATS ROW ── */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
+        <div className="dash-stats" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
           {[
             { icon: "fa-shopping-bag", label: "Photos Purchased", value: stats.purchases,                                    color: "#6BBDD0", bg: "rgba(107,189,208,0.12)" },
             { icon: "fa-download",     label: "Downloads",        value: stats.downloads,                                    color: "#4CC9A6", bg: "rgba(76,201,166,0.12)"  },

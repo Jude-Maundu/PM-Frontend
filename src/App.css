@@ -3278,3 +3278,62 @@ nav.navbar.home-navbar.scrolled {
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Dashboard content wrapper mobile fixes ── */
+.dash-outer {
+  padding: 1.5rem 1.5rem 3rem;
+}
+@media (max-width: 768px) {
+  .dash-outer {
+    padding: 1rem 1rem 80px; /* 80px clears the fixed bottom nav */
+  }
+  .dash-hero {
+    padding: 1.5rem !important;
+  }
+  .dash-hero-avatar {
+    display: none !important; /* hide avatar on small screens to save space */
+  }
+  .dash-stats {
+    grid-template-columns: repeat(2, 1fr) !important; /* force 2 columns */
+  }
+}
+@media (max-width: 360px) {
+  .dash-stats {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ── Public page mobile fixes ── */
+
+/* Filter bar: hide scrollbar but keep touch scroll */
+.pm-filter-bar {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.pm-filter-bar::-webkit-scrollbar { display: none; }
+
+/* Navbar: hide secondary text labels on very small screens */
+@media (max-width: 480px) {
+  .pm-nav-label { display: none !important; }
+  .pm-nav-sign-in { display: none !important; }
+}
+@media (max-width: 360px) {
+  .pm-nav-brand-text { display: none !important; }
+}
+
+/* Hero height on mobile */
+@media (max-width: 576px) {
+  .pm-album-hero { height: 220px !important; }
+  .pm-share-cover { min-height: 180px !important; max-height: 220px !important; }
+}
+
+/* Payment modal: tighter padding on small screens */
+@media (max-width: 480px) {
+  .pm-pay-modal { padding: 1.25rem !important; }
+}
+
+/* Lightbox: photo info bar stacks vertically */
+@media (max-width: 576px) {
+  .pm-lightbox-bar { flex-direction: column !important; align-items: flex-start !important; }
+}

@@ -145,13 +145,13 @@ export default function Explore() {
       <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 200, background: scrolled ? "rgba(26,46,59,0.97)" : "transparent", backdropFilter: scrolled ? "blur(12px)" : "none", transition: "all 0.3s", padding: "0.85rem 1.5rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "0.5rem" }}>
           <img src="/rs-logo.png" alt="Relic Snap" style={{ width: 32, height: 32, objectFit: "contain" }} />
-          <span style={{ color: "#fff", fontFamily: "var(--font-serif)", fontWeight: 700, fontSize: "1.1rem" }}>Relic Snap</span>
+          <span className="pm-nav-brand-text" style={{ color: "#fff", fontFamily: "var(--font-serif)", fontWeight: 700, fontSize: "1.1rem" }}>Relic Snap</span>
         </Link>
-        <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-          <button onClick={() => setShowFaceSearch(true)} style={{ background: "rgba(107,189,208,0.15)", border: "1px solid rgba(107,189,208,0.4)", color: TEAL, borderRadius: 999, padding: "0.4rem 1rem", fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}>
-            <i className="fas fa-camera me-1"></i>Find My Photos
+        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+          <button onClick={() => setShowFaceSearch(true)} style={{ background: "rgba(107,189,208,0.15)", border: "1px solid rgba(107,189,208,0.4)", color: TEAL, borderRadius: 999, padding: "0.4rem 0.75rem", fontSize: "0.82rem", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "0.3rem" }}>
+            <i className="fas fa-camera"></i><span className="pm-nav-label">Find My Photos</span>
           </button>
-          <Link to="/login" style={{ color: "rgba(255,255,255,0.75)", textDecoration: "none", fontSize: "0.88rem" }}>Sign In</Link>
+          <Link to="/login" className="pm-nav-sign-in" style={{ color: "rgba(255,255,255,0.75)", textDecoration: "none", fontSize: "0.88rem" }}>Sign In</Link>
           <Link to="/register" style={{ background: TEAL, color: "#fff", textDecoration: "none", fontSize: "0.88rem", padding: "0.45rem 1rem", borderRadius: 8, fontWeight: 600 }}>Join Free</Link>
         </div>
       </nav>
@@ -212,7 +212,7 @@ export default function Explore() {
       {/* Filters */}
       <div style={{ background: "#fff", borderBottom: "1px solid var(--pm-gray-200)", position: "sticky", top: 56, zIndex: 100 }}>
         <div className="container">
-          <div style={{ display: "flex", gap: 0, alignItems: "center", overflowX: "auto", padding: "0.75rem 0" }}>
+          <div className="pm-filter-bar" style={{ display: "flex", gap: 0, alignItems: "center", padding: "0.75rem 0" }}>
             {/* Type filter */}
             <div style={{ display: "flex", gap: "0.4rem", marginRight: "1.25rem", flexShrink: 0 }}>
               {TYPE_FILTERS.map(f => (
