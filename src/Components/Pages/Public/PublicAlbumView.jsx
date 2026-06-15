@@ -254,7 +254,7 @@ export default function PublicAlbumView() {
                 </div>
               ) : (
                 <div style={{ columns: "3 200px", columnGap: "0.75rem" }}>
-                  {media.filter(m => m.isApproved !== false).map((m, idx) => {
+                  {media.map((m, idx) => {
                     const src = imageUrl(m.watermarkedUrl || m.fileUrl);
                     return (
                       <div key={m._id || idx} onClick={() => setLightbox(m)}
