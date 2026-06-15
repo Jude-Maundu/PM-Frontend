@@ -2184,6 +2184,16 @@ nav.navbar.home-navbar.scrolled {
 
 .mc-icon-btn:hover { color: var(--mc-accent); border-color: var(--mc-accent); }
 
+/* When mc-icon-btn wraps the pill toggle, strip the box */
+.mc-icon-btn:has(.theme-pill) {
+  background: none;
+  border: none;
+  box-shadow: none;
+  width: auto;
+  height: auto;
+  padding: 0;
+}
+
 /* Topbar user avatar */
 .mc-topbar-avatar {
   width: 38px;
