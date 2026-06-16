@@ -54,6 +54,29 @@ export function getDisplayName(user) {
 }
 
 /**
+ * Return the best available profile photo for the current user.
+ * Prefers the explicitly cached localStorage value so dashboards update immediately
+ * after a profile photo change without requiring a fresh login.
+ */
+export function getProfilePhoto(user) {
+  try {
+    const cachedPhoto = localStorage.getItem("profilePicture");
+    if (cachedPhoto && typeof cachedPhoto === "string") return cachedPhoto;
+  } catch {
+    // ignore localStorage read errors
+  }
+
+  if (!user || typeof user !== "object") return null;
+
+  return (
+    user.profilePicture ||
+    user.profileImage ||
+    user.avatar ||
+    null
+  );
+}
+
+/**
  * Return the current auth token from localStorage.
  */
 export function isTokenExpired(token) {

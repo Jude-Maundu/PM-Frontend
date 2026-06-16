@@ -9,7 +9,7 @@ import {
 } from "../../../api/API";
 import { placeholderMedium, placeholderSmall } from "../../../utils/placeholders";
 import { getImageUrl } from "../../../utils/imageUrl";
-import { getDisplayName } from "../../../utils/auth";
+import { getDisplayName, getProfilePhoto } from "../../../utils/auth";
 
 const BuyerDashboard = () => {
   const [featuredMedia, setFeaturedMedia] = useState([]);
@@ -21,6 +21,7 @@ const BuyerDashboard = () => {
   const userStr = localStorage.getItem("user");
   const user    = userStr ? JSON.parse(userStr) : {};
   const displayName  = getDisplayName(user) || "Explorer";
+  const profilePhoto = getProfilePhoto(user);
   const avatarLetter = (displayName || "B").charAt(0).toUpperCase();
   const userId  = user?.id || user?._id;
 
@@ -149,8 +150,8 @@ const BuyerDashboard = () => {
               display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: "2.2rem", fontWeight: 700, color: "#fff",
             }}>
-              {user?.profileImage
-                ? <img src={user.profileImage} alt={displayName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              {profilePhoto
+                ? <img src={profilePhoto} alt={displayName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 : avatarLetter}
             </div>
           </div>

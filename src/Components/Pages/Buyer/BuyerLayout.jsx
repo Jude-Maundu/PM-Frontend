@@ -5,7 +5,7 @@ import { getLocalCart } from "../../../utils/localStore";
 import { API_ENDPOINTS } from "../../../api/apiConfig";
 import ThemeToggle from "../../ThemeToggle";
 import NotificationBell from "../../NotificationBell";
-import { getStoredUser, getDisplayName, getAuthToken, getCurrentUserId } from "../../../utils/auth";
+import { getStoredUser, getDisplayName, getAuthToken, getCurrentUserId, getProfilePhoto } from "../../../utils/auth";
 
 const BuyerLayout = ({ children }) => {
   const [cartCount, setCartCount] = useState(0);
@@ -17,6 +17,7 @@ const BuyerLayout = ({ children }) => {
   const location    = useLocation();
   const storedUser   = getStoredUser();
   const displayName  = getDisplayName(storedUser) || "Buyer";
+  const profilePhoto = getProfilePhoto(storedUser);
   const avatarLetter = displayName.charAt(0).toUpperCase();
   const token        = getAuthToken();
   const userId       = getCurrentUserId();
@@ -154,8 +155,8 @@ const BuyerLayout = ({ children }) => {
             </NavLink>
             <div className="mc-topbar-profile">
               <div className="mc-topbar-avatar" title={displayName} style={{ width: 32, height: 32, fontSize: "0.78rem" }}>
-                {storedUser?.profilePicture ? (
-                  <img src={storedUser.profilePicture} alt={displayName} />
+                {profilePhoto ? (
+                  <img src={profilePhoto} alt={displayName} />
                 ) : avatarLetter}
               </div>
               <div className="mc-topbar-profile-info d-none d-sm-flex" style={{ flexDirection: "column" }}>

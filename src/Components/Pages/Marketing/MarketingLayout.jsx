@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { NavLink, Link, useLocation } from "react-router-dom";
 import ThemeToggle from "../../ThemeToggle";
 import NotificationBell from "../../NotificationBell";
-import { getStoredUser, getDisplayName } from "../../../utils/auth";
+import { getStoredUser, getDisplayName, getProfilePhoto } from "../../../utils/auth";
 
 const MarketingLayout = ({ children }) => {
   const [collapsed, setCollapsed] = useState(
@@ -13,6 +13,7 @@ const MarketingLayout = ({ children }) => {
   const location    = useLocation();
   const storedUser  = getStoredUser();
   const displayName = getDisplayName(storedUser) || "Marketing Lead";
+  const profilePhoto = getProfilePhoto(storedUser);
   const avatarLetter = displayName.charAt(0).toUpperCase();
 
   const handleLogout = () => { localStorage.clear(); window.location.href = "/login"; };
@@ -121,8 +122,8 @@ const MarketingLayout = ({ children }) => {
                 style={{ width: 32, height: 32, fontSize: "0.78rem", background: accentColor, color: "#1a1a1a", overflow: "hidden" }}
                 title={displayName}
               >
-                {storedUser?.profilePicture
-                  ? <img src={storedUser.profilePicture} alt={displayName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                {profilePhoto
+                  ? <img src={profilePhoto} alt={displayName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   : avatarLetter}
               </div>
               <div className="mc-topbar-profile-info d-none d-sm-flex" style={{ flexDirection: "column" }}>

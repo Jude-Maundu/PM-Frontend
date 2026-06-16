@@ -3,13 +3,14 @@ import axios from "axios";
 import AdminLayout from "./AdminLayout";
 import { Link } from "react-router-dom";
 import { API_BASE_URL, API_ENDPOINTS } from "../../../api/apiConfig";
-import { getAuthHeaders, getStoredUser, getDisplayName } from "../../../utils/auth";
+import { getAuthHeaders, getStoredUser, getDisplayName, getProfilePhoto } from "../../../utils/auth";
 
 const API = API_BASE_URL;
 
 export default function AdminDash() {
   const storedUser   = getStoredUser();
   const adminName    = getDisplayName(storedUser) || "Admin";
+  const profilePhoto = getProfilePhoto(storedUser);
   const avatarLetter = adminName.charAt(0).toUpperCase();
   const headers      = getAuthHeaders();
 
@@ -118,8 +119,8 @@ export default function AdminDash() {
               display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: "2.2rem", fontWeight: 700, color: "#fff",
             }}>
-              {storedUser?.profilePicture
-                ? <img src={storedUser.profilePicture} alt={adminName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              {profilePhoto
+                ? <img src={profilePhoto} alt={adminName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 : avatarLetter}
             </div>
           </div>

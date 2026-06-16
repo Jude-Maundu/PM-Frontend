@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { NavLink, Link, useNavigate, useLocation } from "react-router-dom";
 import ThemeToggle from "../../ThemeToggle";
 import NotificationBell from "../../NotificationBell";
-import { getStoredUser, getDisplayName } from "../../../utils/auth";
+import { getStoredUser, getDisplayName, getProfilePhoto } from "../../../utils/auth";
 
 const PhotographerLayout = ({ children }) => {
   const [collapsed, setCollapsed] = useState(
@@ -14,6 +14,7 @@ const PhotographerLayout = ({ children }) => {
   const location  = useLocation();
   const storedUser   = getStoredUser();
   const displayName  = getDisplayName(storedUser) || "Photographer";
+  const profilePhoto = getProfilePhoto(storedUser);
   const avatarLetter = displayName.charAt(0).toUpperCase();
 
   const handleLogout = () => { localStorage.clear(); window.location.href = '/login'; };
@@ -116,8 +117,8 @@ const PhotographerLayout = ({ children }) => {
           <div className="mc-topbar-actions">
             <div className="mc-topbar-profile">
               <div className="mc-topbar-avatar" title={displayName} style={{ width: 32, height: 32, fontSize: "0.78rem" }}>
-                {storedUser?.profilePicture ? (
-                  <img src={storedUser.profilePicture} alt={displayName} />
+                {profilePhoto ? (
+                  <img src={profilePhoto} alt={displayName} />
                 ) : avatarLetter}
               </div>
               <div className="mc-topbar-profile-info d-none d-sm-flex" style={{ flexDirection: "column" }}>

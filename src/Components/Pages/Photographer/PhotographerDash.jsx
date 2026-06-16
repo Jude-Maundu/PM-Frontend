@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { API_BASE_URL, API_ENDPOINTS } from "../../../api/apiConfig";
 import { placeholderSmall } from "../../../utils/placeholders";
 import { getImageUrl, fetchProtectedUrl } from "../../../utils/imageUrl";
-import { getAuthHeaders, getCurrentUserId, getDisplayName, getStoredUser } from "../../../utils/auth";
+import { getAuthHeaders, getCurrentUserId, getDisplayName, getStoredUser, getProfilePhoto } from "../../../utils/auth";
 
 const API = API_BASE_URL;
 
@@ -20,6 +20,7 @@ const PhotographerDashboard = () => {
   const photographerId = getCurrentUserId();
   const storedUser     = getStoredUser();
   const displayName    = getDisplayName(storedUser) || "Photographer";
+  const profilePhoto   = getProfilePhoto(storedUser);
   const headers        = getAuthHeaders();
   const avatarLetter   = displayName.charAt(0).toUpperCase();
 
@@ -144,8 +145,8 @@ const PhotographerDashboard = () => {
               display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: "2.2rem", fontWeight: 700, color: "#fff",
             }}>
-              {storedUser?.profilePicture
-                ? <img src={storedUser.profilePicture} alt={displayName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              {profilePhoto
+                ? <img src={profilePhoto} alt={displayName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 : avatarLetter}
             </div>
           </div>
