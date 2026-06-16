@@ -1,5 +1,5 @@
 import { toast } from "../../../utils/toast";
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import axios from "axios";
 import PhotographerLayout from "./PhotographerLayout";
 import PageHeader from "../../PageHeader";
@@ -33,6 +33,7 @@ const PhotographerProfile = () => {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imageError, setImageError] = useState({ profile: false, cover: false });
   const [error, setError] = useState(null);
+  const profilePreviewRef = useRef(null);
 
   const user = useMemo(() => {
     try {
@@ -79,17 +80,24 @@ const PhotographerProfile = () => {
     }
   }, [profile.profileImage, profile.coverImage, imageError, profile.name]);
 
-  // Load saved images from localStorage
+  const updateStoredUser = useCallback((updates) => {
+    try {
+      const currentRaw = localStorage.getItem("user");
+      const currentUser = currentRaw ? JSON.parse(currentRaw) : {};
+      const merged = { ...currentUser, ...updates };
+      localStorage.setItem("user", JSON.stringify(merged));
+    } catch (err) {
+      console.error("Error updating stored user:", err);
+    }
+  }, []);
+
+  // Load saved cover image from localStorage
   useEffect(() => {
     if (!photographerId) return;
 
     try {
-      const savedProfileImage = localStorage.getItem(`photographer_profile_${photographerId}`);
       const savedCoverImage = localStorage.getItem(`photographer_cover_${photographerId}`);
 
-      if (savedProfileImage) {
-        setProfile(prev => ({ ...prev, profileImage: savedProfileImage }));
-      }
       if (savedCoverImage) {
         setProfile(prev => ({ ...prev, coverImage: savedCoverImage }));
       }
@@ -97,6 +105,12 @@ const PhotographerProfile = () => {
       console.error("Error loading saved images:", err);
     }
   }, [photographerId]);
+
+  useEffect(() => () => {
+    if (profilePreviewRef.current) {
+      URL.revokeObjectURL(profilePreviewRef.current);
+    }
+  }, []);
 
   // Fetch photographer profile
   const fetchProfile = useCallback(async () => {
@@ -142,8 +156,6 @@ const PhotographerProfile = () => {
         }
       }
 
-      // Load saved images from localStorage
-      const savedProfileImage = localStorage.getItem(`photographer_profile_${photographerId}`);
       const savedCoverImage = localStorage.getItem(`photographer_cover_${photographerId}`);
 
       // Update profile with data from backend or localStorage
@@ -162,7 +174,7 @@ const PhotographerProfile = () => {
         skills: userData?.skills || user?.skills || ["Landscape", "Portrait", "Commercial", "Wedding"],
         equipment: userData?.equipment || user?.equipment || ["Canon EOS R5", "Sony A7III", "DJI Mavic 3"],
         joinedDate: userData?.createdAt || user?.createdAt || new Date().toISOString(),
-        profileImage: savedProfileImage || userData?.profileImage || user?.profileImage || "",
+        profileImage: userData?.profilePicture || userData?.profileImage || user?.profilePicture || user?.profileImage || "",
         coverImage: savedCoverImage || userData?.coverImage || user?.coverImage || "",
         watermark: userData?.watermark || user?.watermark || "Relic Snap",
       });
@@ -194,22 +206,22 @@ const PhotographerProfile = () => {
         skills: profile.skills,
         equipment: profile.equipment,
         watermark: profile.watermark || "Relic Snap",
-        profilePicture: profile.profileImage || "",
+        profilePicture: profile.profileImage && !String(profile.profileImage).startsWith("blob:")
+          ? profile.profileImage
+          : "",
       };
-
-      // Save to localStorage
-      const updatedUser = { ...user, ...profile, ...updatePayload };
-      localStorage.setItem("user", JSON.stringify(updatedUser));
 
       // Try to save to backend
       try {
-        await axios.put(API_ENDPOINTS.AUTH.UPDATE_USER(photographerId), updatePayload, {
+        const res = await axios.put(API_ENDPOINTS.AUTH.UPDATE_USER(photographerId), updatePayload, {
           headers,
           timeout: 10000
         });
+        updateStoredUser(res.data);
         console.log("✅ Profile saved to backend");
       } catch (err) {
         console.log("Backend save failed, saved locally only", err?.response?.data || err.message);
+        updateStoredUser(updatePayload);
       }
 
       toast.success("Profile updated successfully!");
@@ -239,30 +251,50 @@ const PhotographerProfile = () => {
     setImageError(prev => ({ ...prev, [type]: false }));
 
     try {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => {
-        const base64Image = reader.result;
-
-        if (type === 'profile') {
-          setProfile(prev => ({ ...prev, profileImage: base64Image }));
-          localStorage.setItem(`photographer_profile_${photographerId}`, base64Image);
-        } else {
-          setProfile(prev => ({ ...prev, coverImage: base64Image }));
-          localStorage.setItem(`photographer_cover_${photographerId}`, base64Image);
+      if (type === "profile") {
+        if (profilePreviewRef.current) {
+          URL.revokeObjectURL(profilePreviewRef.current);
         }
 
-        const updatedUser = {
-          ...user,
-          ...(type === 'profile' ? { profileImage: base64Image } : { coverImage: base64Image })
-        };
-        localStorage.setItem("user", JSON.stringify(updatedUser));
+        const previewUrl = URL.createObjectURL(file);
+        profilePreviewRef.current = previewUrl;
+        setProfile(prev => ({ ...prev, profileImage: previewUrl }));
 
-        setUploadingImage(false);
-      };
+        const formData = new FormData();
+        formData.append("profilePicture", file);
+        formData.append("username", profile.name || user.username || "Photographer");
+        formData.append("email", profile.email || user.email || "");
+
+        const res = await axios.put(API_ENDPOINTS.AUTH.UPDATE_USER(photographerId), formData, {
+          headers: {
+            ...headers,
+            "Content-Type": "multipart/form-data",
+          },
+          timeout: 20000,
+        });
+
+        const savedUrl = res.data?.profilePicture || previewUrl;
+        setProfile(prev => ({ ...prev, profileImage: savedUrl }));
+        updateStoredUser(res.data || { profilePicture: savedUrl });
+        toast.success("Profile photo updated successfully!");
+      } else {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => {
+          const base64Image = reader.result;
+          try {
+            localStorage.setItem(`photographer_cover_${photographerId}`, base64Image);
+          } catch (storageErr) {
+            console.error("Error saving cover image locally:", storageErr);
+            toast.warning("Cover image preview is too large to save on this device.");
+          }
+          setProfile(prev => ({ ...prev, coverImage: base64Image }));
+        };
+      }
     } catch (error) {
       console.error("Error uploading image:", error);
-      toast.error("Failed to upload image");
+      toast.error(error.response?.data?.message || "Failed to upload image");
+    } finally {
       setUploadingImage(false);
     }
   };
