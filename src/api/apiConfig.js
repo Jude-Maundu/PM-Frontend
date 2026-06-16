@@ -148,6 +148,7 @@ const API_ENDPOINTS = {
     PROCESS_WITHDRAWAL: (id) => `${API_BASE_URL}/admin/withdrawals/${id}/process`,
     // Albums
     GET_ALBUMS: `${API_BASE_URL}/admin/albums`,
+    GET_ALBUM_DETAILS: (id) => `${API_BASE_URL}/admin/albums/${id}/details`,
     DELETE_ALBUM: (id) => `${API_BASE_URL}/admin/albums/${id}`,
     // Share links
     GET_SHARES: `${API_BASE_URL}/admin/shares`,
