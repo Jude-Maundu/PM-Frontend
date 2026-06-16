@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { NavLink, Link, useNavigate, useLocation } from "react-router-dom";
+import { NavLink, Link, useLocation } from "react-router-dom";
+import axios from "axios";
 import { getLocalCart } from "../../../utils/localStore";
+import { API_ENDPOINTS } from "../../../api/apiConfig";
 import ThemeToggle from "../../ThemeToggle";
 import NotificationBell from "../../NotificationBell";
-import { getStoredUser, getDisplayName } from "../../../utils/auth";
+import { getStoredUser, getDisplayName, getAuthToken, getCurrentUserId } from "../../../utils/auth";
 
 const BuyerLayout = ({ children }) => {
   const [cartCount, setCartCount] = useState(0);
@@ -12,21 +14,48 @@ const BuyerLayout = ({ children }) => {
   );
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const navigate    = useNavigate();
   const location    = useLocation();
   const storedUser   = getStoredUser();
   const displayName  = getDisplayName(storedUser) || "Buyer";
   const avatarLetter = displayName.charAt(0).toUpperCase();
+  const token        = getAuthToken();
+  const userId       = getCurrentUserId();
+
+  const loadCartCount = async () => {
+    if (!token || !userId) {
+      try { setCartCount(getLocalCart().length); } catch {}
+      return;
+    }
+
+    try {
+      const res = await axios.get(API_ENDPOINTS.CART.GET(userId), {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const mediaItems = Array.isArray(res.data?.items) ? res.data.items.length : 0;
+      const albumItems = Array.isArray(res.data?.albumItems) ? res.data.albumItems.length : 0;
+      setCartCount(mediaItems + albumItems);
+    } catch {
+      try { setCartCount(getLocalCart().length); } catch {}
+    }
+  };
 
   useEffect(() => {
-    try { setCartCount(getLocalCart().length); } catch {}
-  }, []);
+    loadCartCount();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, userId]);
 
   useEffect(() => {
-    const handleCartUpdate = () => setCartCount(getLocalCart().length);
+    const handleCartUpdate = (event) => {
+      if (typeof event?.detail?.count === "number") {
+        setCartCount(event.detail.count);
+        return;
+      }
+      loadCartCount();
+    };
     window.addEventListener("pm:cart-updated", handleCartUpdate);
     return () => window.removeEventListener("pm:cart-updated", handleCartUpdate);
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, userId]);
 
   const handleLogout = () => { localStorage.clear(); window.location.href = '/login'; };
 
@@ -119,6 +148,10 @@ const BuyerLayout = ({ children }) => {
           </div>
 
           <div className="mc-topbar-actions">
+            <NavLink to="/buyer/cart" className="mc-icon-btn mc-cart-topbar-btn" title="View cart">
+              <i className="fas fa-shopping-cart"></i>
+              {cartCount > 0 && <span className="mc-topbar-badge">{cartCount}</span>}
+            </NavLink>
             <div className="mc-topbar-profile">
               <div className="mc-topbar-avatar" title={displayName} style={{ width: 32, height: 32, fontSize: "0.78rem" }}>
                 {storedUser?.profilePicture ? (

@@ -17,6 +17,8 @@ const defaultSchedule = { enabled: false, dayOfMonth: 1, minBalance: 1000 };
 const PhotographerWithdrawals = () => {
   const storedUser = getStoredUser();
   const storedPhone = storedUser?.payoutPhoneNumber || storedUser?.phoneNumber || storedUser?.phone || "";
+  const isEmailVerified = Boolean(storedUser?.isVerified);
+  const emailAddress = storedUser?.email || "";
 
   const [withdrawals, setWithdrawals] = useState([]);
   const [availableBalance, setAvailableBalance] = useState(0);
@@ -170,6 +172,10 @@ const PhotographerWithdrawals = () => {
   };
 
   const handleSendOtp = async () => {
+    if (!isEmailVerified) {
+      toast.warning("Verify your email first before requesting a withdrawal code");
+      return;
+    }
     try {
       setRequestingOtp(true);
       const headers = getAuthHeaders();
@@ -181,6 +187,17 @@ const PhotographerWithdrawals = () => {
       toast.error(error.response?.data?.message || "Failed to send verification code");
     } finally {
       setRequestingOtp(false);
+    }
+  };
+
+  const handleSendVerificationEmail = async () => {
+    try {
+      const headers = getAuthHeaders();
+      const res = await axios.post(API_ENDPOINTS.AUTH.SEND_VERIFICATION, {}, { headers });
+      toast.success(res.data?.message || "Verification email sent");
+    } catch (error) {
+      console.error("Error sending verification email:", error);
+      toast.error(error.response?.data?.message || "Failed to send verification email");
     }
   };
 
@@ -199,8 +216,8 @@ const PhotographerWithdrawals = () => {
           {/* Toggle */}
           <div className="d-flex justify-content-between align-items-center mb-4">
             <div>
-              <p className="mb-0 text-white fw-semibold">Enable automatic monthly withdrawal</p>
-              <small style={{ color: "rgba(255,255,255,0.45)" }}>
+              <p className="mb-0 fw-semibold" style={{ color: "var(--mc-text)" }}>Enable automatic monthly withdrawal</p>
+              <small style={{ color: "var(--mc-text-muted)" }}>
                 Funds will be transferred automatically on your chosen day each month
               </small>
             </div>
@@ -227,17 +244,18 @@ const PhotographerWithdrawals = () => {
           >
             <div className="row g-3 mb-3">
               <div className="col-md-6">
-                <label className="form-label text-white-50 small">
+                <label className="form-label small" style={{ color: "var(--mc-text-muted)" }}>
                   <i className="fas fa-calendar-day me-1"></i>
                   Withdraw on day of month
                 </label>
                 <select
-                  className="form-select bg-dark text-white border-secondary"
+                  className="form-select"
+                  style={{ background: "var(--mc-card-bg)", color: "var(--mc-text)", border: "1px solid var(--mc-border)" }}
                   value={schedule.dayOfMonth}
                   onChange={(e) => setSchedule((prev) => ({ ...prev, dayOfMonth: parseInt(e.target.value) }))}
                 >
                   {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
-                    <option key={d} value={d} style={{ background: "#1a2e3b" }}>
+                    <option key={d} value={d} style={{ background: "var(--mc-card-bg)", color: "var(--mc-text)" }}>
                       {d === 1 ? "1st" : d === 2 ? "2nd" : d === 3 ? "3rd" : `${d}th`}
                     </option>
                   ))}
@@ -245,13 +263,14 @@ const PhotographerWithdrawals = () => {
               </div>
 
               <div className="col-md-6">
-                <label className="form-label text-white-50 small">
+                <label className="form-label small" style={{ color: "var(--mc-text-muted)" }}>
                   <i className="fas fa-coins me-1"></i>
                   Only withdraw if balance is above (KES)
                 </label>
                 <input
                   type="number"
-                  className="form-control bg-dark text-white border-secondary"
+                  className="form-control"
+                  style={{ background: "var(--mc-card-bg)", color: "var(--mc-text)", border: "1px solid var(--mc-border)" }}
                   placeholder="e.g. 5000"
                   value={schedule.minBalance}
                   onChange={(e) => setSchedule((prev) => ({ ...prev, minBalance: parseInt(e.target.value) || 0 }))}
@@ -267,7 +286,7 @@ const PhotographerWithdrawals = () => {
               style={{ background: "rgba(107,189,208,0.07)", border: "1px solid rgba(107,189,208,0.18)" }}
             >
               <i className="fas fa-info-circle mt-1 flex-shrink-0" style={{ color: "var(--mc-accent-teal)" }}></i>
-              <small style={{ color: "rgba(255,255,255,0.55)", lineHeight: 1.5 }}>
+              <small style={{ color: "var(--mc-text-muted)", lineHeight: 1.5 }}>
                 Automatic withdrawals will be processed on{" "}
                 <span style={{ color: "var(--mc-accent-teal)", fontWeight: 600 }}>day {schedule.dayOfMonth}</span> of each month
                 when your available balance exceeds{" "}
@@ -303,35 +322,54 @@ const PhotographerWithdrawals = () => {
               <div style={{ fontSize: "2rem", fontWeight: 700, color: "var(--mc-accent-gold)" }}>
                 KES {availableBalance.toLocaleString()}
               </div>
-              <small style={{ opacity: 0.55 }}>Withdraw your full balance or any amount</small>
+              <small style={{ color: "var(--mc-text-muted)" }}>Withdraw your full balance or any amount</small>
             </div>
             <button
               className="mc-btn mc-btn-primary"
               onClick={() => setShowRequestForm(true)}
-              disabled={availableBalance <= 0}
+              disabled={availableBalance <= 0 || !isEmailVerified}
             >
               <i className="fas fa-plus-circle me-2"></i>
               Request Withdrawal
             </button>
           </div>
+          {!isEmailVerified && (
+            <div
+              className="d-flex flex-wrap justify-content-between align-items-center gap-3 mt-3 p-3 rounded-3"
+              style={{ background: "rgba(245,166,35,0.08)", border: "1px solid rgba(245,166,35,0.25)" }}
+            >
+              <div>
+                <div style={{ color: "var(--mc-text)", fontWeight: 600 }}>Verify your email before cashing out</div>
+                <small style={{ color: "var(--mc-text-muted)" }}>
+                  Withdrawal codes are only sent to verified email addresses. {emailAddress ? `Current email: ${emailAddress}` : "Add an email to your account first."}
+                </small>
+              </div>
+              {emailAddress && (
+                <button type="button" className="btn btn-outline-warning btn-sm" onClick={handleSendVerificationEmail}>
+                  <i className="fas fa-envelope me-2"></i>Send Verification Email
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Request Form Modal */}
         {showRequestForm && (
           <div className="modal show d-block" style={{ background: "rgba(0,0,0,0.8)" }}>
             <div className="modal-dialog">
-              <div className="modal-content bg-dark border-warning">
-                <div className="modal-header border-warning">
-                  <h5 className="modal-title text-warning">Request Withdrawal</h5>
+              <div className="modal-content" style={{ background: "var(--mc-card-bg)", border: "1px solid rgba(245,166,35,0.3)", color: "var(--mc-text)" }}>
+                <div className="modal-header" style={{ borderBottom: "1px solid rgba(245,166,35,0.25)" }}>
+                  <h5 className="modal-title" style={{ color: "var(--mc-accent-gold)" }}>Request Withdrawal</h5>
                   <button className="btn-close btn-close-white" onClick={() => setShowRequestForm(false)}></button>
                 </div>
                 <div className="modal-body">
                   <form onSubmit={handleRequest}>
                     <div className="mb-3">
-                      <label className="form-label text-white-50">Amount (KES)</label>
+                      <label className="form-label" style={{ color: "var(--mc-text-muted)" }}>Amount (KES)</label>
                       <input
                         type="number"
-                        className="form-control bg-dark text-white border-secondary"
+                        className="form-control"
+                        style={{ background: "var(--mc-card-bg)", color: "var(--mc-text)", border: "1px solid var(--mc-border)" }}
                         value={requestData.amount}
                         onChange={(e) => setRequestData({...requestData, amount: e.target.value})}
                         required
@@ -340,9 +378,10 @@ const PhotographerWithdrawals = () => {
                     </div>
 
                     <div className="mb-3">
-                      <label className="form-label text-white-50">Withdrawal Method</label>
+                      <label className="form-label" style={{ color: "var(--mc-text-muted)" }}>Withdrawal Method</label>
                       <select
-                        className="form-select bg-dark text-white border-secondary"
+                        className="form-select"
+                        style={{ background: "var(--mc-card-bg)", color: "var(--mc-text)", border: "1px solid var(--mc-border)" }}
                         value={requestData.method}
                         onChange={(e) => setRequestData({...requestData, method: e.target.value})}
                       >
@@ -354,10 +393,11 @@ const PhotographerWithdrawals = () => {
                     {requestData.method === "mpesa" ? (
                       <>
                         <div className="mb-3">
-                          <label className="form-label text-white-50">M-Pesa Phone Number</label>
+                          <label className="form-label" style={{ color: "var(--mc-text-muted)" }}>M-Pesa Phone Number</label>
                           <input
                             type="tel"
-                            className="form-control bg-dark text-white border-secondary"
+                            className="form-control"
+                            style={{ background: "var(--mc-card-bg)", color: "var(--mc-text)", border: "1px solid var(--mc-border)" }}
                             placeholder="254712345678"
                             value={requestData.phone}
                             onChange={(e) => setRequestData({...requestData, phone: e.target.value})}
@@ -369,9 +409,9 @@ const PhotographerWithdrawals = () => {
                           style={{ background: "rgba(107,189,208,0.08)", border: "1px solid rgba(107,189,208,0.2)" }}
                         >
                           <i className="fas fa-mobile-alt mt-1 flex-shrink-0" style={{ color: "var(--mc-accent-teal)" }}></i>
-                          <small style={{ color: "rgba(255,255,255,0.6)", lineHeight: 1.5 }}>
+                          <small style={{ color: "var(--mc-text-muted)", lineHeight: 1.5 }}>
                             You will receive an <strong style={{ color: "var(--mc-accent-teal)" }}>M-Pesa notification</strong> on{" "}
-                            <strong style={{ color: "#fff" }}>{requestData.phone || "your phone"}</strong> once the transfer is initiated.
+                            <strong style={{ color: "var(--mc-text)" }}>{requestData.phone || "your phone"}</strong> once the transfer is initiated.
                             Funds typically arrive within a few minutes.
                           </small>
                         </div>
@@ -379,20 +419,22 @@ const PhotographerWithdrawals = () => {
                     ) : (
                       <>
                         <div className="mb-3">
-                          <label className="form-label text-white-50">Account Name</label>
+                          <label className="form-label" style={{ color: "var(--mc-text-muted)" }}>Account Name</label>
                           <input
                             type="text"
-                            className="form-control bg-dark text-white border-secondary"
+                            className="form-control"
+                            style={{ background: "var(--mc-card-bg)", color: "var(--mc-text)", border: "1px solid var(--mc-border)" }}
                             value={requestData.accountName}
                             onChange={(e) => setRequestData({...requestData, accountName: e.target.value})}
                             required
                           />
                         </div>
                         <div className="mb-3">
-                          <label className="form-label text-white-50">Account Number</label>
+                          <label className="form-label" style={{ color: "var(--mc-text-muted)" }}>Account Number</label>
                           <input
                             type="text"
-                            className="form-control bg-dark text-white border-secondary"
+                            className="form-control"
+                            style={{ background: "var(--mc-card-bg)", color: "var(--mc-text)", border: "1px solid var(--mc-border)" }}
                             value={requestData.accountNumber}
                             onChange={(e) => setRequestData({...requestData, accountNumber: e.target.value})}
                             required
@@ -402,7 +444,7 @@ const PhotographerWithdrawals = () => {
                     )}
 
                     <div className="mb-3">
-                      <label className="form-label text-white-50">Withdrawal Verification</label>
+                      <label className="form-label" style={{ color: "var(--mc-text-muted)" }}>Withdrawal Verification</label>
                       <div className="d-flex gap-2 flex-wrap">
                         <button
                           type="button"
@@ -418,14 +460,14 @@ const PhotographerWithdrawals = () => {
                         </button>
                         <input
                           type="text"
-                          className="form-control bg-dark text-white border-secondary"
+                          className="form-control"
+                          style={{ maxWidth: "220px", background: "var(--mc-card-bg)", color: "var(--mc-text)", border: "1px solid var(--mc-border)" }}
                           placeholder="Enter 6-digit code"
                           value={requestData.otp}
                           onChange={(e) => setRequestData({ ...requestData, otp: e.target.value.replace(/\D/g, "").slice(0, 6) })}
-                          style={{ maxWidth: "220px" }}
                         />
                       </div>
-                      <small className="text-white-50 d-block mt-2">
+                      <small className="d-block mt-2" style={{ color: "var(--mc-text-muted)" }}>
                         Every withdrawal must be confirmed with a code sent to your email before funds can leave your wallet.
                       </small>
                     </div>
@@ -457,7 +499,7 @@ const PhotographerWithdrawals = () => {
             </div>
           ) : (
             <div className="table-responsive">
-              <table className="table table-dark table-hover mb-0">
+              <table className="table table-hover mb-0">
                 <thead>
                   <tr>
                     <th className="ps-3">Date</th>
@@ -482,7 +524,7 @@ const PhotographerWithdrawals = () => {
                         </span>
                       </td>
                       <td>
-                        <small className="text-white-50">
+                        <small style={{ color: "var(--mc-text-muted)" }}>
                           {w.method === 'mpesa' ? w.phoneNumber : `${w.accountName} - ${w.accountNumber}`}
                         </small>
                       </td>

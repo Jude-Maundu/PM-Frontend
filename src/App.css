@@ -1787,8 +1787,8 @@ nav.navbar.home-navbar.scrolled {
   --mc-hero-from:      #1a6b8a;
   --mc-hero-to:        #6BBDD0;
   --mc-text:           #D8EEF5;
-  --mc-text-muted:     #5A8A9A;
-  --mc-text-sub:       #7AAAB8;
+  --mc-text-muted:     #8FB7C3;
+  --mc-text-sub:       #A7CCD7;
   --mc-border:         rgba(107,189,208,0.15);
   --mc-sidebar-icon:   #4A7A90;
 }
@@ -2183,6 +2183,28 @@ nav.navbar.home-navbar.scrolled {
 }
 
 .mc-icon-btn:hover { color: var(--mc-accent); border-color: var(--mc-accent); }
+
+.mc-cart-topbar-btn {
+  position: relative;
+}
+
+.mc-topbar-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--mc-accent-pink);
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  box-shadow: 0 0 0 2px var(--mc-bg);
+}
 
 /* When mc-icon-btn wraps the pill toggle, strip the box */
 .mc-icon-btn:has(.theme-pill) {

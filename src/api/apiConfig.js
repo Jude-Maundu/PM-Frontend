@@ -29,6 +29,7 @@ const API_ENDPOINTS = {
   AUTH: {
     REGISTER: `${API_BASE_URL}/auth/register`,
     LOGIN: `${API_BASE_URL}/auth/login`,
+    SEND_VERIFICATION: `${API_BASE_URL}/auth/send-verification`,
     GET_USERS: `${API_BASE_URL}/auth/users`,
     GET_USER: (id) => `${API_BASE_URL}/auth/users/${id}`,
     UPDATE_USER: (id) => `${API_BASE_URL}/auth/users/${id}`,

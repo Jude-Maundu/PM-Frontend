@@ -175,6 +175,7 @@ const BuyerFavorites = () => {
       await axios.post(`${API}/payments/cart/add`, { userId, mediaId }, { headers });
 
       setSuccess(`${extractTitle(item)} added to cart!`);
+      window.dispatchEvent(new CustomEvent("pm:cart-updated"));
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       console.error("❌ Error adding to cart:", err);

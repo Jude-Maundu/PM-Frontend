@@ -1,11 +1,9 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import BuyerLayout from "./BuyerLayout";
 import axios from "axios";
-import { API_ENDPOINTS, API_BASE_URL } from "../../../api/apiConfig";
+import { API_ENDPOINTS } from "../../../api/apiConfig";
 import { toast } from "../../../utils/toast";
-import AlbumDownloadModal from "./AlbumDownloadModal";
-import { showConfirm } from "../../../utils/confirm";
 
 const EVENT_TYPES = [
   { value: "",           label: "All",        icon: "fa-th-large" },
@@ -32,7 +30,7 @@ function imgUrl(raw) {
   return `https://pm-backend-f3b6.onrender.com/${raw.replace(/^\//, "")}`;
 }
 
-function AlbumCard({ album, userId, onBuy, onAddToCart, buying, cartAlbumIds }) {
+function AlbumCard({ album, userId, onAddToCart, cartAlbumIds }) {
   const navigate = useNavigate();
   const cover = imgUrl(album.coverImage);
   const alreadyPurchased = (album.purchasedBy || []).map(id => id.toString()).includes(userId?.toString());
@@ -127,7 +125,6 @@ function AlbumCard({ album, userId, onBuy, onAddToCart, buying, cartAlbumIds }) 
             </button>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-              {/* Add to Cart */}
               <button
                 onClick={() => onAddToCart(album)}
                 disabled={inCart}
@@ -142,22 +139,11 @@ function AlbumCard({ album, userId, onBuy, onAddToCart, buying, cartAlbumIds }) 
                 <i className={`fas ${inCart ? "fa-check" : "fa-cart-plus"}`}></i>
                 {inCart ? "In Cart" : "Add to Cart"}
               </button>
-              {/* Buy now row */}
-              <div style={{ display: "flex", gap: "0.4rem" }}>
-                <button onClick={() => navigate(`/album/${album._id}`)}
-                  style={{ flex: 1, padding: "0.55rem", background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.55)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, fontWeight: 600, fontSize: "0.75rem", cursor: "pointer" }}
-                >
-                  <i className="fas fa-eye me-1"></i>Preview
-                </button>
-                <button onClick={() => onBuy(album)} disabled={buying === album._id}
-                  style={{ flex: 1, padding: "0.55rem", background: "#F5A623", color: "#1a1a00", border: "none", borderRadius: 10, fontWeight: 700, fontSize: "0.75rem", cursor: "pointer" }}
-                >
-                  {buying === album._id
-                    ? <span className="spinner-border spinner-border-sm"></span>
-                    : <><i className="fas fa-bolt me-1"></i>Buy Now</>
-                  }
-                </button>
-              </div>
+              <button onClick={() => navigate(`/album/${album._id}`)}
+                style={{ width: "100%", padding: "0.55rem", background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.55)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, fontWeight: 600, fontSize: "0.75rem", cursor: "pointer" }}
+              >
+                <i className="fas fa-eye me-1"></i>Preview
+              </button>
             </div>
           )}
         </div>
@@ -179,16 +165,7 @@ export default function BuyerExplore() {
   const [eventType, setEventType] = useState("");
   const [albumType, setAlbumType] = useState("");
   const [sortBy, setSortBy] = useState("newest");
-  const [buyingAlbum, setBuyingAlbum] = useState(null);
   const [cartAlbumIds, setCartAlbumIds] = useState([]);
-  const [downloadModalData, setDownloadModalData] = useState(null);
-
-  // M-Pesa fallback modal state
-  const [mpesaAlbum, setMpesaAlbum] = useState(null);
-  const [mpesaPhone, setMpesaPhone] = useState("");
-  const [mpesaStatus, setMpesaStatus] = useState("idle"); // idle | pending | polling | success | error
-  const [mpesaMsg, setMpesaMsg] = useState("");
-  const mpesaPollRef = useRef(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -228,99 +205,10 @@ export default function BuyerExplore() {
     try {
       await axios.post(API_ENDPOINTS.CART.ADD, { albumId: album._id }, { headers: { Authorization: `Bearer ${token}` } });
       setCartAlbumIds(prev => [...prev, album._id]);
+      window.dispatchEvent(new CustomEvent("pm:cart-updated"));
       toast.success(`"${album.name}" added to cart`);
     } catch (err) {
       toast.error(err.response?.data?.message || "Could not add to cart");
-    }
-  };
-
-  const handleBuyAlbum = async (album) => {
-    if (!token || !userId) { navigate("/login"); return; }
-    if (album.price <= 0) { toast.info("This album is free"); return; }
-    const ok = await showConfirm(`Buy "${album.name}" for KES ${Number(album.price).toLocaleString()}?`, {
-      title: "Confirm Album Purchase",
-      confirmText: "Buy Album",
-    });
-    if (!ok) return;
-    setBuyingAlbum(album._id);
-    try {
-      const res = await axios.post(API_ENDPOINTS.WALLET.BUY_ALBUM(album._id), {}, { headers: { Authorization: `Bearer ${token}` } });
-      toast.success(res.data.message || "Album purchased!");
-      setAlbums(prev => prev.map(a => a._id === album._id ? { ...a, purchasedBy: [...(a.purchasedBy || []), userId] } : a));
-      if (res.data.downloadInfo) {
-        setDownloadModalData([{
-          albumId: album._id,
-          albumName: res.data.albumName || album.name,
-          downloadInfo: res.data.downloadInfo,
-        }]);
-      }
-    } catch (err) {
-      if (err.response?.status === 402) {
-        // Insufficient wallet — open M-Pesa top-up modal
-        setMpesaAlbum(album);
-        setMpesaStatus("idle");
-        setMpesaMsg("");
-        setMpesaPhone("");
-      } else {
-        toast.error(err.response?.data?.message || "Purchase failed");
-      }
-    } finally {
-      setBuyingAlbum(null);
-    }
-  };
-
-  const closeMpesaModal = () => {
-    if (mpesaPollRef.current) clearInterval(mpesaPollRef.current);
-    setMpesaAlbum(null);
-    setMpesaStatus("idle");
-    setMpesaMsg("");
-  };
-
-  const submitMpesaTopup = async () => {
-    if (!mpesaPhone) { setMpesaMsg("Enter your M-Pesa phone number"); return; }
-    const normalized = mpesaPhone.replace(/[^0-9]/g, "").replace(/^0/, "254");
-    if (!/^254\d{9}$/.test(normalized)) { setMpesaMsg("Use format 0712345678 or 254712345678"); return; }
-    setMpesaStatus("pending");
-    setMpesaMsg("Sending M-Pesa prompt…");
-    try {
-      const res = await axios.post(`${API_BASE_URL}/payments/mpesa/topup`,
-        { buyerPhone: normalized, buyerId: userId, amount: mpesaAlbum.price, walletTopup: true },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      const reqId = res.data.checkoutRequestID;
-      setMpesaStatus("polling");
-      setMpesaMsg("Check your phone and enter your M-Pesa PIN.");
-      let attempts = 0;
-      mpesaPollRef.current = setInterval(async () => {
-        attempts++;
-        try {
-          const poll = await axios.get(API_ENDPOINTS.SHARE.GUEST_STATUS(reqId));
-          if (poll.data.status === "completed") {
-            clearInterval(mpesaPollRef.current);
-            setMpesaStatus("buying");
-            setMpesaMsg("Top-up confirmed! Completing purchase…");
-            // Now buy the album from wallet
-            const buyRes = await axios.post(API_ENDPOINTS.WALLET.BUY_ALBUM(mpesaAlbum._id), {}, { headers: { Authorization: `Bearer ${token}` } });
-            setMpesaStatus("success");
-            setMpesaMsg("Album purchased successfully!");
-            setAlbums(prev => prev.map(a => a._id === mpesaAlbum._id ? { ...a, purchasedBy: [...(a.purchasedBy || []), userId] } : a));
-            if (buyRes.data.downloadInfo) {
-              setDownloadModalData([{
-                albumId: mpesaAlbum._id,
-                albumName: buyRes.data.albumName || mpesaAlbum.name,
-                downloadInfo: buyRes.data.downloadInfo,
-              }]);
-            }
-          } else if (poll.data.status === "failed" || attempts >= 60) {
-            clearInterval(mpesaPollRef.current);
-            setMpesaStatus("error");
-            setMpesaMsg(poll.data.status === "failed" ? "Payment declined. Please try again." : "Payment timed out. Please try again.");
-          }
-        } catch { /* keep polling */ }
-      }, 3000);
-    } catch (err) {
-      setMpesaStatus("error");
-      setMpesaMsg(err.response?.data?.message || "Failed to initiate M-Pesa. Try again.");
     }
   };
 
@@ -435,101 +323,13 @@ export default function BuyerExplore() {
                 key={album._id}
                 album={album}
                 userId={userId}
-                onBuy={handleBuyAlbum}
                 onAddToCart={handleAddToCart}
-                buying={buyingAlbum}
                 cartAlbumIds={cartAlbumIds}
               />
             ))}
           </div>
         )}
       </div>
-
-      {downloadModalData && (
-        <AlbumDownloadModal
-          albums={downloadModalData}
-          onClose={() => setDownloadModalData(null)}
-        />
-      )}
-
-      {/* M-Pesa top-up + auto-buy modal */}
-      {mpesaAlbum && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(10,15,20,0.75)", zIndex: 9100, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
-          <div style={{ background: "#fff", borderRadius: 20, padding: "2rem", maxWidth: 400, width: "100%", boxShadow: "0 24px 64px rgba(0,0,0,0.35)" }}>
-            {mpesaStatus === "success" ? (
-              <>
-                <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
-                  <i className="fas fa-check-circle" style={{ fontSize: "3rem", color: "#4CC9A6", display: "block", marginBottom: "0.75rem" }}></i>
-                  <h5 style={{ fontWeight: 700, color: "#1A2E3B", margin: "0 0 0.25rem" }}>Purchase Complete!</h5>
-                  <p style={{ color: "#6B7280", fontSize: "0.85rem", margin: 0 }}>{mpesaAlbum.name} is now yours.</p>
-                </div>
-                <button onClick={closeMpesaModal} style={{ width: "100%", padding: "0.85rem", background: "#1A2E3B", color: "#fff", border: "none", borderRadius: 12, fontWeight: 700, cursor: "pointer" }}>Done</button>
-              </>
-            ) : (
-              <>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.25rem" }}>
-                  <div>
-                    <h5 style={{ fontWeight: 700, color: "#1A2E3B", margin: 0 }}>Pay with M-Pesa</h5>
-                    <p style={{ color: "#6B7280", fontSize: "0.82rem", margin: "0.2rem 0 0" }}>
-                      Top up wallet &amp; buy <strong>{mpesaAlbum.name}</strong>
-                    </p>
-                  </div>
-                  <button onClick={closeMpesaModal} disabled={mpesaStatus === "polling" || mpesaStatus === "buying"}
-                    style={{ background: "rgba(0,0,0,0.06)", border: "none", borderRadius: "50%", width: 32, height: 32, cursor: "pointer", fontSize: "0.9rem", color: "#6B7280" }}>
-                    <i className="fas fa-times"></i>
-                  </button>
-                </div>
-
-                <div style={{ background: "#f9f7f4", borderRadius: 12, padding: "0.85rem 1rem", marginBottom: "1.25rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <span style={{ fontSize: "0.85rem", color: "#6B7280" }}>Amount to pay</span>
-                  <span style={{ fontWeight: 700, color: "#1A2E3B", fontSize: "1.1rem" }}>KES {Number(mpesaAlbum.price).toLocaleString()}</span>
-                </div>
-
-                {mpesaStatus === "polling" || mpesaStatus === "buying" ? (
-                  <div style={{ textAlign: "center", padding: "1.5rem 0" }}>
-                    <div className="spinner-border" style={{ color: "#6BBDD0", width: "2.5rem", height: "2.5rem" }} role="status"></div>
-                    <p style={{ color: "#6B7280", fontSize: "0.85rem", marginTop: "0.75rem", marginBottom: 0 }}>{mpesaMsg}</p>
-                    <p style={{ fontSize: "0.75rem", color: "#9CA3AF", marginTop: "0.25rem" }}>Auto-checking every 3 seconds…</p>
-                  </div>
-                ) : (
-                  <>
-                    <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "#374151", marginBottom: "0.4rem" }}>
-                      M-Pesa Phone Number
-                    </label>
-                    <input
-                      type="tel"
-                      value={mpesaPhone}
-                      onChange={e => setMpesaPhone(e.target.value)}
-                      placeholder="0712 345 678"
-                      style={{ width: "100%", padding: "0.75rem 1rem", borderRadius: 10, border: "1.5px solid #D1D5DB", fontSize: "1rem", marginBottom: "0.75rem", boxSizing: "border-box" }}
-                    />
-                    {mpesaMsg && (
-                      <p style={{ color: mpesaStatus === "error" ? "#EF4444" : "#6B7280", fontSize: "0.82rem", marginBottom: "0.75rem" }}>
-                        <i className={`fas ${mpesaStatus === "error" ? "fa-exclamation-circle" : "fa-info-circle"} me-1`}></i>
-                        {mpesaMsg}
-                      </p>
-                    )}
-                    <button
-                      onClick={submitMpesaTopup}
-                      disabled={mpesaStatus === "pending"}
-                      style={{ width: "100%", padding: "0.85rem", background: "#4CC9A6", color: "#fff", border: "none", borderRadius: 12, fontWeight: 700, fontSize: "1rem", cursor: "pointer" }}
-                    >
-                      {mpesaStatus === "pending"
-                        ? <><span className="spinner-border spinner-border-sm me-2"></span>Sending…</>
-                        : <><i className="fas fa-mobile-alt me-2"></i>Send M-Pesa Prompt</>
-                      }
-                    </button>
-                    <p style={{ textAlign: "center", fontSize: "0.75rem", color: "#9CA3AF", marginTop: "0.75rem", marginBottom: 0 }}>
-                      <i className="fas fa-shield-alt me-1" style={{ color: "#4CC9A6" }}></i>
-                      Wallet tops up first, then album is purchased automatically
-                    </p>
-                  </>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-      )}
 
       <style>{`
         @keyframes pulse {

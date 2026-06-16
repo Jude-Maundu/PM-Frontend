@@ -79,6 +79,12 @@ const BuyerCart = () => {
   const userId = user.id || user._id;
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("pm:cart-updated", {
+      detail: { count: cartItems.length + albumItems.length },
+    }));
+  }, [cartItems.length, albumItems.length]);
+
   // Get media ID from cart item
   const getMediaIdFromItem = (item) => {
     if (!item) return null;
@@ -612,8 +618,8 @@ const BuyerCart = () => {
       <div className="mc-page container-fluid px-2 px-sm-3 px-md-4 py-3 py-md-4">
         <PageHeader
           title="Shopping Cart"
-          subtitle={`${cartItems.length} ${cartItems.length === 1 ? 'item' : 'items'} in your cart`}
-          action={cartItems.length > 0 && (
+          subtitle={`${totalItemCount} ${totalItemCount === 1 ? 'item' : 'items'} in your cart`}
+          action={totalItemCount > 0 && (
             <button className="btn mc-btn mc-btn-danger btn-sm flex-shrink-0" onClick={clearCart} disabled={updating}>
               <i className="fas fa-trash me-1 me-md-2"></i>Clear Cart
             </button>
