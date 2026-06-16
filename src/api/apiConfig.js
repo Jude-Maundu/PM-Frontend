@@ -222,6 +222,7 @@ const API_ENDPOINTS = {
 
   // ==================== WITHDRAWALS ====================
   WITHDRAWALS: {
+    REQUEST_MFA: `${API_BASE_URL}/withdrawals/request-mfa`,
     REQUEST: `${API_BASE_URL}/withdrawals/request`,
     GET_MY: `${API_BASE_URL}/withdrawals/my`,
     GET_ALL: `${API_BASE_URL}/withdrawals/all`,

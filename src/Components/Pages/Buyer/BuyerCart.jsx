@@ -479,6 +479,12 @@ const BuyerCart = () => {
     const albumTotal = albumItems.reduce((sum, item) => sum + (item.price || 0), 0);
     const total = mediaTotal + albumTotal;
 
+    const ok = await showConfirm(`Complete this purchase for KES ${Number(total).toLocaleString()}?`, {
+      title: "Confirm Checkout",
+      confirmText: "Pay Now",
+    });
+    if (!ok) return;
+
     if (total > walletBalance) {
       toast.error("Insufficient wallet balance. Please top up and try again.");
       navigate("/buyer/wallet");

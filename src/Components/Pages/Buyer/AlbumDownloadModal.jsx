@@ -40,17 +40,21 @@ export default function AlbumDownloadModal({ albums, onClose }) {
     const photos = album.downloadInfo || [];
     let done = 0;
 
-    for (const photo of photos) {
-      try {
-        const res = await fetch(photo.fileUrl);
-        const blob = await res.blob();
-        const ext = photo.fileUrl.split(".").pop().split("?")[0] || "jpg";
-        const filename = `${photo.title || `photo_${done + 1}`}.${ext}`;
-        folder.file(filename, blob);
-      } catch {
-        // skip photos that fail (e.g. CORS)
-      }
-      done++;
+    const concurrency = 4;
+    for (let i = 0; i < photos.length; i += concurrency) {
+      const batch = photos.slice(i, i + concurrency);
+      await Promise.all(batch.map(async (photo, idx) => {
+        try {
+          const res = await fetch(photo.fileUrl);
+          const blob = await res.blob();
+          const ext = photo.fileUrl.split(".").pop().split("?")[0] || "jpg";
+          const filename = `${photo.title || `photo_${i + idx + 1}`}.${ext}`;
+          folder.file(filename, blob);
+        } catch {
+          // skip photos that fail (e.g. CORS)
+        }
+      }));
+      done += batch.length;
       setZipProgress(Math.round((done / photos.length) * 100));
     }
 

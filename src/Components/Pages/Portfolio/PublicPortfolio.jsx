@@ -90,6 +90,107 @@ function ContactRow({ icon, value, accentColor }) {
   );
 }
 
+function SectionTitle({ eyebrow, title, description, color = '#fff', muted = 'rgba(255,255,255,0.6)' }) {
+  return (
+    <div style={{ marginBottom: '28px' }}>
+      {eyebrow && (
+        <div style={{ color: muted, fontSize: '0.78rem', letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: '10px' }}>
+          {eyebrow}
+        </div>
+      )}
+      <h2 style={{ color, fontSize: 'clamp(1.5rem, 3vw, 2.3rem)', fontWeight: 700, marginBottom: description ? '10px' : 0 }}>
+        {title}
+      </h2>
+      {description && (
+        <p style={{ color: muted, maxWidth: '700px', margin: 0, lineHeight: 1.7 }}>
+          {description}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function StatsStrip({ stats = [], accentColor, bg = 'rgba(255,255,255,0.04)', textColor = '#fff', muted = 'rgba(255,255,255,0.55)' }) {
+  const filtered = stats.filter(item => item?.label || item?.value);
+  if (!filtered.length) return null;
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '14px' }}>
+      {filtered.map((item, index) => (
+        <div key={`${item.label}-${index}`} style={{ background: bg, border: `1px solid ${accentColor}22`, borderRadius: '14px', padding: '18px 20px' }}>
+          <div style={{ color: accentColor, fontSize: '1.5rem', fontWeight: 800, marginBottom: '4px' }}>{item.value}</div>
+          <div style={{ color: muted, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{item.label}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ServicesSection({ services = [], accentColor, bg = 'transparent', cardBg = 'rgba(255,255,255,0.04)', textColor = '#fff', muted = 'rgba(255,255,255,0.6)' }) {
+  const filtered = services.filter(item => item?.title || item?.description);
+  if (!filtered.length) return null;
+  return (
+    <section style={{ padding: '70px 40px', background: bg }}>
+      <div style={{ maxWidth: '1150px', margin: '0 auto' }}>
+        <SectionTitle eyebrow="Services" title="How I Can Help" description="Shape your portfolio into a real client-facing website with clear offers and polished messaging." color={textColor} muted={muted} />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '18px' }}>
+          {filtered.map((item, index) => (
+            <div key={`${item.title}-${index}`} style={{ background: cardBg, borderRadius: '16px', padding: '24px', border: `1px solid ${accentColor}22` }}>
+              <div style={{ color: accentColor, fontWeight: 800, fontSize: '0.82rem', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '12px' }}>
+                {String(index + 1).padStart(2, '0')}
+              </div>
+              <h3 style={{ color: textColor, fontSize: '1.1rem', fontWeight: 700, marginBottom: '10px' }}>{item.title}</h3>
+              <p style={{ color: muted, margin: 0, lineHeight: 1.7 }}>{item.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function TestimonialsSection({ testimonials = [], accentColor, textColor = '#fff', muted = 'rgba(255,255,255,0.6)', bg = 'transparent' }) {
+  const filtered = testimonials.filter(item => item?.quote || item?.name);
+  if (!filtered.length) return null;
+  return (
+    <section style={{ padding: '70px 40px', background: bg }}>
+      <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+        <SectionTitle eyebrow="Client Words" title="What Clients Remember" color={textColor} muted={muted} />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '18px' }}>
+          {filtered.map((item, index) => (
+            <div key={`${item.name}-${index}`} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '16px', padding: '24px', border: `1px solid ${accentColor}22` }}>
+              <div style={{ color: accentColor, fontSize: '1.6rem', lineHeight: 1, marginBottom: '14px' }}>&ldquo;</div>
+              <p style={{ color: textColor, lineHeight: 1.8, marginBottom: '16px' }}>{item.quote}</p>
+              <div style={{ color: textColor, fontWeight: 700 }}>{item.name}</div>
+              {item.role && <div style={{ color: muted, fontSize: '0.82rem', marginTop: '4px' }}>{item.role}</div>}
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ProcessSection({ process = [], accentColor, textColor = '#fff', muted = 'rgba(255,255,255,0.6)', bg = 'transparent' }) {
+  const filtered = process.filter(item => item?.title || item?.description);
+  if (!filtered.length) return null;
+  return (
+    <section style={{ padding: '70px 40px', background: bg }}>
+      <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+        <SectionTitle eyebrow="Process" title="What It Feels Like To Work Together" color={textColor} muted={muted} />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '18px' }}>
+          {filtered.map((item, index) => (
+            <div key={`${item.title}-${index}`} style={{ padding: '20px 22px', borderLeft: `3px solid ${accentColor}`, background: 'rgba(255,255,255,0.03)', borderRadius: '0 14px 14px 0' }}>
+              <div style={{ color: accentColor, fontWeight: 800, marginBottom: '10px' }}>{String(index + 1).padStart(2, '0')}</div>
+              <h3 style={{ color: textColor, fontSize: '1rem', fontWeight: 700, marginBottom: '10px' }}>{item.title}</h3>
+              <p style={{ color: muted, lineHeight: 1.7, margin: 0 }}>{item.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ──────────────── Navbar ──────────────── */
 
 function PortfolioNavbar({ photographerName, accentColor, textColor, navBg }) {
@@ -119,17 +220,22 @@ function PortfolioNavbar({ photographerName, accentColor, textColor, navBg }) {
 function NoirTemplate({ portfolio }) {
   const accent = portfolio.theme?.primaryColor || '#D4AF37';
   const photographer = portfolio.photographer || {};
+  const brand = portfolio.brand || {};
   const hero = portfolio.hero || {};
   const about = portfolio.about || {};
   const contact = portfolio.contact || {};
   const social = portfolio.social || {};
   const media = portfolio.featuredMediaIds || [];
   const albums = portfolio.featuredAlbumIds || [];
+  const stats = portfolio.stats || [];
+  const services = portfolio.services || [];
+  const testimonials = portfolio.testimonials || [];
+  const process = portfolio.process || [];
 
   return (
     <div style={{ background: '#0a0a0a', color: '#fff', minHeight: '100vh' }}>
       <PortfolioNavbar
-        photographerName={photographer.username || 'Photographer'}
+        photographerName={brand.siteTitle || photographer.username || 'Photographer'}
         accentColor={accent}
         textColor="rgba(255,255,255,0.6)"
       />
@@ -166,6 +272,13 @@ function NoirTemplate({ portfolio }) {
           )}
         </div>
       </section>
+
+      {(brand.tagline || brand.specialty || stats.length > 0) && (
+        <section style={{ padding: '50px 40px 0', maxWidth: '1200px', margin: '0 auto' }}>
+          <SectionTitle eyebrow={brand.specialty || 'Portfolio'} title={brand.tagline || 'A refined portfolio website for client-ready photography work.'} color="#fff" muted="rgba(255,255,255,0.58)" />
+          <StatsStrip stats={stats} accentColor={accent} />
+        </section>
+      )}
 
       {/* Gallery */}
       {(media.length > 0 || albums.length > 0) && (
@@ -232,10 +345,16 @@ function NoirTemplate({ portfolio }) {
               <p style={{ color: 'rgba(255,255,255,0.75)', lineHeight: 1.8, marginBottom: 0 }}>
                 {about.bio || photographer.bio}
               </p>
+              {about.experience && <p style={{ color: accent, marginTop: '14px', marginBottom: '8px', fontWeight: 600 }}>{about.experience}</p>}
+              {about.approach && <p style={{ color: 'rgba(255,255,255,0.6)', lineHeight: 1.8, marginBottom: 0 }}>{about.approach}</p>}
             </div>
           </div>
         </section>
       )}
+
+      <ServicesSection services={services} accentColor={accent} textColor="#fff" muted="rgba(255,255,255,0.6)" />
+      <ProcessSection process={process} accentColor={accent} textColor="#fff" muted="rgba(255,255,255,0.6)" />
+      <TestimonialsSection testimonials={testimonials} accentColor={accent} textColor="#fff" muted="rgba(255,255,255,0.6)" />
 
       {/* Contact */}
       {(contact.email || contact.phone || contact.location || Object.values(social).some(Boolean)) && (
@@ -263,17 +382,22 @@ function NoirTemplate({ portfolio }) {
 function StudioTemplate({ portfolio }) {
   const accent = '#8B7355';
   const photographer = portfolio.photographer || {};
+  const brand = portfolio.brand || {};
   const hero = portfolio.hero || {};
   const about = portfolio.about || {};
   const contact = portfolio.contact || {};
   const social = portfolio.social || {};
   const media = portfolio.featuredMediaIds || [];
   const albums = portfolio.featuredAlbumIds || [];
+  const stats = portfolio.stats || [];
+  const services = portfolio.services || [];
+  const testimonials = portfolio.testimonials || [];
+  const process = portfolio.process || [];
 
   return (
     <div style={{ background: '#f7f4f0', color: '#1a1a1a', minHeight: '100vh' }}>
       <PortfolioNavbar
-        photographerName={photographer.username || 'Photographer'}
+        photographerName={brand.siteTitle || photographer.username || 'Photographer'}
         accentColor={accent}
         textColor="#555"
         navBg="rgba(247,244,240,0.95)"
@@ -310,6 +434,13 @@ function StudioTemplate({ portfolio }) {
           )}
         </div>
       </section>
+
+      {(brand.tagline || brand.specialty || stats.length > 0) && (
+        <section style={{ padding: '40px 40px 0', maxWidth: '1100px', margin: '0 auto' }}>
+          <SectionTitle eyebrow={brand.specialty || 'Studio'} title={brand.tagline || 'Built like a calm, realistic studio site for serious client work.'} color="#1a1a1a" muted="#666" />
+          <StatsStrip stats={stats} accentColor={accent} bg="#ede9e4" textColor="#1a1a1a" muted="#666" />
+        </section>
+      )}
 
       {/* Gallery */}
       {(media.length > 0 || albums.length > 0) && (
@@ -390,10 +521,16 @@ function StudioTemplate({ portfolio }) {
               <p style={{ color: '#444', lineHeight: 1.9, fontSize: '1rem' }}>
                 {about.bio || photographer.bio}
               </p>
+              {about.experience && <p style={{ color: accent, fontWeight: 600, marginTop: '12px', marginBottom: '8px' }}>{about.experience}</p>}
+              {about.approach && <p style={{ color: '#555', lineHeight: 1.8, marginBottom: 0 }}>{about.approach}</p>}
             </div>
           </div>
         </section>
       )}
+
+      <ServicesSection services={services} accentColor={accent} bg="#f2efea" cardBg="#fff" textColor="#1a1a1a" muted="#666" />
+      <ProcessSection process={process} accentColor={accent} textColor="#1a1a1a" muted="#666" bg="#f7f4f0" />
+      <TestimonialsSection testimonials={testimonials} accentColor={accent} textColor="#1a1a1a" muted="#666" bg="#ede9e4" />
 
       {/* Contact */}
       {(contact.email || contact.phone || contact.location || Object.values(social).some(Boolean)) && (
@@ -423,17 +560,22 @@ function StudioTemplate({ portfolio }) {
 function BoldTemplate({ portfolio }) {
   const accent = '#FF3366';
   const photographer = portfolio.photographer || {};
+  const brand = portfolio.brand || {};
   const hero = portfolio.hero || {};
   const about = portfolio.about || {};
   const contact = portfolio.contact || {};
   const social = portfolio.social || {};
   const media = portfolio.featuredMediaIds || [];
   const albums = portfolio.featuredAlbumIds || [];
+  const stats = portfolio.stats || [];
+  const services = portfolio.services || [];
+  const testimonials = portfolio.testimonials || [];
+  const process = portfolio.process || [];
 
   return (
     <div style={{ background: '#000', color: '#fff', minHeight: '100vh' }}>
       <PortfolioNavbar
-        photographerName={photographer.username || 'Photographer'}
+        photographerName={brand.siteTitle || photographer.username || 'Photographer'}
         accentColor={accent}
         textColor="rgba(255,255,255,0.55)"
         navBg="rgba(0,0,0,0.9)"
@@ -482,6 +624,13 @@ function BoldTemplate({ portfolio }) {
           )}
         </div>
       </section>
+
+      {(brand.tagline || brand.specialty || stats.length > 0) && (
+        <section style={{ padding: '42px 40px 0', maxWidth: '1200px', margin: '0 auto' }}>
+          <SectionTitle eyebrow={brand.specialty || 'Bold Work'} title={brand.tagline || 'A dramatic commercial-style portfolio with agency energy.'} color="#fff" muted="rgba(255,255,255,0.58)" />
+          <StatsStrip stats={stats} accentColor={accent} bg="#111" textColor="#fff" muted="rgba(255,255,255,0.55)" />
+        </section>
+      )}
 
       {/* Gallery */}
       {(media.length > 0 || albums.length > 0) && (
@@ -557,9 +706,15 @@ function BoldTemplate({ portfolio }) {
                 {about.bio || photographer.bio}
               </p>
             </div>
+            {about.experience && <p style={{ color: accent, fontWeight: 700, marginTop: '20px', marginBottom: '8px' }}>{about.experience}</p>}
+            {about.approach && <p style={{ color: 'rgba(255,255,255,0.58)', lineHeight: 1.8, marginBottom: 0, maxWidth: '780px' }}>{about.approach}</p>}
           </div>
         </section>
       )}
+
+      <ServicesSection services={services} accentColor={accent} textColor="#fff" muted="rgba(255,255,255,0.6)" bg="#050505" />
+      <ProcessSection process={process} accentColor={accent} textColor="#fff" muted="rgba(255,255,255,0.6)" bg="#000" />
+      <TestimonialsSection testimonials={testimonials} accentColor={accent} textColor="#fff" muted="rgba(255,255,255,0.6)" bg="#050505" />
 
       {/* Contact */}
       {(contact.email || contact.phone || contact.location || Object.values(social).some(Boolean)) && (
@@ -589,17 +744,22 @@ function BoldTemplate({ portfolio }) {
 function LensTemplate({ portfolio }) {
   const accent = '#6BBDD0';
   const photographer = portfolio.photographer || {};
+  const brand = portfolio.brand || {};
   const hero = portfolio.hero || {};
   const about = portfolio.about || {};
   const contact = portfolio.contact || {};
   const social = portfolio.social || {};
   const media = portfolio.featuredMediaIds || [];
   const albums = portfolio.featuredAlbumIds || [];
+  const stats = portfolio.stats || [];
+  const services = portfolio.services || [];
+  const testimonials = portfolio.testimonials || [];
+  const process = portfolio.process || [];
 
   return (
     <div style={{ background: '#0d1f33', color: '#fff', minHeight: '100vh' }}>
       <PortfolioNavbar
-        photographerName={photographer.username || 'Photographer'}
+        photographerName={brand.siteTitle || photographer.username || 'Photographer'}
         accentColor={accent}
         textColor="rgba(255,255,255,0.6)"
         navBg="rgba(13,31,51,0.92)"
@@ -638,6 +798,13 @@ function LensTemplate({ portfolio }) {
           )}
         </div>
       </section>
+
+      {(brand.tagline || brand.specialty || stats.length > 0) && (
+        <section style={{ padding: '42px 40px 0', maxWidth: '1150px', margin: '0 auto' }}>
+          <SectionTitle eyebrow={brand.specialty || 'Creative Direction'} title={brand.tagline || 'A polished modern portfolio with a premium editorial feel.'} color="#fff" muted="rgba(255,255,255,0.58)" />
+          <StatsStrip stats={stats} accentColor={accent} />
+        </section>
+      )}
 
       {/* Gallery */}
       {(media.length > 0 || albums.length > 0) && (
@@ -705,10 +872,16 @@ function LensTemplate({ portfolio }) {
               <p style={{ color: 'rgba(255,255,255,0.75)', lineHeight: 1.9, marginBottom: 0 }}>
                 {about.bio || photographer.bio}
               </p>
+              {about.experience && <p style={{ color: accent, fontWeight: 600, marginTop: '14px', marginBottom: '8px' }}>{about.experience}</p>}
+              {about.approach && <p style={{ color: 'rgba(255,255,255,0.6)', lineHeight: 1.8, marginBottom: 0 }}>{about.approach}</p>}
             </div>
           </div>
         </section>
       )}
+
+      <ServicesSection services={services} accentColor={accent} textColor="#fff" muted="rgba(255,255,255,0.6)" />
+      <ProcessSection process={process} accentColor={accent} textColor="#fff" muted="rgba(255,255,255,0.6)" bg="rgba(255,255,255,0.02)" />
+      <TestimonialsSection testimonials={testimonials} accentColor={accent} textColor="#fff" muted="rgba(255,255,255,0.6)" />
 
       {/* Contact */}
       {(contact.email || contact.phone || contact.location || Object.values(social).some(Boolean)) && (

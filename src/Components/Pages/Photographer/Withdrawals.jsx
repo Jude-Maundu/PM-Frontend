@@ -4,7 +4,7 @@ import axios from "axios";
 import { io } from "socket.io-client";
 import PhotographerLayout from "./PhotographerLayout";
 import PageHeader from "../../PageHeader";
-import { API_BASE_URL } from "../../../api/apiConfig";
+import { API_BASE_URL, API_ENDPOINTS } from "../../../api/apiConfig";
 import { getAuthHeaders, getCurrentUserId, getStoredUser } from "../../../utils/auth";
 
 const API = API_BASE_URL;
@@ -16,7 +16,7 @@ const defaultSchedule = { enabled: false, dayOfMonth: 1, minBalance: 1000 };
 
 const PhotographerWithdrawals = () => {
   const storedUser = getStoredUser();
-  const storedPhone = storedUser?.phoneNumber || storedUser?.phone || "";
+  const storedPhone = storedUser?.payoutPhoneNumber || storedUser?.phoneNumber || storedUser?.phone || "";
 
   const [withdrawals, setWithdrawals] = useState([]);
   const [availableBalance, setAvailableBalance] = useState(0);
@@ -28,8 +28,11 @@ const PhotographerWithdrawals = () => {
     phone: storedPhone,
     accountName: "",
     accountNumber: "",
+    otp: "",
   });
   const [submitting, setSubmitting] = useState(false);
+  const [requestingOtp, setRequestingOtp] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
   const socketRef = useRef(null);
 
   // Auto withdrawal schedule state
@@ -123,6 +126,11 @@ const PhotographerWithdrawals = () => {
       return;
     }
 
+    if (!requestData.otp.trim()) {
+      toast.warning("Enter the withdrawal verification code sent to your email");
+      return;
+    }
+
     try {
       setSubmitting(true);
       const headers = getAuthHeaders();
@@ -133,6 +141,7 @@ const PhotographerWithdrawals = () => {
         phoneNumber: requestData.method === 'mpesa' ? requestData.phone : undefined,
         accountName: requestData.method === 'bank' ? requestData.accountName : undefined,
         accountNumber: requestData.method === 'bank' ? requestData.accountNumber : undefined,
+        otp: requestData.otp.trim(),
       };
 
       const res = await axios.post(`${API}/withdrawals/request`, payload, { headers });
@@ -145,7 +154,9 @@ const PhotographerWithdrawals = () => {
         phone: storedPhone,
         accountName: "",
         accountNumber: "",
+        otp: "",
       });
+      setOtpSent(false);
 
       // Refresh data
       fetchWithdrawals();
@@ -155,6 +166,21 @@ const PhotographerWithdrawals = () => {
       toast.error(error.response?.data?.message || "Failed to submit withdrawal request");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleSendOtp = async () => {
+    try {
+      setRequestingOtp(true);
+      const headers = getAuthHeaders();
+      const res = await axios.post(API_ENDPOINTS.WITHDRAWALS.REQUEST_MFA, {}, { headers });
+      toast.success(res.data?.message || "Verification code sent");
+      setOtpSent(true);
+    } catch (error) {
+      console.error("Error requesting withdrawal verification code:", error);
+      toast.error(error.response?.data?.message || "Failed to send verification code");
+    } finally {
+      setRequestingOtp(false);
     }
   };
 
@@ -374,6 +400,35 @@ const PhotographerWithdrawals = () => {
                         </div>
                       </>
                     )}
+
+                    <div className="mb-3">
+                      <label className="form-label text-white-50">Withdrawal Verification</label>
+                      <div className="d-flex gap-2 flex-wrap">
+                        <button
+                          type="button"
+                          className="btn btn-outline-info"
+                          onClick={handleSendOtp}
+                          disabled={requestingOtp}
+                        >
+                          {requestingOtp ? (
+                            <><span className="spinner-border spinner-border-sm me-2"></span>Sending…</>
+                          ) : (
+                            <><i className="fas fa-envelope me-2"></i>{otpSent ? "Resend Code" : "Send Code"}</>
+                          )}
+                        </button>
+                        <input
+                          type="text"
+                          className="form-control bg-dark text-white border-secondary"
+                          placeholder="Enter 6-digit code"
+                          value={requestData.otp}
+                          onChange={(e) => setRequestData({ ...requestData, otp: e.target.value.replace(/\D/g, "").slice(0, 6) })}
+                          style={{ maxWidth: "220px" }}
+                        />
+                      </div>
+                      <small className="text-white-50 d-block mt-2">
+                        Every withdrawal must be confirmed with a code sent to your email before funds can leave your wallet.
+                      </small>
+                    </div>
 
                     <button type="submit" className="mc-btn mc-btn-primary w-100" disabled={submitting}>
                       {submitting ? (

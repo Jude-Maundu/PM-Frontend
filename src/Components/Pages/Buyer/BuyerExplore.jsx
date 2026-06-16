@@ -5,6 +5,7 @@ import axios from "axios";
 import { API_ENDPOINTS, API_BASE_URL } from "../../../api/apiConfig";
 import { toast } from "../../../utils/toast";
 import AlbumDownloadModal from "./AlbumDownloadModal";
+import { showConfirm } from "../../../utils/confirm";
 
 const EVENT_TYPES = [
   { value: "",           label: "All",        icon: "fa-th-large" },
@@ -236,6 +237,11 @@ export default function BuyerExplore() {
   const handleBuyAlbum = async (album) => {
     if (!token || !userId) { navigate("/login"); return; }
     if (album.price <= 0) { toast.info("This album is free"); return; }
+    const ok = await showConfirm(`Buy "${album.name}" for KES ${Number(album.price).toLocaleString()}?`, {
+      title: "Confirm Album Purchase",
+      confirmText: "Buy Album",
+    });
+    if (!ok) return;
     setBuyingAlbum(album._id);
     try {
       const res = await axios.post(API_ENDPOINTS.WALLET.BUY_ALBUM(album._id), {}, { headers: { Authorization: `Bearer ${token}` } });

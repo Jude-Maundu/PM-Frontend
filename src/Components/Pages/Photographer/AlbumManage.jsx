@@ -95,7 +95,7 @@ export default function AlbumManage() {
 
   const handleUpload = async (files) => {
     if (!files || files.length === 0) return;
-    const valid = Array.from(files).filter(f => f.type.startsWith("image/"));
+    const valid = Array.from(files).filter(f => f.type.startsWith("image/") || f.type.startsWith("video/"));
     if (!valid.length) return;
 
     setUploading(true);
@@ -245,7 +245,7 @@ export default function AlbumManage() {
         {/* Photos section header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.25rem", flexWrap: "wrap", gap: "0.75rem" }}>
           <h5 style={{ margin: 0, fontWeight: 700, color: nav, fontFamily: "var(--font-serif)" }}>
-            Photos <span style={{ fontWeight: 400, fontSize: "0.85rem", color: "var(--pm-text-muted)" }}>({photos.length})</span>
+            Media <span style={{ fontWeight: 400, fontSize: "0.85rem", color: "var(--pm-text-muted)" }}>({photos.length})</span>
           </h5>
 
           {/* Add photos button */}
@@ -254,11 +254,11 @@ export default function AlbumManage() {
             onDragLeave={() => setDragging(false)}
             onDrop={e => { e.preventDefault(); setDragging(false); handleUpload(e.dataTransfer.files); }}
           >
-            <input ref={uploadRef} type="file" accept="image/*" multiple style={{ display: "none" }} onChange={e => handleUpload(e.target.files)} />
+            <input ref={uploadRef} type="file" accept="image/*,video/*" multiple style={{ display: "none" }} onChange={e => handleUpload(e.target.files)} />
             <button onClick={() => uploadRef.current?.click()} disabled={uploading} style={{ padding: "0.6rem 1.25rem", background: dragging ? teal : nav, color: "#fff", border: "none", borderRadius: 12, fontWeight: 700, fontSize: "0.88rem", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "0.5rem", transition: "background 0.2s" }}>
               {uploading
                 ? <><span className="spinner-border spinner-border-sm"></span> Uploading… {uploadProgress}%</>
-                : <><i className="fas fa-plus"></i> Add Photos</>
+                : <><i className="fas fa-plus"></i> Add Media</>
               }
             </button>
           </div>
@@ -283,8 +283,8 @@ export default function AlbumManage() {
             style={{ border: `2px dashed ${dragging ? teal : "var(--pm-gray-200, #E8EEF2)"}`, borderRadius: 20, padding: "5rem 1rem", textAlign: "center", cursor: "pointer", background: dragging ? "var(--pm-teal-pale, #EEF8FB)" : "transparent", transition: "all 0.2s" }}
           >
             <i className="fas fa-cloud-upload-alt" style={{ fontSize: "3rem", color: dragging ? teal : "var(--pm-gray-200)", display: "block", marginBottom: "1rem" }}></i>
-            <h6 style={{ color: nav, fontWeight: 700 }}>No photos yet</h6>
-            <p style={{ color: "var(--pm-text-muted)", fontSize: "0.88rem", margin: 0 }}>Click or drag & drop to add photos to this album</p>
+            <h6 style={{ color: nav, fontWeight: 700 }}>No media yet</h6>
+            <p style={{ color: "var(--pm-text-muted)", fontSize: "0.88rem", margin: 0 }}>Click or drag & drop to add photos or videos to this album</p>
           </div>
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "0.75rem" }}>
@@ -298,14 +298,21 @@ export default function AlbumManage() {
 
               return (
                 <div key={id} style={{ borderRadius: 14, overflow: "hidden", border: "1.5px solid var(--pm-gray-200, #E8EEF2)", background: "var(--mc-card-bg, #fff)", position: "relative", boxShadow: "0 1px 8px rgba(26,46,59,0.06)" }}>
-                  {/* Image */}
+                  {/* Thumbnail */}
                   <div style={{ height: 160, background: "var(--pm-teal-pale, #EEF8FB)", overflow: "hidden", position: "relative" }}>
                     {src
-                      ? <img src={src} alt={title} style={{ width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />
+                      ? photo.mediaType === "video"
+                        ? <video src={src} style={{ width: "100%", height: "100%", objectFit: "cover" }} muted playsInline preload="metadata" />
+                        : <img src={src} alt={title} style={{ width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />
                       : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          <i className="fas fa-image" style={{ fontSize: "2rem", color: teal }}></i>
+                          <i className={`fas ${photo.mediaType === "video" ? "fa-film" : "fa-image"}`} style={{ fontSize: "2rem", color: teal }}></i>
                         </div>
                     }
+                    {photo.mediaType === "video" && src && (
+                      <div style={{ position: "absolute", bottom: 8, left: 8, background: "rgba(0,0,0,0.6)", borderRadius: 6, padding: "2px 7px", fontSize: "0.68rem", color: "#fff" }}>
+                        <i className="fas fa-play me-1"></i>Video
+                      </div>
+                    )}
                     {/* Remove button */}
                     <button
                       onClick={() => handleRemove(id)}

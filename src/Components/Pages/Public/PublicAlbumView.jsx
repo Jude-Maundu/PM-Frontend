@@ -4,6 +4,8 @@ import axios from "axios";
 import { Helmet } from "react-helmet-async";
 import { API_ENDPOINTS, API_BASE_URL } from "../../../api/apiConfig";
 import AlbumDownloadModal from "../Buyer/AlbumDownloadModal";
+import { showConfirm } from "../../../utils/confirm";
+import { getCurrentUserId } from "../../../utils/auth";
 
 function imageUrl(raw) {
   if (!raw) return null;
@@ -40,6 +42,7 @@ export default function PublicAlbumView() {
 
   const isLoggedIn = !!localStorage.getItem("token");
   const authToken  = localStorage.getItem("token");
+  const currentUserId = getCurrentUserId();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -59,13 +62,59 @@ export default function PublicAlbumView() {
   useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
 
   const [walletBuying, setWalletBuying] = useState(false);
+  const [mediaBuying, setMediaBuying] = useState(null);   // mediaId currently being wallet-bought
+  const [mediaBuySuccess, setMediaBuySuccess] = useState(null); // { title, fileUrl }
+
+  const confirmPurchase = async (label, amount) => {
+    return showConfirm(`Buy ${label} for ${formatKES(amount)}?`, {
+      title: "Confirm Purchase",
+      confirmText: "Buy Now",
+    });
+  };
+
+  const normalizePhone = (value) => String(value || "").replace(/[^0-9]/g, "").replace(/^0/, "254");
+
+  const getPurchaseAmount = useCallback(() => (
+    buying === "album"
+      ? Number(album?.price || 0)
+      : Number((album?.media || []).find((m) => m._id === buying)?.price || 0)
+  ), [album?.media, album?.price, buying]);
 
   const handleBuy = (type, mediaItem) => {
     setBuying(type === "album" ? "album" : mediaItem._id);
     setPayStatus(""); setPayMsg(""); setPhone(""); setCheckoutReqId(null); setDownloadItems([]);
   };
 
+  // Wallet-first single media purchase (logged-in users)
+  const handleWalletBuyMedia = async (mediaItem) => {
+    const ok = await confirmPurchase(`"${mediaItem.title}"`, Number(mediaItem.price || 0));
+    if (!ok) return;
+    if (!isLoggedIn) { handleBuy("photo", mediaItem); return; }
+    setMediaBuying(mediaItem._id);
+    try {
+      await axios.post(
+        `${API_BASE_URL}/payments/buy`,
+        { mediaId: mediaItem._id },
+        { headers: { Authorization: `Bearer ${authToken}` } }
+      );
+      setMediaBuySuccess({ title: mediaItem.title, fileUrl: mediaItem.fileUrl });
+      setLightbox(null);
+      load(); // refresh so purchased state updates
+    } catch (err) {
+      if (err.response?.status === 402) {
+        // Not enough wallet — fall back to M-Pesa topup modal
+        handleBuy("photo", mediaItem);
+      } else {
+        alert(err.response?.data?.message || "Purchase failed. Please try again.");
+      }
+    } finally {
+      setMediaBuying(null);
+    }
+  };
+
   const handleWalletBuyAlbum = async () => {
+    const ok = await confirmPurchase(`the full album "${album?.name || "Album"}"`, Number(album?.price || 0));
+    if (!ok) return;
     if (!isLoggedIn) { handleBuy("album"); return; }
     setWalletBuying(true);
     try {
@@ -108,6 +157,40 @@ export default function PublicAlbumView() {
     }
   };
 
+  const completeAuthenticatedPurchase = async () => {
+    if (!isLoggedIn || !authToken) return;
+
+    if (buying === "album") {
+      const res = await axios.post(
+        API_ENDPOINTS.WALLET.BUY_ALBUM(albumId),
+        {},
+        { headers: { Authorization: `Bearer ${authToken}` } }
+      );
+
+      const info = res.data.downloadInfo || [];
+      setDownloadItems(info);
+      if (info.length > 0) {
+        setDownloadModalData([{
+          albumId,
+          albumName: res.data.albumName || album?.name || "Album",
+          downloadInfo: info,
+        }]);
+      }
+      await load();
+      return;
+    }
+
+    const selectedMedia = (album?.media || []).find((m) => m._id === buying);
+    await axios.post(
+      `${API_BASE_URL}/payments/buy`,
+      { mediaId: buying },
+      { headers: { Authorization: `Bearer ${authToken}` } }
+    );
+    setDownloadItems(selectedMedia ? [{ title: selectedMedia.title, fileUrl: imageUrl(selectedMedia.fileUrl) || selectedMedia.fileUrl }] : []);
+    setMediaBuySuccess(selectedMedia ? { title: selectedMedia.title, fileUrl: selectedMedia.fileUrl } : null);
+    await load();
+  };
+
   const pollPaymentStatus = (reqId) => {
     let attempts = 0;
     pollRef.current = setInterval(async () => {
@@ -116,9 +199,22 @@ export default function PublicAlbumView() {
         const res = await axios.get(API_ENDPOINTS.SHARE.GUEST_STATUS(reqId));
         if (res.data.status === "completed") {
           clearInterval(pollRef.current);
-          setDownloadItems(res.data.downloadItems || []);
-          setPayStatus("success");
-          setPayMsg("Payment confirmed! Your photos are ready.");
+          if (isLoggedIn) {
+            setPayStatus("pending");
+            setPayMsg("Payment confirmed. Unlocking your purchase…");
+            try {
+              await completeAuthenticatedPurchase();
+              setPayStatus("success");
+              setPayMsg("Payment confirmed! Your photos are ready.");
+            } catch (err) {
+              setPayStatus("error");
+              setPayMsg(err.response?.data?.message || "Payment was received, but completing your purchase failed. Please check your wallet or downloads.");
+            }
+          } else {
+            setDownloadItems(res.data.downloadItems || []);
+            setPayStatus("success");
+            setPayMsg("Payment confirmed! Your photos are ready.");
+          }
         } else if (res.data.status === "failed") {
           clearInterval(pollRef.current);
           setPayStatus("error");
@@ -134,16 +230,28 @@ export default function PublicAlbumView() {
 
   const submitPayment = async () => {
     if (!phone) { setPayMsg("Enter your M-Pesa phone number"); return; }
+    const normalizedPhone = normalizePhone(phone);
+    if (!/^254\d{9}$/.test(normalizedPhone)) {
+      setPayMsg("Use format 0712345678 or 254712345678");
+      return;
+    }
     setPayStatus("pending"); setPayMsg("Initiating M-Pesa payment…");
     try {
+      const amount = getPurchaseAmount();
+      if (amount <= 0) {
+        setPayStatus("error");
+        setPayMsg("This item does not have a payable price.");
+        return;
+      }
+
       const payload = buying === "album"
-        ? { albumId, phone }
-        : { mediaId: buying, phone };
+        ? { albumId, phone: normalizedPhone }
+        : { mediaId: buying, phone: normalizedPhone };
 
       let res;
       if (isLoggedIn) {
-        res = await axios.post(`${API_BASE_URL}/payments/buy`,
-          { ...payload, type: buying === "album" ? "album" : "photo" },
+        res = await axios.post(`${API_BASE_URL}/payments/mpesa/topup`,
+          { buyerPhone: normalizedPhone, buyerId: currentUserId, amount, walletTopup: true },
           { headers: { Authorization: `Bearer ${authToken}` } }
         );
       } else {
@@ -256,23 +364,34 @@ export default function PublicAlbumView() {
                 <div style={{ columns: "3 200px", columnGap: "0.75rem" }}>
                   {media.map((m, idx) => {
                     const src = imageUrl(m.watermarkedUrl || m.fileUrl);
+                    const isVideo = m.mediaType === "video";
+                    const isBuyingThis = mediaBuying === m._id;
                     return (
                       <div key={m._id || idx} onClick={() => setLightbox(m)}
                         style={{ breakInside: "avoid", marginBottom: "0.75rem", borderRadius: 12, overflow: "hidden", cursor: "pointer", position: "relative", display: "block" }}
                         onMouseEnter={e => e.currentTarget.querySelector(".ph-overlay").style.opacity = "1"}
                         onMouseLeave={e => e.currentTarget.querySelector(".ph-overlay").style.opacity = "0"}
                       >
-                        <img src={src} alt={m.title} style={{ width: "100%", display: "block", borderRadius: 12 }} loading="lazy" />
+                        {isVideo
+                          ? <video src={src} style={{ width: "100%", display: "block", borderRadius: 12 }} muted playsInline preload="metadata" />
+                          : <img src={src} alt={m.title} style={{ width: "100%", display: "block", borderRadius: 12 }} loading="lazy" />
+                        }
+                        {isVideo && (
+                          <div style={{ position: "absolute", top: 8, left: 8, background: "rgba(0,0,0,0.6)", borderRadius: 6, padding: "2px 8px", fontSize: "0.7rem", color: "#fff" }}>
+                            <i className="fas fa-play me-1"></i>Video
+                          </div>
+                        )}
                         <div className="ph-overlay" style={{ position: "absolute", inset: 0, background: "rgba(26,46,59,0.7)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "0.4rem", opacity: 0, transition: "opacity 0.2s", borderRadius: 12 }}>
-                          <i className="fas fa-expand" style={{ color: "rgba(255,255,255,0.7)", fontSize: "1rem" }}></i>
+                          <i className={`fas ${isVideo ? "fa-play-circle" : "fa-expand"}`} style={{ color: "rgba(255,255,255,0.7)", fontSize: "1rem" }}></i>
                           {m.price > 0 && <span style={{ color: "#fff", fontWeight: 700, fontSize: "0.82rem" }}>{formatKES(m.price)}</span>}
                           {m.price === 0 && <span style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.75rem" }}>Free with album</span>}
                           {m.price > 0 && (
                             <button
-                              onClick={e => { e.stopPropagation(); handleBuy("photo", m); }}
+                              onClick={e => { e.stopPropagation(); handleWalletBuyMedia(m); }}
+                              disabled={isBuyingThis}
                               style={{ background: teal, color: "#fff", border: "none", borderRadius: 8, padding: "0.3rem 0.75rem", fontWeight: 700, fontSize: "0.75rem", cursor: "pointer", marginTop: "0.1rem" }}
                             >
-                              <i className="fas fa-shopping-bag me-1"></i>Buy
+                              {isBuyingThis ? <span className="spinner-border spinner-border-sm"></span> : <><i className="fas fa-shopping-bag me-1"></i>Buy</>}
                             </button>
                           )}
                         </div>
@@ -410,7 +529,7 @@ export default function PublicAlbumView() {
                   {payStatus === "polling" ? "Waiting for payment…" : "Complete Purchase"}
                 </h5>
                 <p style={{ color: "var(--pm-text-muted)", fontSize: "0.85rem", marginBottom: "1.5rem" }}>
-                  {buying === "album" ? `Full album — ${formatKES(album?.price)}` : `Photo — ${formatKES(media.find(m => m._id === buying)?.price || 0)}`}
+                  {buying === "album" ? `Full album — ${formatKES(Number(album?.price || 0))}` : `Photo — ${formatKES(Number(media.find(m => m._id === buying)?.price || 0))}`}
                 </p>
 
                 {payStatus === "polling" ? (

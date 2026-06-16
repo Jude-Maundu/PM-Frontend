@@ -51,7 +51,10 @@ const ShareAccess = () => {
 
   // Calculate total price
   const totalPrice = shareData?.shareType === "album"
-    ? (shareData?.album?.media || []).reduce((sum, m) => sum + Number(m.price || 0), 0)
+    ? Number(
+        shareData?.album?.price ||
+        (shareData?.album?.media || []).reduce((sum, m) => sum + Number(m.price || 0), 0)
+      )
     : Number(shareData?.media?.price || 0);
 
   const itemCount = shareData?.shareType === "album"
