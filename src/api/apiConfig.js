@@ -161,6 +161,7 @@ const API_ENDPOINTS = {
     ANALYTICS_REVENUE: `${API_BASE_URL}/admin/analytics/revenue`,
     ANALYTICS_SIGNUPS: `${API_BASE_URL}/admin/analytics/signups`,
     ANALYTICS_TOP_PHOTOGRAPHERS: `${API_BASE_URL}/admin/analytics/top-photographers`,
+    STAFF_DASHBOARD: (role) => `${API_BASE_URL}/admin/staff-dashboard/${role}`,
     EXPORT_USERS: `${API_BASE_URL}/admin/export/users`,
     EXPORT_TRANSACTIONS: `${API_BASE_URL}/admin/export/transactions`,
     MODERATION_LIST: `${API_BASE_URL}/admin/moderation`,

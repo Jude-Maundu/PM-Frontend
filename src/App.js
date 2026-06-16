@@ -48,11 +48,15 @@ import ShareAccess from './Components/Pages/Buyer/ShareAccess';
 // Staff Role Dashboards
 import SecretaryDash from './Components/Pages/Secretary/SecretaryDash';
 import SecretaryLayout from './Components/Pages/Secretary/SecretaryLayout';
+import SecretaryApplications from './Components/Pages/Secretary/SecretaryApplications';
+import SecretaryAnnouncements from './Components/Pages/Secretary/SecretaryAnnouncements';
 import SecretaryNotifications from './Components/Pages/Secretary/SecretaryNotifications';
 import EngineerDash from './Components/Pages/Engineer/EngineerDash';
 import EngineerLayout from './Components/Pages/Engineer/EngineerLayout';
+import EngineerConfig from './Components/Pages/Engineer/EngineerConfig';
 import MarketingDash from './Components/Pages/Marketing/MarketingDash';
 import MarketingLayout from './Components/Pages/Marketing/MarketingLayout';
+import MarketingBroadcasts from './Components/Pages/Marketing/MarketingBroadcasts';
 import StaffWorkspacePage from './Components/Pages/Shared/StaffWorkspacePage';
 
 // Photographer Pages
@@ -788,9 +792,13 @@ function App() {
 
           {/* Staff Role Routes */}
           <Route path='/secretary/dashboard'     element={<ProtectedRoute requiredRole="secretary"><SecretaryDash /></ProtectedRoute>} />
+          <Route path='/secretary/applications'  element={<ProtectedRoute requiredRole="secretary"><SecretaryApplications /></ProtectedRoute>} />
+          <Route path='/secretary/announcements' element={<ProtectedRoute requiredRole="secretary"><SecretaryAnnouncements /></ProtectedRoute>} />
           <Route path='/secretary/notifications' element={<ProtectedRoute requiredRole="secretary"><SecretaryNotifications /></ProtectedRoute>} />
           <Route path='/engineer/dashboard'      element={<ProtectedRoute requiredRole="engineer"><EngineerDash /></ProtectedRoute>} />
+          <Route path='/engineer/security'       element={<ProtectedRoute requiredRole="engineer"><EngineerConfig /></ProtectedRoute>} />
           <Route path='/marketing/dashboard'     element={<ProtectedRoute requiredRole="marketing"><MarketingDash /></ProtectedRoute>} />
+          <Route path='/marketing/push'          element={<ProtectedRoute requiredRole="marketing"><MarketingBroadcasts /></ProtectedRoute>} />
           {secretaryRoutes.map((route) => (
             <Route
               key={route.path}

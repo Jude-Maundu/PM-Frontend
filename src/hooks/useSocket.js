@@ -1,20 +1,28 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 
-const SOCKET_URL = "https://pm-backend-f3b6.onrender.com";
+const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || "https://pm-backend-f3b6.onrender.com";
 
 export function useSocket(userId) {
-  const socketRef = useRef(null);
+  const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    if (!userId) return;
-    socketRef.current = io(SOCKET_URL, {
+    if (!userId) {
+      setSocket(null);
+      return undefined;
+    }
+
+    const nextSocket = io(SOCKET_URL, {
       transports: ["websocket"],
       auth: { token: localStorage.getItem("token") },
     });
-    socketRef.current.emit("join", `user_${userId}`);
-    return () => { socketRef.current?.disconnect(); };
+    setSocket(nextSocket);
+
+    return () => {
+      nextSocket.disconnect();
+      setSocket(null);
+    };
   }, [userId]);
 
-  return socketRef.current;
+  return socket;
 }

@@ -64,6 +64,10 @@ const StatusBanner = ({ status, onDismiss }) => {
 };
 
 export default function NotificationsBroadcast() {
+  const currentUser = (() => {
+    try { return JSON.parse(localStorage.getItem("user") || "{}"); } catch { return {}; }
+  })();
+  const currentRole = String(currentUser?.role || localStorage.getItem("role") || "").toLowerCase();
   const [tab, setTab]     = useState("compose");
   const [form, setForm]   = useState(EMPTY_FORM);
   const [status, setStatus] = useState(null); // { type: "success"|"error"|"loading", msg }
@@ -118,6 +122,51 @@ export default function NotificationsBroadcast() {
         ? prev.filter(u => u._id !== user._id)
         : [...prev, user]
     );
+  };
+
+  const handleEditHistory = async (entry) => {
+    const nextTitle = window.prompt("Edit broadcast title", entry.title || "");
+    if (nextTitle === null) return;
+    const nextMessage = window.prompt("Edit broadcast message", entry.message || "");
+    if (nextMessage === null) return;
+
+    try {
+      setStatus({ type: "loading", msg: "Updating broadcast..." });
+      await axios.patch(`${API}/notifications/admin/broadcast/history`, {
+        sender: entry.sender,
+        title: entry.title,
+        sentAtMinute: entry.sentAtMinute,
+        updates: {
+          title: nextTitle.trim(),
+          message: nextMessage.trim(),
+        },
+      }, { headers: getAuthHeaders() });
+      setStatus({ type: "success", msg: "Broadcast updated successfully." });
+      fetchHistory();
+    } catch (err) {
+      setStatus({ type: "error", msg: err.response?.data?.error || "Failed to update broadcast." });
+    }
+  };
+
+  const handleDeleteHistory = async (entry) => {
+    const ok = window.confirm(`Delete broadcast "${entry.title}" for all recipients? This cannot be undone.`);
+    if (!ok) return;
+
+    try {
+      setStatus({ type: "loading", msg: "Deleting broadcast..." });
+      await axios.delete(`${API}/notifications/admin/broadcast/history`, {
+        headers: getAuthHeaders(),
+        data: {
+          sender: entry.sender,
+          title: entry.title,
+          sentAtMinute: entry.sentAtMinute,
+        },
+      });
+      setStatus({ type: "success", msg: "Broadcast deleted successfully." });
+      fetchHistory();
+    } catch (err) {
+      setStatus({ type: "error", msg: err.response?.data?.error || "Failed to delete broadcast." });
+    }
   };
 
   const handleSend = async () => {
@@ -438,12 +487,13 @@ export default function NotificationsBroadcast() {
                     <th>Priority</th>
                     <th>Sent by</th>
                     <th>Recipients</th>
+                    <th>Actions</th>
                     <th className="pe-3">When</th>
                   </tr>
                 </thead>
                 <tbody>
                   {history.map((h, i) => (
-                    <tr key={i}>
+                    <tr key={h.batchKey || i}>
                       <td className="ps-3">
                         <div style={{ fontWeight: 600, fontSize: "0.83rem", maxWidth: 200 }}>{h.title}</div>
                       </td>
@@ -464,6 +514,20 @@ export default function NotificationsBroadcast() {
                       <td>
                         <span className="badge bg-primary">{h.totalSent}</span>
                         <span style={{ fontSize: "0.68rem", opacity: 0.5, marginLeft: 5 }}>{h.readCount} read</span>
+                      </td>
+                      <td>
+                        {(currentRole === "admin" || String(h.sender) === String(currentUser?._id || currentUser?.id)) ? (
+                          <div className="d-flex gap-2">
+                            <button className="btn btn-sm btn-outline-info" onClick={() => handleEditHistory(h)} title="Edit broadcast">
+                              <i className="fas fa-pen"></i>
+                            </button>
+                            <button className="btn btn-sm btn-outline-danger" onClick={() => handleDeleteHistory(h)} title="Delete broadcast">
+                              <i className="fas fa-trash"></i>
+                            </button>
+                          </div>
+                        ) : (
+                          <small style={{ opacity: 0.45 }}>Read only</small>
+                        )}
                       </td>
                       <td className="pe-3">
                         <small style={{ opacity: 0.6 }}>{new Date(h.sentAt).toLocaleString()}</small>
