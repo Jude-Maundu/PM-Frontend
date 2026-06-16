@@ -22,7 +22,8 @@ const AdminAlbums = () => {
       const res = await axios.get(API_ENDPOINTS.ADMIN.GET_ALBUMS, { headers });
       setAlbums(res.data?.data || res.data || []);
     } catch (err) {
-      toast.error("Failed to load albums");
+      const message = err.response?.data?.message || "Failed to load albums";
+      toast.error(message);
     } finally {
       setLoading(false);
     }
