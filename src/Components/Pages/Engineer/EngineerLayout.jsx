@@ -31,6 +31,7 @@ const EngineerLayout = ({ children }) => {
   const navItems = [
     { path: "/engineer/dashboard",   icon: "fa-server",          label: "Dashboard"       },
     { path: "/engineer/status",      icon: "fa-heartbeat",       label: "System Status"   },
+    { path: "/engineer/incidents",   icon: "fa-triangle-exclamation", label: "Incidents"  },
     { path: "/engineer/logs",        icon: "fa-terminal",        label: "API Logs"        },
     { path: "/engineer/errors",      icon: "fa-bug",             label: "Error Reports"   },
     { path: "/engineer/database",    icon: "fa-database",        label: "Database"        },
@@ -144,8 +145,8 @@ const EngineerLayout = ({ children }) => {
           {[
             { path: "/engineer/dashboard",   icon: "fa-server",         label: "Home"     },
             { path: "/engineer/status",      icon: "fa-heartbeat",      label: "Status"   },
+            { path: "/engineer/incidents",   icon: "fa-triangle-exclamation", label: "Issues" },
             { path: "/engineer/logs",        icon: "fa-terminal",       label: "Logs"     },
-            { path: "/engineer/errors",      icon: "fa-bug",            label: "Errors"   },
             { path: "/engineer/performance", icon: "fa-tachometer-alt", label: "Perf"     },
           ].map((item, idx) => (
             <NavLink

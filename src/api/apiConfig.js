@@ -212,6 +212,13 @@ const API_ENDPOINTS = {
     REMOVE_REACTION: (messageId) => `${API_BASE_URL}/messages/${messageId}/reactions`,
   },
 
+  STAFF_OPS: {
+    LIST: (group, resource) => `${API_BASE_URL}/staff-ops/${group}/${resource}`,
+    CREATE: (group, resource) => `${API_BASE_URL}/staff-ops/${group}/${resource}`,
+    UPDATE: (group, resource, id) => `${API_BASE_URL}/staff-ops/${group}/${resource}/${id}`,
+    DELETE: (group, resource, id) => `${API_BASE_URL}/staff-ops/${group}/${resource}/${id}`,
+  },
+
   // ==================== PORTFOLIO ====================
   PORTFOLIO: {
     GET_MY: `${API_BASE_URL}/portfolio/me`,

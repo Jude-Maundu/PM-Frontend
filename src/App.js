@@ -50,13 +50,21 @@ import SecretaryDash from './Components/Pages/Secretary/SecretaryDash';
 import SecretaryLayout from './Components/Pages/Secretary/SecretaryLayout';
 import SecretaryApplications from './Components/Pages/Secretary/SecretaryApplications';
 import SecretaryAnnouncements from './Components/Pages/Secretary/SecretaryAnnouncements';
+import SecretaryTickets from './Components/Pages/Secretary/SecretaryTickets';
+import SecretaryTasks from './Components/Pages/Secretary/SecretaryTasks';
 import SecretaryNotifications from './Components/Pages/Secretary/SecretaryNotifications';
 import EngineerDash from './Components/Pages/Engineer/EngineerDash';
 import EngineerLayout from './Components/Pages/Engineer/EngineerLayout';
 import EngineerConfig from './Components/Pages/Engineer/EngineerConfig';
+import EngineerIncidents from './Components/Pages/Engineer/EngineerIncidents';
+import EngineerBackups from './Components/Pages/Engineer/EngineerBackups';
+import EngineerDeployments from './Components/Pages/Engineer/EngineerDeployments';
 import MarketingDash from './Components/Pages/Marketing/MarketingDash';
 import MarketingLayout from './Components/Pages/Marketing/MarketingLayout';
 import MarketingBroadcasts from './Components/Pages/Marketing/MarketingBroadcasts';
+import MarketingCampaigns from './Components/Pages/Marketing/MarketingCampaigns';
+import MarketingAds from './Components/Pages/Marketing/MarketingAds';
+import MarketingContentCalendar from './Components/Pages/Marketing/MarketingContentCalendar';
 import StaffWorkspacePage from './Components/Pages/Shared/StaffWorkspacePage';
 
 // Photographer Pages
@@ -792,14 +800,22 @@ function App() {
 
           {/* Staff Role Routes */}
           <Route path='/secretary/dashboard'     element={<ProtectedRoute requiredRole="secretary"><SecretaryDash /></ProtectedRoute>} />
+          <Route path='/secretary/tickets'       element={<ProtectedRoute requiredRole="secretary"><SecretaryTickets /></ProtectedRoute>} />
           <Route path='/secretary/applications'  element={<ProtectedRoute requiredRole="secretary"><SecretaryApplications /></ProtectedRoute>} />
           <Route path='/secretary/announcements' element={<ProtectedRoute requiredRole="secretary"><SecretaryAnnouncements /></ProtectedRoute>} />
+          <Route path='/secretary/tasks'         element={<ProtectedRoute requiredRole="secretary"><SecretaryTasks /></ProtectedRoute>} />
           <Route path='/secretary/notifications' element={<ProtectedRoute requiredRole="secretary"><SecretaryNotifications /></ProtectedRoute>} />
           <Route path='/engineer/dashboard'      element={<ProtectedRoute requiredRole="engineer"><EngineerDash /></ProtectedRoute>} />
+          <Route path='/engineer/incidents'      element={<ProtectedRoute requiredRole="engineer"><EngineerIncidents /></ProtectedRoute>} />
+          <Route path='/engineer/backups'        element={<ProtectedRoute requiredRole="engineer"><EngineerBackups /></ProtectedRoute>} />
+          <Route path='/engineer/deployments'    element={<ProtectedRoute requiredRole="engineer"><EngineerDeployments /></ProtectedRoute>} />
           <Route path='/engineer/security'       element={<ProtectedRoute requiredRole="engineer"><EngineerConfig /></ProtectedRoute>} />
           <Route path='/marketing/dashboard'     element={<ProtectedRoute requiredRole="marketing"><MarketingDash /></ProtectedRoute>} />
+          <Route path='/marketing/campaigns'     element={<ProtectedRoute requiredRole="marketing"><MarketingCampaigns /></ProtectedRoute>} />
+          <Route path='/marketing/ads'           element={<ProtectedRoute requiredRole="marketing"><MarketingAds /></ProtectedRoute>} />
+          <Route path='/marketing/content'       element={<ProtectedRoute requiredRole="marketing"><MarketingContentCalendar /></ProtectedRoute>} />
           <Route path='/marketing/push'          element={<ProtectedRoute requiredRole="marketing"><MarketingBroadcasts /></ProtectedRoute>} />
-          {secretaryRoutes.map((route) => (
+          {secretaryRoutes.filter((route) => !["/secretary/tickets", "/secretary/tasks", "/secretary/announcements"].includes(route.path)).map((route) => (
             <Route
               key={route.path}
               path={route.path}
@@ -810,7 +826,7 @@ function App() {
               }
             />
           ))}
-          {engineerRoutes.map((route) => (
+          {engineerRoutes.filter((route) => !["/engineer/backups", "/engineer/deployments", "/engineer/security"].includes(route.path)).map((route) => (
             <Route
               key={route.path}
               path={route.path}
@@ -821,7 +837,7 @@ function App() {
               }
             />
           ))}
-          {marketingRoutes.map((route) => (
+          {marketingRoutes.filter((route) => !["/marketing/campaigns", "/marketing/ads", "/marketing/content"].includes(route.path)).map((route) => (
             <Route
               key={route.path}
               path={route.path}
