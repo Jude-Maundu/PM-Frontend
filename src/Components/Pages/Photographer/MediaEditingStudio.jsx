@@ -238,6 +238,7 @@ export default function MediaEditingStudio({
   const [historyIndex, setHistoryIndex] = useState(0);
   const [previewUrl, setPreviewUrl] = useState("");
   const [originalReady, setOriginalReady] = useState(false);
+  const [previewError, setPreviewError] = useState("");
   const [zoomView, setZoomView] = useState(1);
   const [compareSplit, setCompareSplit] = useState(50);
   const [showCompare, setShowCompare] = useState(false);
@@ -294,116 +295,124 @@ export default function MediaEditingStudio({
     const image = hiddenImageRef.current;
     const canvas = canvasRef.current;
     if (!image || !canvas || !image.naturalWidth || !image.naturalHeight) return;
+    try {
+      const ratio = getAspectRatio(editorState);
+      const baseSize = fitDimensions(image.naturalWidth, image.naturalHeight, ratio);
+      const frame = FRAME_STYLES[editorState.frame] || FRAME_STYLES.none;
+      const framePadding = frame.padding || 0;
+      const footerPadding = frame.footer || 0;
 
-    const ratio = getAspectRatio(editorState);
-    const baseSize = fitDimensions(image.naturalWidth, image.naturalHeight, ratio);
-    const frame = FRAME_STYLES[editorState.frame] || FRAME_STYLES.none;
-    const framePadding = frame.padding || 0;
-    const footerPadding = frame.footer || 0;
+      canvas.width = baseSize.width + framePadding * 2;
+      canvas.height = baseSize.height + framePadding * 2 + footerPadding;
 
-    canvas.width = baseSize.width + framePadding * 2;
-    canvas.height = baseSize.height + framePadding * 2 + footerPadding;
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    const ctx = canvas.getContext("2d");
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    if (editorState.background.mode === "solid") {
-      ctx.fillStyle = editorState.background.solid;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-    } else if (editorState.background.mode === "gradient") {
-      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-      gradient.addColorStop(0, editorState.background.gradientFrom);
-      gradient.addColorStop(1, editorState.background.gradientTo);
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }
-
-    if (frame.color !== "transparent") {
-      ctx.fillStyle = frame.color;
-      if (frame.radius) {
-        ctx.beginPath();
-        ctx.roundRect(0, 0, canvas.width, canvas.height, frame.radius);
-        ctx.fill();
-      } else {
+      if (editorState.background.mode === "solid") {
+        ctx.fillStyle = editorState.background.solid;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      } else if (editorState.background.mode === "gradient") {
+        const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+        gradient.addColorStop(0, editorState.background.gradientFrom);
+        gradient.addColorStop(1, editorState.background.gradientTo);
+        ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
-    }
 
-    const drawWidth = baseSize.width;
-    const drawHeight = baseSize.height;
-    const offsetX = framePadding;
-    const offsetY = framePadding;
+      if (frame.color !== "transparent") {
+        ctx.fillStyle = frame.color;
+        if (frame.radius) {
+          ctx.beginPath();
+          ctx.roundRect(0, 0, canvas.width, canvas.height, frame.radius);
+          ctx.fill();
+        } else {
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+      }
 
-    ctx.save();
-    ctx.filter = getCanvasFilter(editorState);
-    ctx.translate(offsetX + drawWidth / 2, offsetY + drawHeight / 2);
-    ctx.rotate(((editorState.rotation + editorState.straighten) * Math.PI) / 180);
-    ctx.scale(
-      (editorState.flipH ? -1 : 1) * editorState.zoom,
-      (editorState.flipV ? -1 : 1) * editorState.zoom
-    );
-    ctx.drawImage(image, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
-    ctx.restore();
-    ctx.filter = "none";
+      const drawWidth = baseSize.width;
+      const drawHeight = baseSize.height;
+      const offsetX = framePadding;
+      const offsetY = framePadding;
 
-    const adjustments = getAppliedAdjustments(editorState);
-    if (adjustments.grain > 0) {
       ctx.save();
-      ctx.globalAlpha = adjustments.grain / 240;
-      for (let i = 0; i < 9000; i += 1) {
-        ctx.fillStyle = i % 2 === 0 ? "#ffffff" : "#000000";
-        ctx.fillRect(
-          Math.random() * canvas.width,
-          Math.random() * canvas.height,
-          1,
-          1
-        );
-      }
+      ctx.filter = getCanvasFilter(editorState);
+      ctx.translate(offsetX + drawWidth / 2, offsetY + drawHeight / 2);
+      ctx.rotate(((editorState.rotation + editorState.straighten) * Math.PI) / 180);
+      ctx.scale(
+        (editorState.flipH ? -1 : 1) * editorState.zoom,
+        (editorState.flipV ? -1 : 1) * editorState.zoom
+      );
+      ctx.drawImage(image, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
       ctx.restore();
-    }
+      ctx.filter = "none";
 
-    if (editorState.watermark.enabled) {
-      ctx.save();
-      const mark = editorState.watermark;
-      const markPos = positionFromKey(mark.position, canvas.width, canvas.height, mark.customX, mark.customY);
-      ctx.translate(markPos.x, markPos.y);
-      ctx.rotate((mark.rotation * Math.PI) / 180);
-      ctx.globalAlpha = mark.opacity / 100;
-      if (mark.type === "text") {
-        ctx.fillStyle = mark.color;
-        ctx.font = `${Math.round(42 * mark.scale)}px Inter, sans-serif`;
-        ctx.textAlign = "center";
-        ctx.fillText(mark.text || "Relic Snap", 0, 0);
-      } else if (mark.logoUrl) {
-        const logo = new Image();
-        logo.src = mark.logoUrl;
+      const adjustments = getAppliedAdjustments(editorState);
+      if (adjustments.grain > 0) {
+        ctx.save();
+        ctx.globalAlpha = adjustments.grain / 240;
+        for (let i = 0; i < 9000; i += 1) {
+          ctx.fillStyle = i % 2 === 0 ? "#ffffff" : "#000000";
+          ctx.fillRect(
+            Math.random() * canvas.width,
+            Math.random() * canvas.height,
+            1,
+            1
+          );
+        }
+        ctx.restore();
       }
-      ctx.restore();
-    }
 
-    if (editorState.textOverlay.enabled && editorState.textOverlay.text.trim()) {
-      const text = editorState.textOverlay;
-      ctx.save();
-      ctx.globalAlpha = text.opacity / 100;
-      ctx.translate((text.x / 100) * canvas.width, (text.y / 100) * canvas.height);
-      ctx.rotate((text.rotation * Math.PI) / 180);
-      ctx.font = `${text.fontWeight} ${text.fontSize}px Georgia, serif`;
-      ctx.textAlign = text.align;
-      ctx.fillStyle = text.color;
-      if (text.shadow > 0) {
-        ctx.shadowColor = `rgba(0,0,0,${text.shadow / 100})`;
-        ctx.shadowBlur = 20;
+      if (editorState.watermark.enabled) {
+        ctx.save();
+        const mark = editorState.watermark;
+        const markPos = positionFromKey(mark.position, canvas.width, canvas.height, mark.customX, mark.customY);
+        ctx.translate(markPos.x, markPos.y);
+        ctx.rotate((mark.rotation * Math.PI) / 180);
+        ctx.globalAlpha = mark.opacity / 100;
+        if (mark.type === "text") {
+          ctx.fillStyle = mark.color;
+          ctx.font = `${Math.round(42 * mark.scale)}px Inter, sans-serif`;
+          ctx.textAlign = "center";
+          ctx.fillText(mark.text || "Relic Snap", 0, 0);
+        } else if (mark.logoUrl) {
+          const logo = new Image();
+          logo.src = mark.logoUrl;
+        }
+        ctx.restore();
       }
-      if (text.stroke > 0) {
-        ctx.lineWidth = text.stroke;
-        ctx.strokeStyle = "rgba(0,0,0,0.6)";
-        ctx.strokeText(text.text, 0, 0);
-      }
-      ctx.fillText(text.text, 0, 0);
-      ctx.restore();
-    }
 
-    setPreviewUrl(canvas.toDataURL("image/png"));
+      if (editorState.textOverlay.enabled && editorState.textOverlay.text.trim()) {
+        const text = editorState.textOverlay;
+        ctx.save();
+        ctx.globalAlpha = text.opacity / 100;
+        ctx.translate((text.x / 100) * canvas.width, (text.y / 100) * canvas.height);
+        ctx.rotate((text.rotation * Math.PI) / 180);
+        ctx.font = `${text.fontWeight} ${text.fontSize}px Georgia, serif`;
+        ctx.textAlign = text.align;
+        ctx.fillStyle = text.color;
+        if (text.shadow > 0) {
+          ctx.shadowColor = `rgba(0,0,0,${text.shadow / 100})`;
+          ctx.shadowBlur = 20;
+        }
+        if (text.stroke > 0) {
+          ctx.lineWidth = text.stroke;
+          ctx.strokeStyle = "rgba(0,0,0,0.6)";
+          ctx.strokeText(text.text, 0, 0);
+        }
+        ctx.fillText(text.text, 0, 0);
+        ctx.restore();
+      }
+
+      setPreviewUrl(canvas.toDataURL("image/png"));
+      setPreviewError("");
+    } catch (error) {
+      setPreviewUrl("");
+      setPreviewError("Preview blocked by image security settings. Refresh after the server update finishes deploying.");
+      if (process.env.NODE_ENV === "development") {
+        console.error("Media editor preview error:", error);
+      }
+    }
   }, [editorState]);
 
   useEffect(() => {
@@ -765,11 +774,17 @@ export default function MediaEditingStudio({
       <img
         ref={hiddenImageRef}
         src={sourceUrl}
+        crossOrigin="anonymous"
         alt=""
         style={{ display: "none" }}
         onLoad={() => {
           setOriginalReady(true);
+          setPreviewError("");
           renderCanvas();
+        }}
+        onError={() => {
+          setPreviewError("We couldn't load this image into the editor preview.");
+          setOriginalReady(false);
         }}
       />
 
@@ -818,6 +833,7 @@ export default function MediaEditingStudio({
 
           <div style={styles.previewStage}>
             {!originalReady && <div style={styles.loader}>Loading full resolution preview…</div>}
+            {previewError && <div style={styles.previewError}>{previewError}</div>}
             <div style={{ ...styles.previewFrame, transform: `scale(${zoomView})` }}>
               {previewUrl && <img src={previewUrl} alt="Edited preview" style={styles.previewImage} />}
               {showCompare && sourceUrl && (
@@ -988,6 +1004,21 @@ const styles = {
   loader: {
     color: "rgba(255,255,255,0.7)",
     fontWeight: 600,
+  },
+  previewError: {
+    position: "absolute",
+    top: "1rem",
+    left: "50%",
+    transform: "translateX(-50%)",
+    zIndex: 2,
+    maxWidth: "min(92%, 760px)",
+    padding: "0.8rem 1rem",
+    borderRadius: 14,
+    background: "rgba(151, 32, 25, 0.94)",
+    color: "#fff",
+    fontWeight: 600,
+    textAlign: "center",
+    boxShadow: "0 18px 40px rgba(0,0,0,0.28)",
   },
   rightHeader: {
     display: "flex",
