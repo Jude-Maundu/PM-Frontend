@@ -128,7 +128,7 @@ function PhotoActionsModal({
             <div style={{ display: "grid", gap: "0.7rem" }}>
               <button
                 onClick={onEdit}
-                disabled={isBusy}
+                disabled={isBusy || isVideo}
                 style={{ padding: "0.78rem 1rem", borderRadius: 14, border: "none", background: "var(--pm-teal, #6BBDD0)", color: "#072030", fontWeight: 800, cursor: "pointer" }}
               >
                 <i className="fas fa-sliders me-2"></i>Edit Photo
@@ -159,7 +159,9 @@ function PhotoActionsModal({
             </div>
 
             <p style={{ margin: "1rem 0 0", fontSize: "0.78rem", lineHeight: 1.55, color: "var(--pm-text-muted)" }}>
-              Deleting here removes the item from this album view. You can still keep the rest of the album untouched.
+              {isVideo
+                ? "Video items can still be renamed, used as cover, or removed. The advanced editor is currently image-only."
+                : "Deleting here removes the item from this album view. You can still keep the rest of the album untouched."}
             </p>
           </div>
         </div>

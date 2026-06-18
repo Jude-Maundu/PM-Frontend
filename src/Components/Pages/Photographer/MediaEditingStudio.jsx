@@ -1,4 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import axios from "axios";
+import { API_ENDPOINTS } from "../../../api/apiConfig";
+import { resolveUrl } from "../../../utils/imageUrl";
 
 const TOOL_LIST = [
   { key: "crop", label: "Crop", icon: "fa-crop-simple" },
@@ -70,6 +73,8 @@ const DEFAULT_STATE = {
   customWidth: 1800,
   customHeight: 1200,
   zoom: 1,
+  panX: 50,
+  panY: 50,
   rotation: 0,
   flipH: false,
   flipV: false,
@@ -106,6 +111,8 @@ const DEFAULT_STATE = {
     customX: 50,
     customY: 50,
     color: "#ffffff",
+    repeat: true,
+    spacing: 180,
     logoUrl: "",
   },
   textOverlay: {
@@ -197,6 +204,136 @@ function getCanvasFilter(state) {
   ].join(" ");
 }
 
+function getToneAlpha(value, divisor = 200) {
+  return clamp(Math.abs(value) / divisor, 0, 0.35);
+}
+
+function applyOverlayTint(ctx, width, height, color, alpha, mode = "soft-light") {
+  if (!alpha) return;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.globalCompositeOperation = mode;
+  ctx.fillStyle = color;
+  ctx.fillRect(0, 0, width, height);
+  ctx.restore();
+}
+
+function buildWorkingCanvas(image, state, width, height) {
+  const workingCanvas = document.createElement("canvas");
+  workingCanvas.width = width;
+  workingCanvas.height = height;
+  const workingCtx = workingCanvas.getContext("2d");
+  workingCtx.clearRect(0, 0, width, height);
+
+  const fillScale = Math.max(width / image.naturalWidth, height / image.naturalHeight) * state.zoom;
+  const drawWidth = image.naturalWidth * fillScale;
+  const drawHeight = image.naturalHeight * fillScale;
+  const overflowX = Math.max(0, drawWidth - width);
+  const overflowY = Math.max(0, drawHeight - height);
+  const offsetX = -overflowX * (state.panX / 100);
+  const offsetY = -overflowY * (state.panY / 100);
+
+  workingCtx.drawImage(image, offsetX, offsetY, drawWidth, drawHeight);
+  return workingCanvas;
+}
+
+function applyCanvasAdjustments(ctx, canvas, state) {
+  const a = getAppliedAdjustments(state);
+  const { width, height } = canvas;
+
+  if (a.temperature !== 0) {
+    applyOverlayTint(ctx, width, height, a.temperature > 0 ? "#f4a261" : "#7dd3fc", getToneAlpha(a.temperature), "soft-light");
+  }
+  if (a.tint !== 0) {
+    applyOverlayTint(ctx, width, height, a.tint > 0 ? "#d946ef" : "#22c55e", getToneAlpha(a.tint), "color");
+  }
+  if (a.highlights !== 0) {
+    applyOverlayTint(ctx, width, height, "#ffffff", getToneAlpha(a.highlights), a.highlights > 0 ? "screen" : "multiply");
+  }
+  if (a.shadows !== 0) {
+    applyOverlayTint(ctx, width, height, a.shadows > 0 ? "#1d4ed8" : "#020617", getToneAlpha(a.shadows), a.shadows > 0 ? "screen" : "multiply");
+  }
+  if (a.fade > 0) {
+    applyOverlayTint(ctx, width, height, "#f8fafc", clamp(a.fade / 260, 0, 0.2), "screen");
+  }
+  if (a.dehaze > 0) {
+    applyOverlayTint(ctx, width, height, "#0f172a", clamp(a.dehaze / 260, 0, 0.18), "multiply");
+  }
+  if (a.sharpness > 0) {
+    ctx.save();
+    ctx.globalAlpha = clamp(a.sharpness / 180, 0, 0.24);
+    ctx.drawImage(canvas, -1, 0, width, height);
+    ctx.drawImage(canvas, 1, 0, width, height);
+    ctx.drawImage(canvas, 0, -1, width, height);
+    ctx.drawImage(canvas, 0, 1, width, height);
+    ctx.restore();
+  }
+}
+
+function drawTextWatermark(ctx, width, height, mark) {
+  const position = positionFromKey(mark.position, width, height, mark.customX, mark.customY);
+  const fontSize = Math.round(42 * mark.scale);
+  ctx.save();
+  ctx.fillStyle = mark.color;
+  ctx.font = `700 ${fontSize}px Inter, sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.globalAlpha = mark.opacity / 100;
+
+  if (mark.repeat) {
+    const spacing = Math.max(90, mark.spacing || 180);
+    ctx.translate(width / 2, height / 2);
+    ctx.rotate((mark.rotation * Math.PI) / 180);
+    for (let y = -height; y <= height; y += spacing) {
+      for (let x = -width; x <= width; x += spacing * 1.35) {
+        ctx.fillText(mark.text || "Relic Snap", x, y);
+      }
+    }
+  } else {
+    ctx.translate(position.x, position.y);
+    ctx.rotate((mark.rotation * Math.PI) / 180);
+    ctx.fillText(mark.text || "Relic Snap", 0, 0);
+  }
+  ctx.restore();
+}
+
+function drawLogoWatermark(ctx, width, height, mark, logoImage) {
+  if (!logoImage?.complete || !logoImage.naturalWidth || !logoImage.naturalHeight) return;
+  const position = positionFromKey(mark.position, width, height, mark.customX, mark.customY);
+  const baseWidth = Math.max(70, width * 0.18 * mark.scale);
+  const aspectRatio = logoImage.naturalWidth / logoImage.naturalHeight;
+  const logoWidth = baseWidth;
+  const logoHeight = baseWidth / aspectRatio;
+  ctx.save();
+  ctx.globalAlpha = mark.opacity / 100;
+
+  if (mark.repeat) {
+    const spacing = Math.max(120, mark.spacing || 180);
+    ctx.translate(width / 2, height / 2);
+    ctx.rotate((mark.rotation * Math.PI) / 180);
+    for (let y = -height; y <= height; y += spacing) {
+      for (let x = -width; x <= width; x += spacing) {
+        ctx.drawImage(logoImage, x - logoWidth / 2, y - logoHeight / 2, logoWidth, logoHeight);
+      }
+    }
+  } else {
+    ctx.translate(position.x, position.y);
+    ctx.rotate((mark.rotation * Math.PI) / 180);
+    ctx.drawImage(logoImage, -logoWidth / 2, -logoHeight / 2, logoWidth, logoHeight);
+  }
+  ctx.restore();
+}
+
+function sanitizeStateForStorage(state) {
+  return {
+    ...state,
+    watermark: {
+      ...state.watermark,
+      logoUrl: "",
+    },
+  };
+}
+
 function positionFromKey(position, width, height, customX, customY) {
   if (position === "custom") return { x: (customX / 100) * width, y: (customY / 100) * height };
   if (position === "center") return { x: width / 2, y: height / 2 };
@@ -230,6 +367,7 @@ export default function MediaEditingStudio({
 }) {
   const canvasRef = useRef(null);
   const hiddenImageRef = useRef(null);
+  const logoImageRef = useRef(null);
   const historyRef = useRef([deepClone(DEFAULT_STATE)]);
   const historyIndexRef = useRef(0);
   const [tool, setTool] = useState("crop");
@@ -239,6 +377,9 @@ export default function MediaEditingStudio({
   const [previewUrl, setPreviewUrl] = useState("");
   const [originalReady, setOriginalReady] = useState(false);
   const [previewError, setPreviewError] = useState("");
+  const [resolvedSourceUrl, setResolvedSourceUrl] = useState("");
+  const [sourceObjectUrl, setSourceObjectUrl] = useState("");
+  const [sourceLoading, setSourceLoading] = useState(false);
   const [zoomView, setZoomView] = useState(1);
   const [compareSplit, setCompareSplit] = useState(50);
   const [showCompare, setShowCompare] = useState(false);
@@ -248,9 +389,10 @@ export default function MediaEditingStudio({
   const [publishing, setPublishing] = useState(false);
   const [exporting, setExporting] = useState(false);
   const sourceUrl = useMemo(
-    () => photo?.fileUrl || photo?.watermarkedUrl || photo?.imageUrl || "",
+    () => resolveUrl(photo?.fileUrl) || resolveUrl(photo?.watermarkedUrl) || resolveUrl(photo?.imageUrl) || "",
     [photo]
   );
+  const editorImageSrc = sourceObjectUrl || resolvedSourceUrl || sourceUrl;
 
   const pushState = useCallback((producer) => {
     setEditorState((current) => {
@@ -277,11 +419,13 @@ export default function MediaEditingStudio({
     setHistoryIndex(0);
     setTool("crop");
     setShowCompare(false);
+    setPreviewError("");
+    setOriginalReady(false);
   }, [photo?._id]);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      localStorage.setItem(draftStorageKey(photo?._id), JSON.stringify(editorState));
+      localStorage.setItem(draftStorageKey(photo?._id), JSON.stringify(sanitizeStateForStorage(editorState)));
       setAutoSaveState(`Auto-saved ${new Date().toLocaleTimeString()}`);
     }, 4000);
     return () => clearInterval(timer);
@@ -290,6 +434,71 @@ export default function MediaEditingStudio({
   useEffect(() => {
     setVersionHistory(JSON.parse(localStorage.getItem(versionStorageKey(photo?._id)) || "[]"));
   }, [photo?._id, versionRefresh]);
+
+  useEffect(() => {
+    let cancelled = false;
+    let nextObjectUrl = "";
+
+    async function resolveSource() {
+      setSourceLoading(true);
+      setResolvedSourceUrl(sourceUrl || "");
+      setSourceObjectUrl("");
+
+      try {
+        let candidate = sourceUrl;
+        if (!candidate && photo?._id) {
+          const protectedUrl = await axios.get(API_ENDPOINTS.MEDIA.GET_PROTECTED(photo._id), {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token") || ""}` },
+          }).then((res) => res.data?.signedUrl || res.data?.downloadUrl || "");
+          candidate = protectedUrl || "";
+        }
+
+        if (!candidate) {
+          if (!cancelled) {
+            setResolvedSourceUrl("");
+            setPreviewError("No source image is available for editing.");
+          }
+          return;
+        }
+
+        if (candidate.startsWith("data:") || candidate.startsWith("blob:")) {
+          if (!cancelled) setResolvedSourceUrl(candidate);
+          return;
+        }
+
+        const response = await fetch(candidate, { mode: "cors" });
+        if (!response.ok) {
+          throw new Error(`Failed to fetch source image: ${response.status}`);
+        }
+        const blob = await response.blob();
+        nextObjectUrl = URL.createObjectURL(blob);
+        if (!cancelled) {
+          setResolvedSourceUrl(candidate);
+          setSourceObjectUrl(nextObjectUrl);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setResolvedSourceUrl(sourceUrl || "");
+          setSourceObjectUrl("");
+          setPreviewError("The source image could not be prepared for editing yet.");
+          if (process.env.NODE_ENV === "development") {
+            console.error("Failed to resolve media editor source:", error);
+          }
+        }
+      } finally {
+        if (!cancelled) setSourceLoading(false);
+      }
+    }
+
+    resolveSource();
+
+    return () => {
+      cancelled = true;
+      if (nextObjectUrl) {
+        URL.revokeObjectURL(nextObjectUrl);
+      }
+    };
+  }, [photo?._id, sourceUrl]);
 
   const renderCanvas = useCallback(() => {
     const image = hiddenImageRef.current;
@@ -334,18 +543,20 @@ export default function MediaEditingStudio({
       const drawHeight = baseSize.height;
       const offsetX = framePadding;
       const offsetY = framePadding;
+      const workingCanvas = buildWorkingCanvas(image, editorState, drawWidth, drawHeight);
 
       ctx.save();
       ctx.filter = getCanvasFilter(editorState);
       ctx.translate(offsetX + drawWidth / 2, offsetY + drawHeight / 2);
       ctx.rotate(((editorState.rotation + editorState.straighten) * Math.PI) / 180);
       ctx.scale(
-        (editorState.flipH ? -1 : 1) * editorState.zoom,
-        (editorState.flipV ? -1 : 1) * editorState.zoom
+        editorState.flipH ? -1 : 1,
+        editorState.flipV ? -1 : 1
       );
-      ctx.drawImage(image, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
+      ctx.drawImage(workingCanvas, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
       ctx.restore();
       ctx.filter = "none";
+      applyCanvasAdjustments(ctx, canvas, editorState);
 
       const adjustments = getAppliedAdjustments(editorState);
       if (adjustments.grain > 0) {
@@ -364,22 +575,12 @@ export default function MediaEditingStudio({
       }
 
       if (editorState.watermark.enabled) {
-        ctx.save();
         const mark = editorState.watermark;
-        const markPos = positionFromKey(mark.position, canvas.width, canvas.height, mark.customX, mark.customY);
-        ctx.translate(markPos.x, markPos.y);
-        ctx.rotate((mark.rotation * Math.PI) / 180);
-        ctx.globalAlpha = mark.opacity / 100;
         if (mark.type === "text") {
-          ctx.fillStyle = mark.color;
-          ctx.font = `${Math.round(42 * mark.scale)}px Inter, sans-serif`;
-          ctx.textAlign = "center";
-          ctx.fillText(mark.text || "Relic Snap", 0, 0);
+          drawTextWatermark(ctx, canvas.width, canvas.height, mark);
         } else if (mark.logoUrl) {
-          const logo = new Image();
-          logo.src = mark.logoUrl;
+          drawLogoWatermark(ctx, canvas.width, canvas.height, mark, logoImageRef.current);
         }
-        ctx.restore();
       }
 
       if (editorState.textOverlay.enabled && editorState.textOverlay.text.trim()) {
@@ -446,6 +647,8 @@ export default function MediaEditingStudio({
       } else if (tool === "crop" || tool === "resize") {
         next.cropPreset = "free";
         next.zoom = 1;
+        next.panX = 50;
+        next.panY = 50;
         next.rotation = 0;
         next.straighten = 0;
         next.flipH = false;
@@ -491,12 +694,12 @@ export default function MediaEditingStudio({
   };
 
   const saveDraft = () => {
-    localStorage.setItem(draftStorageKey(photo?._id), JSON.stringify(editorState));
+    localStorage.setItem(draftStorageKey(photo?._id), JSON.stringify(sanitizeStateForStorage(editorState)));
     const versions = JSON.parse(localStorage.getItem(versionStorageKey(photo?._id)) || "[]");
     versions.unshift({
       id: `${Date.now()}`,
       label: `Draft ${new Date().toLocaleString()}`,
-      state: editorState,
+      state: sanitizeStateForStorage(editorState),
     });
     localStorage.setItem(versionStorageKey(photo?._id), JSON.stringify(versions.slice(0, 12)));
     setVersionRefresh((value) => value + 1);
@@ -566,6 +769,8 @@ export default function MediaEditingStudio({
             </div>
           )}
           <Slider label="Zoom" min={1} max={2.4} step={0.01} value={editorState.zoom} onChange={(value) => pushState((current) => ({ ...current, zoom: Number(value) }))} />
+          <Slider label="Position X" min={0} max={100} step={1} value={editorState.panX} onChange={(value) => pushState((current) => ({ ...current, panX: Number(value) }))} />
+          <Slider label="Position Y" min={0} max={100} step={1} value={editorState.panY} onChange={(value) => pushState((current) => ({ ...current, panY: Number(value) }))} />
           <Slider label="Rotate" min={-180} max={180} step={1} value={editorState.rotation} onChange={(value) => pushState((current) => ({ ...current, rotation: Number(value) }))} />
           <Slider label="Straighten" min={-20} max={20} step={1} value={editorState.straighten} onChange={(value) => pushState((current) => ({ ...current, straighten: Number(value) }))} />
           <div style={styles.rowTwo}>
@@ -631,10 +836,45 @@ export default function MediaEditingStudio({
             <button style={chipStyle(editorState.watermark.type === "text")} onClick={() => pushState((current) => ({ ...current, watermark: { ...current.watermark, enabled: true, type: "text" } }))}>Text</button>
             <button style={chipStyle(editorState.watermark.type === "logo")} onClick={() => pushState((current) => ({ ...current, watermark: { ...current.watermark, enabled: true, type: "logo" } }))}>Logo</button>
           </div>
-          <input className="form-control" value={editorState.watermark.text} onChange={(e) => pushState((current) => ({ ...current, watermark: { ...current.watermark, text: e.target.value, enabled: true } }))} placeholder="Watermark text" />
+          {editorState.watermark.type === "text" && (
+            <input className="form-control" value={editorState.watermark.text} onChange={(e) => pushState((current) => ({ ...current, watermark: { ...current.watermark, text: e.target.value, enabled: true } }))} placeholder="Watermark text" />
+          )}
+          {editorState.watermark.type === "logo" && (
+            <input
+              type="file"
+              accept="image/*"
+              className="form-control"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = () => {
+                  pushState((current) => ({ ...current, watermark: { ...current.watermark, logoUrl: String(reader.result || ""), enabled: true, type: "logo" } }));
+                };
+                reader.readAsDataURL(file);
+              }}
+            />
+          )}
+          <div style={styles.rowTwo}>
+            <label style={styles.toggleRow}>
+              <input
+                type="checkbox"
+                checked={editorState.watermark.repeat}
+                onChange={(e) => pushState((current) => ({ ...current, watermark: { ...current.watermark, repeat: e.target.checked, enabled: true } }))}
+              />
+              <span>Repeat Across Image</span>
+            </label>
+            <div>
+              <label style={styles.label}>Color</label>
+              <input type="color" value={editorState.watermark.color} onChange={(e) => pushState((current) => ({ ...current, watermark: { ...current.watermark, color: e.target.value, enabled: true } }))} />
+            </div>
+          </div>
           <Slider label="Opacity" min={0} max={100} step={1} value={editorState.watermark.opacity} onChange={(value) => pushState((current) => ({ ...current, watermark: { ...current.watermark, opacity: Number(value), enabled: true } }))} />
           <Slider label="Scale" min={0.4} max={2.5} step={0.01} value={editorState.watermark.scale} onChange={(value) => pushState((current) => ({ ...current, watermark: { ...current.watermark, scale: Number(value), enabled: true } }))} />
           <Slider label="Rotation" min={-180} max={180} step={1} value={editorState.watermark.rotation} onChange={(value) => pushState((current) => ({ ...current, watermark: { ...current.watermark, rotation: Number(value), enabled: true } }))} />
+          {editorState.watermark.repeat && (
+            <Slider label="Spacing" min={90} max={280} step={5} value={editorState.watermark.spacing} onChange={(value) => pushState((current) => ({ ...current, watermark: { ...current.watermark, spacing: Number(value), enabled: true } }))} />
+          )}
           <div style={styles.chipGrid}>
             {["center", "bottomLeft", "bottomRight", "topLeft", "topRight", "custom"].map((key) => (
               <button key={key} style={chipStyle(editorState.watermark.position === key)} onClick={() => pushState((current) => ({ ...current, watermark: { ...current.watermark, position: key, enabled: true } }))}>
@@ -656,9 +896,26 @@ export default function MediaEditingStudio({
       return (
         <>
           <textarea className="form-control" rows={3} value={editorState.textOverlay.text} onChange={(e) => pushState((current) => ({ ...current, textOverlay: { ...current.textOverlay, enabled: true, text: e.target.value } }))} placeholder="Add overlay text" />
+          <div style={styles.rowTwo}>
+            <div>
+              <label style={styles.label}>Color</label>
+              <input type="color" value={editorState.textOverlay.color} onChange={(e) => pushState((current) => ({ ...current, textOverlay: { ...current.textOverlay, enabled: true, color: e.target.value } }))} />
+            </div>
+            <div>
+              <label style={styles.label}>Align</label>
+              <select className="form-control" value={editorState.textOverlay.align} onChange={(e) => pushState((current) => ({ ...current, textOverlay: { ...current.textOverlay, enabled: true, align: e.target.value } }))}>
+                <option value="left">Left</option>
+                <option value="center">Center</option>
+                <option value="right">Right</option>
+              </select>
+            </div>
+          </div>
           <Slider label="Font Size" min={18} max={120} step={1} value={editorState.textOverlay.fontSize} onChange={(value) => pushState((current) => ({ ...current, textOverlay: { ...current.textOverlay, enabled: true, fontSize: Number(value) } }))} />
+          <Slider label="Font Weight" min={300} max={900} step={100} value={editorState.textOverlay.fontWeight} onChange={(value) => pushState((current) => ({ ...current, textOverlay: { ...current.textOverlay, enabled: true, fontWeight: Number(value) } }))} />
           <Slider label="Opacity" min={0} max={100} step={1} value={editorState.textOverlay.opacity} onChange={(value) => pushState((current) => ({ ...current, textOverlay: { ...current.textOverlay, enabled: true, opacity: Number(value) } }))} />
           <Slider label="Rotation" min={-180} max={180} step={1} value={editorState.textOverlay.rotation} onChange={(value) => pushState((current) => ({ ...current, textOverlay: { ...current.textOverlay, enabled: true, rotation: Number(value) } }))} />
+          <Slider label="Shadow" min={0} max={100} step={1} value={editorState.textOverlay.shadow} onChange={(value) => pushState((current) => ({ ...current, textOverlay: { ...current.textOverlay, enabled: true, shadow: Number(value) } }))} />
+          <Slider label="Stroke" min={0} max={8} step={1} value={editorState.textOverlay.stroke} onChange={(value) => pushState((current) => ({ ...current, textOverlay: { ...current.textOverlay, enabled: true, stroke: Number(value) } }))} />
           <Slider label="Position X" min={0} max={100} step={1} value={editorState.textOverlay.x} onChange={(value) => pushState((current) => ({ ...current, textOverlay: { ...current.textOverlay, enabled: true, x: Number(value) } }))} />
           <Slider label="Position Y" min={0} max={100} step={1} value={editorState.textOverlay.y} onChange={(value) => pushState((current) => ({ ...current, textOverlay: { ...current.textOverlay, enabled: true, y: Number(value) } }))} />
         </>
@@ -773,7 +1030,7 @@ export default function MediaEditingStudio({
     <div style={styles.overlay}>
       <img
         ref={hiddenImageRef}
-        src={sourceUrl}
+        src={editorImageSrc}
         crossOrigin="anonymous"
         alt=""
         style={{ display: "none" }}
@@ -787,6 +1044,15 @@ export default function MediaEditingStudio({
           setOriginalReady(false);
         }}
       />
+      {editorState.watermark.logoUrl && (
+        <img
+          ref={logoImageRef}
+          src={editorState.watermark.logoUrl}
+          alt=""
+          style={{ display: "none" }}
+          onLoad={renderCanvas}
+        />
+      )}
 
       <div style={styles.topbar}>
         <div>
@@ -832,14 +1098,14 @@ export default function MediaEditingStudio({
           </div>
 
           <div style={styles.previewStage}>
-            {!originalReady && <div style={styles.loader}>Loading full resolution preview…</div>}
+            {(!originalReady || sourceLoading) && <div style={styles.loader}>Loading full resolution preview…</div>}
             {previewError && <div style={styles.previewError}>{previewError}</div>}
             <div style={{ ...styles.previewFrame, transform: `scale(${zoomView})` }}>
               {previewUrl && <img src={previewUrl} alt="Edited preview" style={styles.previewImage} />}
-              {showCompare && sourceUrl && (
+              {showCompare && editorImageSrc && (
                 <>
                   <div style={{ ...styles.compareOriginalWrap, width: `${compareSplit}%` }}>
-                    <img src={sourceUrl} alt="Original preview" style={styles.previewImage} />
+                    <img src={editorImageSrc} alt="Original preview" style={styles.previewImage} />
                   </div>
                   <input type="range" min="0" max="100" value={compareSplit} onChange={(e) => setCompareSplit(Number(e.target.value))} style={styles.compareSlider} />
                 </>
@@ -963,6 +1229,7 @@ const styles = {
     borderBottom: "1px solid rgba(255,255,255,0.08)",
   },
   previewStage: {
+    position: "relative",
     flex: 1,
     minHeight: 0,
     display: "flex",
@@ -1076,6 +1343,14 @@ const styles = {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
     gap: "0.65rem",
+  },
+  toggleRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: "0.55rem",
+    fontSize: "0.82rem",
+    fontWeight: 600,
+    color: "#fff",
   },
   secondaryBtn: {
     border: "1px solid rgba(255,255,255,0.14)",
