@@ -35,6 +35,8 @@ export default function PublicAlbumView() {
   const [payStatus, setPayStatus]     = useState("");     // '' | 'pending' | 'polling' | 'success' | 'error'
   const [payMsg, setPayMsg]           = useState("");
   const [downloadItems, setDownloadItems] = useState([]);
+  const [purchasedMediaIds, setPurchasedMediaIds] = useState([]);
+  const [albumUnlocked, setAlbumUnlocked] = useState(false);
   const pollRef = useRef(null);
 
   const isLoggedIn = !!localStorage.getItem("token");
@@ -45,13 +47,69 @@ export default function PublicAlbumView() {
     setLoading(true);
     try {
       const res = await axios.get(API_ENDPOINTS.MEDIA.GET_PUBLIC_GALLERY(albumId));
-      setAlbum(res.data.album || res.data);
+      const fetchedAlbum = res.data.album || res.data;
+
+      let unlockedMediaMap = new Map();
+      let unlockedAlbum = false;
+
+      if (isLoggedIn && authToken) {
+        try {
+          const purchasedRes = await axios.get(
+            API_ENDPOINTS.PAYMENTS.CHECK_ALBUM_PURCHASED(albumId),
+            { headers: { Authorization: `Bearer ${authToken}` } }
+          );
+
+          if (purchasedRes.data?.purchased) {
+            unlockedAlbum = true;
+            const downloadInfoRes = await axios.get(
+              API_ENDPOINTS.PAYMENTS.ALBUM_DOWNLOAD_INFO(albumId),
+              { headers: { Authorization: `Bearer ${authToken}` } }
+            );
+
+            (downloadInfoRes.data?.downloadInfo || []).forEach((item) => {
+              if (item?.mediaId && item?.fileUrl) {
+                unlockedMediaMap.set(String(item.mediaId), item.fileUrl);
+              }
+            });
+          } else if (currentUserId) {
+            const historyRes = await axios.get(
+              API_ENDPOINTS.PAYMENTS.PURCHASE_HISTORY(currentUserId),
+              { headers: { Authorization: `Bearer ${authToken}` } }
+            );
+
+            const purchases = Array.isArray(historyRes.data)
+              ? historyRes.data
+              : historyRes.data?.purchases || historyRes.data?.items || historyRes.data?.data || [];
+
+            purchases.forEach((item) => {
+              const mediaId = item.mediaId || item.mediaDetails?._id || item.media?._id || item._id;
+              const originalUrl = item.mediaDetails?.fileUrl || item.media?.fileUrl || item.fileUrl;
+              if (mediaId && originalUrl) {
+                unlockedMediaMap.set(String(mediaId), originalUrl);
+              }
+            });
+          }
+        } catch {
+          // Keep public preview state if purchase lookup fails.
+        }
+      }
+
+      const unlockedIds = [...unlockedMediaMap.keys()];
+      setPurchasedMediaIds(unlockedIds);
+      setAlbumUnlocked(unlockedAlbum);
+
+      const nextMedia = (fetchedAlbum.media || []).map((item) => {
+        const unlockedFile = unlockedMediaMap.get(String(item._id));
+        return unlockedFile ? { ...item, unlockedFileUrl: unlockedFile } : item;
+      });
+
+      setAlbum({ ...fetchedAlbum, media: nextMedia });
     } catch (e) {
       setError(e.response?.data?.message || "Album not found or is private.");
     } finally {
       setLoading(false);
     }
-  }, [albumId]);
+  }, [albumId, authToken, currentUserId, isLoggedIn]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -73,6 +131,13 @@ export default function PublicAlbumView() {
     () => Number((album?.media || []).find((m) => m._id === buying)?.price || 0),
     [album?.media, buying]
   );
+
+  const mediaDisplayUrl = useCallback((item) => {
+    if (!item) return null;
+    const isUnlocked = albumUnlocked || purchasedMediaIds.includes(String(item._id));
+    const preferredUrl = isUnlocked ? (item.unlockedFileUrl || item.fileUrl || item.watermarkedUrl) : (item.watermarkedUrl || item.fileUrl);
+    return imageUrl(preferredUrl);
+  }, [albumUnlocked, purchasedMediaIds]);
 
   const handleBuy = (mediaItem) => {
     setBuying(mediaItem._id);
@@ -243,8 +308,8 @@ export default function PublicAlbumView() {
       </nav>
 
       {/* Hero */}
-      <div className="pm-album-hero" style={{ marginTop: 56, position: "relative", height: "360px", overflow: "hidden", background: "linear-gradient(135deg, #1A2E3B 0%, #0f1e28 100%)" }}>
-        {cover && <img src={cover} alt={album?.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
+      <div className="pm-album-hero protected-content" style={{ marginTop: 56, position: "relative", height: "360px", overflow: "hidden", background: "linear-gradient(135deg, #1A2E3B 0%, #0f1e28 100%)" }}>
+        {cover && <img src={cover} alt={album?.name} className="protected-image" draggable={false} style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(26,46,59,0.2) 0%, rgba(26,46,59,0.85) 100%)" }} />
         <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "2rem 2rem 2.5rem" }}>
           <span style={{ background: teal, color: "#fff", borderRadius: 999, padding: "0.2rem 0.75rem", fontSize: "0.75rem", fontWeight: 700, display: "inline-block", marginBottom: "0.75rem" }}>
@@ -286,18 +351,20 @@ export default function PublicAlbumView() {
               ) : (
                 <div style={{ columns: "3 200px", columnGap: "0.75rem" }}>
                   {media.map((m, idx) => {
-                    const src = imageUrl(m.watermarkedUrl || m.fileUrl);
+                    const src = mediaDisplayUrl(m);
                     const isVideo = m.mediaType === "video";
                     const isBuyingThis = mediaBuying === m._id;
+                    const isUnlocked = albumUnlocked || purchasedMediaIds.includes(String(m._id));
                     return (
                       <div key={m._id || idx} onClick={() => setLightbox(m)}
+                        className={isUnlocked ? "" : "protected-content"}
                         style={{ breakInside: "avoid", marginBottom: "0.75rem", borderRadius: 12, overflow: "hidden", cursor: "pointer", position: "relative", display: "block" }}
                         onMouseEnter={e => e.currentTarget.querySelector(".ph-overlay").style.opacity = "1"}
                         onMouseLeave={e => e.currentTarget.querySelector(".ph-overlay").style.opacity = "0"}
                       >
                         {isVideo
-                          ? <video src={src} style={{ width: "100%", display: "block", borderRadius: 12 }} muted playsInline preload="metadata" />
-                          : <img src={src} alt={m.title} style={{ width: "100%", display: "block", borderRadius: 12 }} loading="lazy" />
+                          ? <video src={src} className={isUnlocked ? "" : "protected-image"} draggable={false} style={{ width: "100%", display: "block", borderRadius: 12 }} muted playsInline preload="metadata" />
+                          : <img src={src} alt={m.title} className={isUnlocked ? "" : "protected-image"} draggable={false} style={{ width: "100%", display: "block", borderRadius: 12 }} loading="lazy" />
                         }
                         {isVideo && (
                           <div style={{ position: "absolute", top: 8, left: 8, background: "rgba(0,0,0,0.6)", borderRadius: 6, padding: "2px 8px", fontSize: "0.7rem", color: "#fff" }}>
@@ -306,15 +373,18 @@ export default function PublicAlbumView() {
                         )}
                         <div className="ph-overlay" style={{ position: "absolute", inset: 0, background: "rgba(26,46,59,0.7)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "0.4rem", opacity: 0, transition: "opacity 0.2s", borderRadius: 12 }}>
                           <i className={`fas ${isVideo ? "fa-play-circle" : "fa-expand"}`} style={{ color: "rgba(255,255,255,0.7)", fontSize: "1rem" }}></i>
-                          {m.price > 0 && <span style={{ color: "#fff", fontWeight: 700, fontSize: "0.82rem" }}>{formatKES(m.price)}</span>}
-                          {m.price === 0 && <span style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.75rem" }}>Free with album</span>}
+                          {isUnlocked ? (
+                            <span style={{ color: "#fff", fontWeight: 700, fontSize: "0.8rem" }}>
+                              <i className="fas fa-check-circle me-1" style={{ color: "#4CC9A6" }}></i>Unlocked
+                            </span>
+                          ) : m.price > 0 ? <span style={{ color: "#fff", fontWeight: 700, fontSize: "0.82rem" }}>{formatKES(m.price)}</span> : <span style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.75rem" }}>Free with album</span>}
                           {m.price > 0 && (
                             <button
                               onClick={e => { e.stopPropagation(); handleWalletBuyMedia(m); }}
-                              disabled={isBuyingThis}
+                              disabled={isBuyingThis || isUnlocked}
                               style={{ background: teal, color: "#fff", border: "none", borderRadius: 8, padding: "0.3rem 0.75rem", fontWeight: 700, fontSize: "0.75rem", cursor: "pointer", marginTop: "0.1rem" }}
                             >
-                              {isBuyingThis ? <span className="spinner-border spinner-border-sm"></span> : <><i className="fas fa-shopping-bag me-1"></i>Buy</>}
+                              {isUnlocked ? <><i className="fas fa-check me-1"></i>Owned</> : isBuyingThis ? <span className="spinner-border spinner-border-sm"></span> : <><i className="fas fa-shopping-bag me-1"></i>Buy</>}
                             </button>
                           )}
                         </div>
@@ -366,7 +436,13 @@ export default function PublicAlbumView() {
             <i className="fas fa-times"></i>
           </button>
           <div onClick={e => e.stopPropagation()} style={{ maxWidth: 700, width: "100%", display: "flex", flexDirection: "column", gap: "1rem", alignItems: "center" }}>
-            <img src={imageUrl(lightbox.watermarkedUrl || lightbox.fileUrl)} alt={lightbox.title} style={{ maxWidth: "100%", maxHeight: "65vh", objectFit: "contain", borderRadius: 14 }} />
+            <img
+              src={mediaDisplayUrl(lightbox)}
+              alt={lightbox.title}
+              className={(albumUnlocked || purchasedMediaIds.includes(String(lightbox._id))) ? "" : "protected-image protected-content"}
+              draggable={false}
+              style={{ maxWidth: "100%", maxHeight: "65vh", objectFit: "contain", borderRadius: 14 }}
+            />
             <div className="pm-lightbox-bar" style={{ background: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", borderRadius: 14, padding: "1.25rem 1.5rem", width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem" }}>
               <div>
                 <div style={{ fontWeight: 700, color: "#fff", fontSize: "1rem" }}>{lightbox.title}</div>
@@ -376,7 +452,7 @@ export default function PublicAlbumView() {
                 <span style={{ color: "#fff", fontWeight: 700, fontSize: "1.1rem" }}>
                   {lightbox.price > 0 ? formatKES(lightbox.price) : "Free with album"}
                 </span>
-                {lightbox.price > 0 && (
+                {lightbox.price > 0 && !(albumUnlocked || purchasedMediaIds.includes(String(lightbox._id))) && (
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.3rem" }}>
                     <button onClick={() => handleBuy(lightbox)} style={{ background: teal, color: "#fff", border: "none", borderRadius: 10, padding: "0.6rem 1.4rem", fontWeight: 700, cursor: "pointer" }}>
                       <i className="fas fa-shopping-bag me-1"></i>Buy Photo
@@ -385,6 +461,11 @@ export default function PublicAlbumView() {
                       <i className="fas fa-shield-alt me-1" style={{ color: "#4CC9A6" }}></i>No account required
                     </span>
                   </div>
+                )}
+                {(albumUnlocked || purchasedMediaIds.includes(String(lightbox._id))) && (
+                  <span style={{ color: "#4CC9A6", fontWeight: 700, fontSize: "0.9rem" }}>
+                    <i className="fas fa-check-circle me-1"></i>Original unlocked
+                  </span>
                 )}
               </div>
             </div>

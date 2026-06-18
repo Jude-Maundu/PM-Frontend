@@ -76,6 +76,15 @@ export function getProfilePhoto(user) {
   );
 }
 
+export function getMediaPosition(position, fallback = "50% 50%") {
+  if (!position || typeof position !== "object") return fallback;
+  const x = Number(position.x);
+  const y = Number(position.y);
+  const safeX = Number.isFinite(x) ? Math.min(100, Math.max(0, x)) : 50;
+  const safeY = Number.isFinite(y) ? Math.min(100, Math.max(0, y)) : 50;
+  return `${safeX}% ${safeY}%`;
+}
+
 /**
  * Return the current auth token from localStorage.
  */

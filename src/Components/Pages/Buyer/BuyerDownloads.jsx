@@ -34,8 +34,9 @@ const BuyerDownloads = () => {
     const mediaObj = item.mediaDetails || item.media || item;
 
     const candidates = [
-      mediaObj.fileUrl, mediaObj.watermarkedUrl, mediaObj.url,
-      mediaObj.imageUrl, mediaObj.coverImage, mediaObj.thumbnail,
+      mediaObj.fileUrl, mediaObj.url, mediaObj.imageUrl, mediaObj.coverImage,
+      mediaObj.watermarkedUrl,
+      mediaObj.thumbnail,
     ];
     for (const url of candidates) {
       if (url && (url.includes('cloudinary') || url.startsWith('http'))) return url;

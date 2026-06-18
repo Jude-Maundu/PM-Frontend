@@ -122,13 +122,44 @@ function AlbumCard({ album, onDelete }) {
       onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 2px 16px rgba(26,46,59,0.08)"; }}
     >
       {/* Cover */}
-      <Link to={`/photographer/albums/${album._id}`} style={{ display: "block", position: "relative", height: 180, overflow: "hidden", textDecoration: "none" }}>
+      <Link to={`/photographer/albums/${album._id}`} style={{ display: "block", position: "relative", height: 200, overflow: "hidden", textDecoration: "none", background: "#dfeaf0" }}>
         {cover
-          ? <img src={cover} alt={album.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          ? <>
+              <img
+                src={cover}
+                alt=""
+                aria-hidden="true"
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  objectPosition: `${album.coverImagePosition?.x ?? 50}% ${album.coverImagePosition?.y ?? 50}%`,
+                  filter: "blur(16px)",
+                  transform: "scale(1.08)",
+                  opacity: 0.5,
+                }}
+              />
+              <img
+                src={cover}
+                alt={album.name}
+                style={{
+                  position: "relative",
+                  zIndex: 1,
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  objectPosition: `${album.coverImagePosition?.x ?? 50}% ${album.coverImagePosition?.y ?? 50}%`,
+                  padding: "0.35rem",
+                }}
+              />
+            </>
           : <div style={{ width: "100%", height: "100%", background: "var(--pm-teal-pale, #EEF8FB)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <i className={`fas ${EVENT_ICONS[album.eventType] || "fa-images"}`} style={{ fontSize: "3rem", color: "var(--pm-teal, #6BBDD0)" }}></i>
             </div>
         }
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(11,24,34,0.05), rgba(11,24,34,0.22))" }} />
         {/* Badges */}
         <div style={{ position: "absolute", top: 10, left: 10, display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
           <span style={{ background: typeStyle.bg, color: typeStyle.color, borderRadius: 999, padding: "0.2rem 0.65rem", fontSize: "0.72rem", fontWeight: 700 }}>
@@ -157,7 +188,7 @@ function AlbumCard({ album, onDelete }) {
         )}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem" }}>
           <span style={{ fontSize: "0.9rem", fontWeight: 700, color: nav }}>
-            {album.price > 0 ? `KES ${Number(album.price).toLocaleString()}` : "Free / Pay per photo"}
+            {`KES ${Number(album.price).toLocaleString()}`}
           </span>
           <span style={{ fontSize: "0.75rem", color: "var(--pm-text-muted)" }}>
             <i className="fas fa-eye me-1"></i>{album.views || 0} views

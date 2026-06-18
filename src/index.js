@@ -16,6 +16,42 @@ document.addEventListener('contextmenu', function (e) {
   }
 });
 
+// Discourage saving / dragging protected previews.
+document.addEventListener('dragstart', function (e) {
+  if (
+    e.target.tagName === 'IMG' ||
+    e.target.classList.contains('protected-content') ||
+    e.target.closest('.protected-content')
+  ) {
+    e.preventDefault();
+  }
+});
+
+document.addEventListener('copy', function (e) {
+  const selection = window.getSelection?.();
+  const anchorNode = selection?.anchorNode;
+  const protectedParent =
+    anchorNode?.parentElement?.closest?.('.protected-content') ||
+    anchorNode?.parentNode?.closest?.('.protected-content');
+
+  if (protectedParent) {
+    e.preventDefault();
+  }
+});
+
+document.addEventListener('keydown', function (e) {
+  const blockedShortcut =
+    e.key === 'PrintScreen' ||
+    ((e.ctrlKey || e.metaKey) && ['s', 'S', 'c', 'C', 'u', 'U', 'p', 'P'].includes(e.key));
+
+  if (blockedShortcut) {
+    const activeProtected = document.querySelector('.protected-content');
+    if (activeProtected) {
+      e.preventDefault();
+    }
+  }
+});
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>

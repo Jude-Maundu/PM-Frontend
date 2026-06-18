@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import axios from "axios";
 import { API_ENDPOINTS } from "../../../api/apiConfig";
 import PhotographerLayout from "./PhotographerLayout";
@@ -14,9 +14,153 @@ function resolveUrl(url) {
   return `${process.env.REACT_APP_API_URL || "https://pm-backend-f3b6.onrender.com"}/${url.replace(/^\//, "")}`;
 }
 
+function getPhotoPreview(photo) {
+  return resolveUrl(photo?.watermarkedUrl) || resolveUrl(photo?.fileUrl) || resolveUrl(photo?.imageUrl);
+}
+
+function PhotoActionsModal({
+  photo,
+  albumName,
+  renameValue,
+  onRenameChange,
+  onClose,
+  onRename,
+  onSetCover,
+  onDelete,
+  busyAction,
+}) {
+  if (!photo) return null;
+
+  const preview = getPhotoPreview(photo);
+  const isVideo = photo.mediaType === "video";
+  const isBusy = Boolean(busyAction);
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 1300,
+        background: "rgba(8, 17, 24, 0.72)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "1rem",
+        backdropFilter: "blur(6px)",
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: "min(94vw, 760px)",
+          maxHeight: "92vh",
+          overflowY: "auto",
+          background: "var(--mc-card-bg, #fff)",
+          borderRadius: 24,
+          border: "1px solid rgba(255,255,255,0.08)",
+          boxShadow: "0 30px 80px rgba(0,0,0,0.32)",
+        }}
+      >
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+            gap: "0",
+          }}
+        >
+          <div style={{ background: "#e8eef2", minHeight: 280, position: "relative" }}>
+            {preview ? (
+              isVideo ? (
+                <video src={preview} controls style={{ width: "100%", height: "100%", minHeight: 280, objectFit: "contain", background: "#08131c" }} />
+              ) : (
+                <>
+                  <img
+                    src={preview}
+                    alt=""
+                    aria-hidden="true"
+                    style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "blur(18px)", transform: "scale(1.08)", opacity: 0.42 }}
+                  />
+                  <img
+                    src={preview}
+                    alt={photo.title || "Album photo"}
+                    style={{ position: "relative", zIndex: 1, width: "100%", height: "100%", minHeight: 280, objectFit: "contain", padding: "0.85rem" }}
+                  />
+                </>
+              )
+            ) : (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 280 }}>
+                <i className={`fas ${isVideo ? "fa-film" : "fa-image"}`} style={{ fontSize: "3rem", color: "var(--pm-teal, #6BBDD0)" }}></i>
+              </div>
+            )}
+          </div>
+
+          <div style={{ padding: "1.25rem 1.25rem 1.4rem" }}>
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "0.75rem", marginBottom: "1rem" }}>
+              <div>
+                <div style={{ fontSize: "0.74rem", letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--pm-text-muted)" }}>
+                  {albumName}
+                </div>
+                <h4 style={{ margin: "0.2rem 0 0", color: "var(--pm-navy, #1A2E3B)", fontFamily: "var(--font-serif)" }}>
+                  Photo Options
+                </h4>
+              </div>
+              <button onClick={onClose} style={{ background: "transparent", border: "none", color: "var(--pm-text-muted)", fontSize: "1.1rem", cursor: "pointer" }}>
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+
+            <div style={{ marginBottom: "1rem" }}>
+              <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "var(--pm-navy, #1A2E3B)", marginBottom: "0.4rem" }}>
+                Rename photo
+              </label>
+              <input
+                value={renameValue}
+                onChange={(e) => onRenameChange(e.target.value)}
+                placeholder="Enter photo name"
+                className="form-control"
+                style={{ borderRadius: 12 }}
+              />
+            </div>
+
+            <div style={{ display: "grid", gap: "0.7rem" }}>
+              <button
+                onClick={onRename}
+                disabled={isBusy || !renameValue.trim()}
+                style={{ padding: "0.78rem 1rem", borderRadius: 14, border: "none", background: "var(--pm-navy, #1A2E3B)", color: "#fff", fontWeight: 700, cursor: "pointer" }}
+              >
+                {busyAction === "rename" ? <span className="spinner-border spinner-border-sm"></span> : <><i className="fas fa-pen me-2"></i>Rename Photo</>}
+              </button>
+
+              <button
+                onClick={onSetCover}
+                disabled={isBusy || !preview}
+                style={{ padding: "0.78rem 1rem", borderRadius: 14, border: "1px solid rgba(107,189,208,0.35)", background: "rgba(107,189,208,0.12)", color: "var(--pm-teal-deep, #1A6B8A)", fontWeight: 700, cursor: "pointer" }}
+              >
+                {busyAction === "cover" ? <span className="spinner-border spinner-border-sm"></span> : <><i className="fas fa-image me-2"></i>Set As Album Cover</>}
+              </button>
+
+              <button
+                onClick={onDelete}
+                disabled={isBusy}
+                style={{ padding: "0.78rem 1rem", borderRadius: 14, border: "1px solid rgba(232,85,85,0.28)", background: "rgba(232,85,85,0.08)", color: "#d64343", fontWeight: 700, cursor: "pointer" }}
+              >
+                {busyAction === "delete" ? <span className="spinner-border spinner-border-sm"></span> : <><i className="fas fa-trash me-2"></i>Delete From Album</>}
+              </button>
+            </div>
+
+            <p style={{ margin: "1rem 0 0", fontSize: "0.78rem", lineHeight: 1.55, color: "var(--pm-text-muted)" }}>
+              Deleting here removes the item from this album view. You can still keep the rest of the album untouched.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AlbumManage() {
   const { albumId } = useParams();
-  const navigate = useNavigate();
   const uploadRef = useRef();
 
   const [album, setAlbum] = useState(null);
@@ -29,6 +173,7 @@ export default function AlbumManage() {
   const [editDesc, setEditDesc] = useState("");
   const [editPrice, setEditPrice] = useState("0");
   const [editPrivate, setEditPrivate] = useState(false);
+  const [editCoverPosition, setEditCoverPosition] = useState({ x: 50, y: 50 });
   const [saving, setSaving] = useState(false);
 
   // Upload state
@@ -38,6 +183,9 @@ export default function AlbumManage() {
 
   // Remove state
   const [removing, setRemoving] = useState(null);
+  const [selectedPhoto, setSelectedPhoto] = useState(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [busyAction, setBusyAction] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -53,6 +201,7 @@ export default function AlbumManage() {
       setEditDesc(a.description || "");
       setEditPrice(String(a.price ?? 0));
       setEditPrivate(!!a.isPrivate);
+      setEditCoverPosition(a.coverImagePosition || { x: 50, y: 50 });
     } catch {
       setError("Could not load album.");
     } finally {
@@ -63,6 +212,10 @@ export default function AlbumManage() {
   useEffect(() => { load(); }, [load]);
 
   const handleSave = async () => {
+    if (Number(editPrice) <= 0) {
+      setError("Album price must be greater than 0.");
+      return;
+    }
     setSaving(true);
     setError("");
     try {
@@ -71,8 +224,9 @@ export default function AlbumManage() {
         description: editDesc.trim(),
         price: Number(editPrice) || 0,
         isPrivate: editPrivate,
+        coverImagePosition: editCoverPosition,
       }, { headers: headers() });
-      setAlbum(prev => ({ ...prev, name: editName.trim(), description: editDesc.trim(), price: Number(editPrice) || 0, isPrivate: editPrivate }));
+      setAlbum(prev => ({ ...prev, name: editName.trim(), description: editDesc.trim(), price: Number(editPrice) || 0, isPrivate: editPrivate, coverImagePosition: editCoverPosition }));
       setEditing(false);
     } catch {
       setError("Failed to save changes.");
@@ -85,11 +239,93 @@ export default function AlbumManage() {
     setRemoving(mediaId);
     try {
       await axios.delete(API_ENDPOINTS.MEDIA.REMOVE_PHOTO_FROM_ALBUM(albumId, mediaId), { headers: headers() });
-      setAlbum(prev => ({ ...prev, media: prev.media.filter(m => (m._id || m) !== mediaId) }));
+      setAlbum(prev => {
+        const remaining = prev.media.filter(m => (m._id || m) !== mediaId);
+        const removedWasCover = selectedPhoto && (selectedPhoto._id || selectedPhoto) === mediaId && prev.coverImage && prev.media.some(item => {
+          const itemId = item._id || item;
+          if (String(itemId) !== String(mediaId) || typeof item !== "object") return false;
+          return getPhotoPreview(item) === prev.coverImage || resolveUrl(prev.coverImage) === getPhotoPreview(item);
+        });
+
+        return {
+          ...prev,
+          media: remaining,
+          coverImage: removedWasCover ? (getPhotoPreview(remaining[0]) || "") : prev.coverImage,
+        };
+      });
+      return true;
     } catch {
       setError("Failed to remove photo.");
+      return false;
     } finally {
       setRemoving(null);
+    }
+  };
+
+  const openPhotoActions = (photo) => {
+    setSelectedPhoto(photo);
+    setRenameValue(photo?.title || "");
+    setBusyAction("");
+  };
+
+  const closePhotoActions = () => {
+    if (busyAction) return;
+    setSelectedPhoto(null);
+    setRenameValue("");
+  };
+
+  const handleRenamePhoto = async () => {
+    if (!selectedPhoto?._id || !renameValue.trim()) return;
+    setBusyAction("rename");
+    setError("");
+    try {
+      const res = await axios.put(
+        API_ENDPOINTS.MEDIA.UPDATE(selectedPhoto._id),
+        { title: renameValue.trim() },
+        { headers: headers() }
+      );
+      const updated = res.data;
+      setAlbum(prev => ({
+        ...prev,
+        media: prev.media.map(item => (item._id === selectedPhoto._id ? { ...item, ...updated, title: updated?.title || renameValue.trim() } : item)),
+      }));
+      setSelectedPhoto(prev => prev ? { ...prev, title: updated?.title || renameValue.trim() } : prev);
+    } catch {
+      setError("Failed to rename photo.");
+    } finally {
+      setBusyAction("");
+    }
+  };
+
+  const handleSetAlbumCover = async () => {
+    if (!selectedPhoto?._id) return;
+    const nextCover = getPhotoPreview(selectedPhoto);
+    if (!nextCover) return;
+
+    setBusyAction("cover");
+    setError("");
+    try {
+      await axios.put(
+        API_ENDPOINTS.MEDIA.UPDATE_ALBUM(albumId),
+        { coverImage: nextCover },
+        { headers: headers() }
+      );
+      setAlbum(prev => ({ ...prev, coverImage: nextCover }));
+    } catch {
+      setError("Failed to update album cover.");
+    } finally {
+      setBusyAction("");
+    }
+  };
+
+  const handleDeleteFromModal = async () => {
+    if (!selectedPhoto?._id) return;
+    setBusyAction("delete");
+    const removed = await handleRemove(selectedPhoto._id);
+    setBusyAction("");
+    if (removed) {
+      setSelectedPhoto(null);
+      setRenameValue("");
     }
   };
 
@@ -167,9 +403,23 @@ export default function AlbumManage() {
         {/* Header card */}
         <div style={{ background: "var(--mc-card-bg, #fff)", borderRadius: 20, overflow: "hidden", boxShadow: "0 2px 20px rgba(26,46,59,0.08)", marginBottom: "2rem" }}>
           {/* Cover strip */}
-          <div style={{ height: 200, background: cover ? `url(${cover}) center/cover` : "var(--pm-teal-pale, #EEF8FB)", position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            {!cover && <i className="fas fa-images" style={{ fontSize: "3.5rem", color: teal }}></i>}
-            <div style={{ position: "absolute", inset: 0, background: "rgba(26,46,59,0.35)" }}></div>
+          <div style={{ height: 220, background: cover ? "#dfe8ee" : "var(--pm-teal-pale, #EEF8FB)", position: "relative", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+            {cover ? (
+              <>
+                <img
+                  src={cover}
+                  alt=""
+                  aria-hidden="true"
+                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: `${album.coverImagePosition?.x ?? 50}% ${album.coverImagePosition?.y ?? 50}%`, filter: "blur(18px)", transform: "scale(1.06)", opacity: 0.45 }}
+                />
+                <img
+                  src={cover}
+                  alt={album.name}
+                  style={{ position: "relative", zIndex: 1, width: "100%", height: "100%", objectFit: "cover", objectPosition: `${album.coverImagePosition?.x ?? 50}% ${album.coverImagePosition?.y ?? 50}%`, padding: "0.35rem" }}
+                />
+              </>
+            ) : <i className="fas fa-images" style={{ fontSize: "3.5rem", color: teal, position: "relative", zIndex: 1 }}></i>}
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(26,46,59,0.08), rgba(26,46,59,0.42))" }}></div>
             <div style={{ position: "absolute", bottom: 16, left: 20, right: 20, display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>
               <div>
                 <h2 style={{ color: "#fff", fontFamily: "var(--font-serif)", fontWeight: 700, margin: 0, fontSize: "clamp(1.2rem,3vw,1.7rem)", textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>{album.name}</h2>
@@ -194,11 +444,20 @@ export default function AlbumManage() {
                 </div>
                 <div className="col-12 col-sm-6">
                   <label style={{ fontWeight: 600, fontSize: "0.83rem", color: nav, marginBottom: "0.3rem", display: "block" }}>Album Price (KES)</label>
-                  <input type="number" min="0" className="form-control" value={editPrice} onChange={e => setEditPrice(e.target.value)} style={{ borderRadius: 10 }} />
+                  <input type="number" min="1" className="form-control" value={editPrice} onChange={e => setEditPrice(e.target.value)} style={{ borderRadius: 10 }} />
                 </div>
                 <div className="col-12">
                   <label style={{ fontWeight: 600, fontSize: "0.83rem", color: nav, marginBottom: "0.3rem", display: "block" }}>Description</label>
                   <textarea className="form-control" rows={2} value={editDesc} onChange={e => setEditDesc(e.target.value)} style={{ borderRadius: 10, resize: "vertical" }} />
+                </div>
+                <div className="col-12">
+                  <label style={{ fontWeight: 600, fontSize: "0.83rem", color: nav, marginBottom: "0.55rem", display: "block" }}>Cover Position</label>
+                  <div style={{ background: "var(--pm-gray-100, #F2F5F7)", borderRadius: 12, padding: "0.9rem 1rem" }}>
+                    <label style={{ display: "block", fontSize: "0.78rem", color: "var(--pm-text-muted)", marginBottom: "0.25rem" }}>Horizontal</label>
+                    <input type="range" min="0" max="100" value={editCoverPosition?.x ?? 50} onChange={e => setEditCoverPosition(prev => ({ ...prev, x: Number(e.target.value) }))} style={{ width: "100%" }} />
+                    <label style={{ display: "block", fontSize: "0.78rem", color: "var(--pm-text-muted)", margin: "0.45rem 0 0.25rem" }}>Vertical</label>
+                    <input type="range" min="0" max="100" value={editCoverPosition?.y ?? 50} onChange={e => setEditCoverPosition(prev => ({ ...prev, y: Number(e.target.value) }))} style={{ width: "100%" }} />
+                  </div>
                 </div>
                 <div className="col-12">
                   <div style={{ display: "flex", gap: "0.75rem" }}>
@@ -222,7 +481,7 @@ export default function AlbumManage() {
             <div style={{ padding: "1rem 1.5rem", display: "flex", gap: "1.5rem", flexWrap: "wrap", borderTop: "1px solid var(--pm-gray-200, #E8EEF2)" }}>
               <div style={{ fontSize: "0.82rem", color: "var(--pm-text-muted)" }}>
                 <i className="fas fa-tag me-1" style={{ color: teal }}></i>
-                {album.price > 0 ? `KES ${Number(album.price).toLocaleString()}` : "Free / Pay per photo"}
+                {`KES ${Number(album.price).toLocaleString()}`}
               </div>
               <div style={{ fontSize: "0.82rem", color: "var(--pm-text-muted)" }}>
                 <i className={`fas ${album.isPrivate ? "fa-lock" : "fa-globe"} me-1`} style={{ color: teal }}></i>
@@ -297,7 +556,11 @@ export default function AlbumManage() {
               const price = typeof photo === "object" ? photo.price : 0;
 
               return (
-                <div key={id} style={{ borderRadius: 14, overflow: "hidden", border: "1.5px solid var(--pm-gray-200, #E8EEF2)", background: "var(--mc-card-bg, #fff)", position: "relative", boxShadow: "0 1px 8px rgba(26,46,59,0.06)" }}>
+                <div
+                  key={id}
+                  onClick={() => typeof photo === "object" && openPhotoActions(photo)}
+                  style={{ borderRadius: 14, overflow: "hidden", border: "1.5px solid var(--pm-gray-200, #E8EEF2)", background: "var(--mc-card-bg, #fff)", position: "relative", boxShadow: "0 1px 8px rgba(26,46,59,0.06)", cursor: typeof photo === "object" ? "pointer" : "default" }}
+                >
                   {/* Thumbnail */}
                   <div style={{ height: 160, background: "var(--pm-teal-pale, #EEF8FB)", overflow: "hidden", position: "relative" }}>
                     {src
@@ -315,7 +578,10 @@ export default function AlbumManage() {
                     )}
                     {/* Remove button */}
                     <button
-                      onClick={() => handleRemove(id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemove(id);
+                      }}
                       disabled={removing === id}
                       style={{ position: "absolute", top: 8, right: 8, background: "rgba(232,85,85,0.85)", color: "#fff", border: "none", borderRadius: "50%", width: 28, height: 28, fontSize: "0.72rem", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(4px)" }}
                     >
@@ -332,6 +598,9 @@ export default function AlbumManage() {
                     <div style={{ fontSize: "0.75rem", color: price > 0 ? teal : "var(--pm-text-muted)", fontWeight: price > 0 ? 700 : 400 }}>
                       {price > 0 ? `KES ${Number(price).toLocaleString()}` : "Free"}
                     </div>
+                    <div style={{ fontSize: "0.72rem", color: "var(--pm-text-muted)", marginTop: "0.35rem" }}>
+                      Click photo for options
+                    </div>
                   </div>
                 </div>
               );
@@ -339,6 +608,17 @@ export default function AlbumManage() {
           </div>
         )}
       </div>
+      <PhotoActionsModal
+        photo={selectedPhoto}
+        albumName={album.name}
+        renameValue={renameValue}
+        onRenameChange={setRenameValue}
+        onClose={closePhotoActions}
+        onRename={handleRenamePhoto}
+        onSetCover={handleSetAlbumCover}
+        onDelete={handleDeleteFromModal}
+        busyAction={busyAction}
+      />
     </PhotographerLayout>
   );
 }

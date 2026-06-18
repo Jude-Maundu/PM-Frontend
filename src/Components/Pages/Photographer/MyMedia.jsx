@@ -83,7 +83,7 @@ const PhotographerMedia = () => {
   const [updatingAlbum, setUpdatingAlbum] = useState(false);
   const [newAlbumName, setNewAlbumName] = useState("");
   const [newAlbumDescription, setNewAlbumDescription] = useState("");
-  const [newAlbumPrice, setNewAlbumPrice] = useState(0);
+  const [newAlbumPrice, setNewAlbumPrice] = useState(100);
   const [createAlbumError, setCreateAlbumError] = useState(null);
   const [selectedAlbum, setSelectedAlbum] = useState(null);
   const [showAlbumMediaModal, setShowAlbumMediaModal] = useState(false);
@@ -298,6 +298,10 @@ const PhotographerMedia = () => {
       setCreateAlbumError("Please enter a name for the album.");
       return;
     }
+    if (Number(newAlbumPrice) <= 0) {
+      setCreateAlbumError("Album price must be greater than 0.");
+      return;
+    }
 
     setCreateAlbumError(null);
     setCreatingAlbum(true);
@@ -306,7 +310,7 @@ const PhotographerMedia = () => {
       const payload = {
         name: newAlbumName.trim(),
         description: newAlbumDescription.trim(),
-        price: parseFloat(newAlbumPrice) || 0,
+        price: parseFloat(newAlbumPrice),
       };
 
       const res = await createAlbum(payload);
@@ -316,7 +320,7 @@ const PhotographerMedia = () => {
       setAlbums(prev => [...prev, { ...album, coverImage: placeholderMedium }]);
       setNewAlbumName("");
       setNewAlbumDescription("");
-      setNewAlbumPrice(0);
+      setNewAlbumPrice(100);
       setShowAlbumModal(false);
       
     } catch (err) {
@@ -512,13 +516,17 @@ const PhotographerMedia = () => {
       toast.warning("Album name is required");
       return;
     }
+    if (Number(editingAlbum.price) <= 0) {
+      toast.warning("Album price must be greater than 0");
+      return;
+    }
 
     setUpdatingAlbum(true);
     try {
       const payload = {
         name: editingAlbum.name.trim(),
         description: editingAlbum.description?.trim() || "",
-        price: parseFloat(editingAlbum.price) || 0,
+        price: parseFloat(editingAlbum.price),
       };
 
       const res = await updateAlbum(editingAlbum._id, payload);
@@ -1372,11 +1380,11 @@ const PhotographerMedia = () => {
                       className="form-control bg-dark text-white border-secondary"
                       value={newAlbumPrice}
                       onChange={(e) => setNewAlbumPrice(e.target.value)}
-                      min="0"
+                      min="1"
                       step="50"
-                      placeholder="0 = Free"
+                      placeholder="100"
                     />
-                    <small className="text-white-50">Set 0 to make the album free to access</small>
+                    <small className="text-white-50">Albums must have a price greater than 0.</small>
                   </div>
                   <div className="d-flex gap-2">
                     <button type="submit" className="btn btn-warning flex-grow-1" disabled={creatingAlbum}>
@@ -1436,11 +1444,11 @@ const PhotographerMedia = () => {
                       className="form-control bg-dark text-white border-secondary"
                       value={editingAlbum.price ?? 0}
                       onChange={(e) => setEditingAlbum({ ...editingAlbum, price: e.target.value })}
-                      min="0"
+                      min="1"
                       step="50"
-                      placeholder="0 = Free"
+                      placeholder="100"
                     />
-                    <small className="text-white-50">Set 0 to make the album free to access</small>
+                    <small className="text-white-50">Albums must have a price greater than 0.</small>
                   </div>
                   <div className="d-flex gap-2">
                     <button type="submit" className="btn btn-warning flex-grow-1" disabled={updatingAlbum}>

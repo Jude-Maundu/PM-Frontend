@@ -60,7 +60,7 @@ export default function CreateAlbum() {
   const [uploadProgress, setUploadProgress] = useState(0);
 
   // Step 3 — pricing / privacy
-  const [albumPrice, setAlbumPrice] = useState("0");
+  const [albumPrice, setAlbumPrice] = useState("100");
   const [isPrivate, setIsPrivate]   = useState(false);
   const [shareLink, setShareLink]   = useState("");
 
@@ -103,11 +103,13 @@ export default function CreateAlbum() {
   // Step 1 → Create album on backend
   const handleCreateAlbum = async () => {
     if (!name.trim()) { setError("Album name is required"); return; }
+    if (Number(albumPrice) <= 0) { setError("Album price must be greater than 0"); return; }
     setLoading(true); setError("");
     try {
       const fd = new FormData();
       fd.append("name", name.trim());
       fd.append("description", description.trim());
+      fd.append("price", Number(albumPrice));
       fd.append("albumType", albumType);
       fd.append("eventType", eventType);
       fd.append("location", location.trim());
@@ -250,6 +252,19 @@ export default function CreateAlbum() {
               <div className="col-12">
                 <label style={{ fontWeight: 600, fontSize: "0.85rem", color: nav, marginBottom: "0.4rem", display: "block" }}>Description</label>
                 <textarea className="form-control" rows={3} value={description} onChange={e => setDesc(e.target.value)} placeholder="Tell people what this album is about…" style={{ borderRadius: 10, resize: "vertical" }} />
+              </div>
+              <div className="col-12 col-sm-6">
+                <label style={{ fontWeight: 600, fontSize: "0.85rem", color: nav, marginBottom: "0.4rem", display: "block" }}>Album Price (KES) *</label>
+                <input
+                  type="number"
+                  min="1"
+                  className="form-control"
+                  value={albumPrice}
+                  onChange={e => setAlbumPrice(e.target.value)}
+                  placeholder="Enter album price"
+                  style={{ borderRadius: 10 }}
+                />
+                <small style={{ color: "var(--pm-text-muted)" }}>Albums must have a price greater than 0.</small>
               </div>
             </div>
 
@@ -399,7 +414,8 @@ export default function CreateAlbum() {
               <div style={{ color: "var(--pm-text-muted)", fontSize: "0.85rem", marginBottom: "0.75rem" }}>Buyers can purchase access to every photo at once. Set 0 to make it free (individual photo prices still apply).</div>
               <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", maxWidth: 260 }}>
                 <span style={{ fontWeight: 700, color: nav, fontSize: "0.9rem" }}>KES</span>
-                <input type="number" min="0" value={albumPrice} onChange={e => setAlbumPrice(e.target.value)} className="form-control" placeholder="0" style={{ borderRadius: 10 }} />
+                <input type="number" min="1" value={albumPrice} onChange={e => setAlbumPrice(e.target.value)} className="form-control" placeholder="100" style={{ borderRadius: 10 }} />
+                <small style={{ color: "var(--pm-text-muted)" }}>Albums must have a price greater than 0.</small>
               </div>
             </div>
 

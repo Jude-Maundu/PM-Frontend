@@ -2892,16 +2892,17 @@ nav.navbar.home-navbar.scrolled {
   /* Sidebar hidden by default on mobile — slides in as drawer */
   .mc-sidebar {
     transform: translateX(-100%);
-    width: 260px !important;
+    width: min(280px, 86vw) !important;
     transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 100;
+    box-shadow: 14px 0 40px rgba(0, 0, 0, 0.22);
   }
   .mc-sidebar.mc-sidebar-open {
     transform: translateX(0);
   }
   /* Collapsed state has no effect on mobile — always full width when open */
   .mc-shell.mc-collapsed .mc-sidebar {
-    width: 260px !important;
+    width: min(280px, 86vw) !important;
   }
   .mc-shell.mc-collapsed .mc-nav-label,
   .mc-shell.mc-collapsed .mc-logout-label,
@@ -2919,14 +2920,134 @@ nav.navbar.home-navbar.scrolled {
   .mc-stats-row { grid-template-columns: 1fr; gap: 0.75rem; }
   .mc-bottom-grid { grid-template-columns: 1fr; }
   .mc-right-panel { grid-template-columns: 1fr; }
-  .mc-hero { min-height: 110px; padding: 1.25rem 1.5rem; }
-  .mc-hero h2 { font-size: 1.15rem !important; }
-  .mc-hero-art { font-size: 2.5rem; }
-  .mc-topbar { padding: 0.75rem 1rem; gap: 0.6rem; }
+  .mc-hero {
+    min-height: unset;
+    margin: 0 0 0.8rem;
+    padding: 1rem 1rem;
+    border-radius: 16px;
+    box-shadow: none;
+  }
+  .mc-hero::before,
+  .mc-hero::after,
+  .mc-hero-art {
+    display: none;
+  }
+  .mc-hero h2 { font-size: 1.05rem !important; }
+  .mc-hero p,
+  .mc-hero-date { font-size: 0.76rem !important; }
+  .mc-topbar {
+    height: 56px;
+    padding: 0.55rem 0.8rem;
+    gap: 0.45rem;
+    box-shadow: none;
+    background: var(--mc-topbar-bg);
+    backdrop-filter: blur(14px);
+  }
+  .mc-topbar-title {
+    min-width: 0;
+    flex: 1;
+  }
+  .mc-topbar-page-icon {
+    display: none;
+  }
+  .mc-topbar-page-name {
+    font-size: 0.9rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .mc-topbar-actions {
+    gap: 0.45rem;
+  }
+  .mc-topbar-profile,
+  .mc-topbar-theme,
+  .mc-topbar-action-btn {
+    display: none !important;
+  }
+  .mc-icon-btn,
+  .mc-hamburger,
+  .mc-topbar-notifications {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border-radius: 10px;
+    box-shadow: none;
+  }
+  .mc-topbar-notifications {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--mc-card-bg);
+    border: 1px solid var(--mc-border);
+  }
+  .mc-topbar-notifications > div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .mc-topbar-notifications i {
+    font-size: 1rem !important;
+  }
   .mc-stats-row, .mc-bottom-grid { padding-left: 0; padding-right: 0; }
-  .mc-hero { margin: 0.5rem 1rem 1rem; }
-  /* extra top gap between topbar and content; bottom padding clears the bottom nav */
-  .mc-page { padding: 1rem 1rem 80px; }
+  .mc-page { padding: 0.8rem 0.8rem 76px; }
+  .mc-content {
+    background: var(--mc-bg);
+  }
+  .mc-card,
+  .mc-stat-card,
+  .mc-main .glass-card,
+  .mc-main .glass-stat,
+  .mc-main .glass-panel,
+  .mc-main .card,
+  .mc-main .profile-card,
+  .mc-main .wallet-card {
+    border-radius: 14px !important;
+    box-shadow: none !important;
+  }
+  .mc-main .glass-card,
+  .mc-main .glass-stat,
+  .mc-main .glass-panel,
+  .mc-main .card,
+  .mc-main .profile-card,
+  .mc-main .wallet-card {
+    border-width: 1px !important;
+  }
+  .mc-main .form-control,
+  .mc-main input,
+  .mc-main select,
+  .mc-main textarea {
+    font-size: 16px !important;
+  }
+  .mc-bottom-nav {
+    height: 58px;
+    background: var(--mc-sidebar-bg);
+    backdrop-filter: blur(16px);
+    box-shadow: 0 -8px 26px rgba(0,0,0,0.16);
+  }
+  .mc-bottom-nav-inner {
+    height: 58px;
+    padding: 0 0.25rem;
+    gap: 0.1rem;
+  }
+  .mc-bottom-nav-link {
+    gap: 2px;
+    padding: 0;
+    margin: 6px 0 0;
+    border-radius: 12px;
+    font-size: 0.56rem;
+  }
+  .mc-bottom-nav-link i {
+    font-size: 1rem;
+  }
+  .mc-bottom-nav-link.active,
+  .mc-bottom-nav-link:hover {
+    background: rgba(107, 189, 208, 0.1);
+  }
+  .mc-bottom-nav-link.active::before {
+    display: none;
+  }
+  .mc-bottom-nav-badge {
+    top: 1px;
+  }
 }
 
 /* ============================================================

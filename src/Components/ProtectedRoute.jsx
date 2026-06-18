@@ -105,24 +105,62 @@ const ProtectedRoute = ({ children, requiredRole }) => {
       <div style={{
         minHeight: "100vh",
         display: "flex",
-        flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        backgroundImage: "url('/Splash%20.jpeg')",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
         position: "relative",
+        overflow: "hidden",
+        background: "linear-gradient(135deg, #08131c 0%, #102433 45%, #17384b 100%)",
+        padding: "1.25rem",
       }}>
-        {/* Dark overlay */}
-        <div style={{ position: "absolute", inset: 0, background: "rgba(10,20,28,0.6)" }} />
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundImage: "url('/Splash%20.jpeg')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+            opacity: 0.28,
+            transform: "scale(1.04)",
+          }}
+        />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(6,12,18,0.5), rgba(6,12,18,0.78))" }} />
 
-        <div style={{ textAlign: "center", position: "relative", zIndex: 1 }}>
+        <div
+          style={{
+            textAlign: "center",
+            position: "relative",
+            zIndex: 1,
+            width: "min(92vw, 560px)",
+            padding: "clamp(1.25rem, 4vw, 2rem)",
+            borderRadius: 28,
+            background: "rgba(12, 24, 34, 0.62)",
+            border: "1px solid rgba(255,255,255,0.12)",
+            boxShadow: "0 24px 70px rgba(0,0,0,0.32)",
+            backdropFilter: "blur(12px)",
+          }}
+        >
+          <div
+            style={{
+              width: "100%",
+              aspectRatio: "16 / 9",
+              borderRadius: 20,
+              overflow: "hidden",
+              marginBottom: "1.25rem",
+              boxShadow: "0 10px 30px rgba(0,0,0,0.22)",
+            }}
+          >
+            <img
+              src="/Splash%20.jpeg"
+              alt="Relic Snap preview"
+              style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }}
+            />
+          </div>
           {/* Logo image */}
           <img
             src="/rs-logo.png"
             alt="Relic Snap"
-            style={{ width: 90, height: 90, objectFit: "contain", marginBottom: "1.25rem", filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.5))" }}
+            style={{ width: 82, height: 82, objectFit: "contain", marginBottom: "1rem", filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.5))" }}
           />
 
           {/* Wordmark */}
@@ -136,9 +174,12 @@ const ProtectedRoute = ({ children, requiredRole }) => {
           }}>
             Relic Snap
           </div>
-          <div style={{ fontSize: "0.78rem", color: "rgba(107,189,208,0.85)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "2.5rem" }}>
+          <div style={{ fontSize: "0.78rem", color: "rgba(107,189,208,0.85)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "0.6rem" }}>
             Photography Marketplace
           </div>
+          <p style={{ margin: "0 0 2rem", color: "rgba(255,255,255,0.76)", fontSize: "0.88rem", lineHeight: 1.6 }}>
+            Loading your dashboard and getting your gallery ready.
+          </p>
 
           {/* Pulse dots */}
           <div style={{ display: "flex", gap: "0.5rem", justifyContent: "center" }}>

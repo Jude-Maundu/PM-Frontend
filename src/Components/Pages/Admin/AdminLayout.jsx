@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { NavLink, Link, useNavigate, useLocation } from "react-router-dom";
+import { NavLink, Link, useLocation } from "react-router-dom";
 import ThemeToggle from "../../ThemeToggle";
 import NotificationBell from "../../NotificationBell";
-import { getStoredUser, getDisplayName, getProfilePhoto } from "../../../utils/auth";
+import { getStoredUser, getDisplayName, getProfilePhoto, getMediaPosition } from "../../../utils/auth";
 
 const AdminLayout = ({ children }) => {
   const [collapsed, setCollapsed] = useState(
@@ -10,14 +10,14 @@ const AdminLayout = ({ children }) => {
   );
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const navigate    = useNavigate();
   const location    = useLocation();
   const storedUser   = getStoredUser();
   const displayName  = getDisplayName(storedUser) || "Admin";
   const profilePhoto = getProfilePhoto(storedUser);
+  const profilePhotoPosition = getMediaPosition(storedUser?.profilePicturePosition);
   const avatarLetter = displayName.charAt(0).toUpperCase();
 
-  const handleLogout = () => { localStorage.clear(); navigate("/login"); };
+  const handleLogout = () => { localStorage.clear(); window.location.href = "/login"; };
 
   const toggleSidebar = () => {
     setCollapsed(prev => {
@@ -121,7 +121,7 @@ const AdminLayout = ({ children }) => {
             <div className="mc-topbar-profile">
               <div className="mc-topbar-avatar" title={displayName} style={{ width: 32, height: 32, fontSize: "0.78rem" }}>
                 {profilePhoto ? (
-                  <img src={profilePhoto} alt={displayName} />
+                  <img src={profilePhoto} alt={displayName} style={{ objectPosition: profilePhotoPosition }} />
                 ) : avatarLetter}
               </div>
               <div className="mc-topbar-profile-info d-none d-sm-flex" style={{ flexDirection: "column" }}>
@@ -129,8 +129,8 @@ const AdminLayout = ({ children }) => {
                 <span className="mc-topbar-profile-status">Admin</span>
               </div>
             </div>
-            <div className="mc-icon-btn"><ThemeToggle /></div>
-            <NotificationBell />
+            <div className="mc-icon-btn mc-topbar-theme"><ThemeToggle /></div>
+            <div className="mc-topbar-notifications"><NotificationBell /></div>
             <NavLink to="/admin/settings" className="mc-topbar-action-btn d-none d-sm-flex">
               <i className="fas fa-plus"></i>Manage
             </NavLink>

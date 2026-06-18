@@ -5,7 +5,7 @@ import { getLocalCart } from "../../../utils/localStore";
 import { API_ENDPOINTS } from "../../../api/apiConfig";
 import ThemeToggle from "../../ThemeToggle";
 import NotificationBell from "../../NotificationBell";
-import { getStoredUser, getDisplayName, getAuthToken, getCurrentUserId, getProfilePhoto } from "../../../utils/auth";
+import { getStoredUser, getDisplayName, getAuthToken, getCurrentUserId, getProfilePhoto, getMediaPosition } from "../../../utils/auth";
 
 const BuyerLayout = ({ children }) => {
   const [cartCount, setCartCount] = useState(0);
@@ -18,6 +18,7 @@ const BuyerLayout = ({ children }) => {
   const storedUser   = getStoredUser();
   const displayName  = getDisplayName(storedUser) || "Buyer";
   const profilePhoto = getProfilePhoto(storedUser);
+  const profilePhotoPosition = getMediaPosition(storedUser?.profilePicturePosition);
   const avatarLetter = displayName.charAt(0).toUpperCase();
   const token        = getAuthToken();
   const userId       = getCurrentUserId();
@@ -156,7 +157,7 @@ const BuyerLayout = ({ children }) => {
             <div className="mc-topbar-profile">
               <div className="mc-topbar-avatar" title={displayName} style={{ width: 32, height: 32, fontSize: "0.78rem" }}>
                 {profilePhoto ? (
-                  <img src={profilePhoto} alt={displayName} />
+                  <img src={profilePhoto} alt={displayName} style={{ objectPosition: profilePhotoPosition }} />
                 ) : avatarLetter}
               </div>
               <div className="mc-topbar-profile-info d-none d-sm-flex" style={{ flexDirection: "column" }}>
@@ -164,8 +165,8 @@ const BuyerLayout = ({ children }) => {
                 <span className="mc-topbar-profile-status">Active</span>
               </div>
             </div>
-            <div className="mc-icon-btn"><ThemeToggle /></div>
-            <NotificationBell />
+            <div className="mc-icon-btn mc-topbar-theme"><ThemeToggle /></div>
+            <div className="mc-topbar-notifications"><NotificationBell /></div>
             <NavLink to="/buyer/explore" className="mc-topbar-action-btn d-none d-sm-flex">
               <i className="fas fa-compass"></i>Explore
             </NavLink>

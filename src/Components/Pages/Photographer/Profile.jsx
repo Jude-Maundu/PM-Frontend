@@ -24,6 +24,8 @@ const PhotographerProfile = () => {
     joinedDate: "",
     profileImage: "",
     coverImage: "",
+    profileImagePosition: { x: 50, y: 50 },
+    coverImagePosition: { x: 50, y: 50 },
     watermark: "",
   });
 
@@ -176,6 +178,8 @@ const PhotographerProfile = () => {
         joinedDate: userData?.createdAt || user?.createdAt || new Date().toISOString(),
         profileImage: userData?.profilePicture || userData?.profileImage || user?.profilePicture || user?.profileImage || "",
         coverImage: savedCoverImage || userData?.coverImage || user?.coverImage || "",
+        profileImagePosition: userData?.profilePicturePosition || user?.profilePicturePosition || { x: 50, y: 50 },
+        coverImagePosition: userData?.coverImagePosition || user?.coverImagePosition || { x: 50, y: 50 },
         watermark: userData?.watermark || user?.watermark || "Relic Snap",
       });
 
@@ -206,6 +210,8 @@ const PhotographerProfile = () => {
         skills: profile.skills,
         equipment: profile.equipment,
         watermark: profile.watermark || "Relic Snap",
+        profilePicturePosition: profile.profileImagePosition,
+        coverImagePosition: profile.coverImagePosition,
         profilePicture: profile.profileImage && !String(profile.profileImage).startsWith("blob:")
           ? profile.profileImage
           : "",
@@ -373,7 +379,7 @@ const PhotographerProfile = () => {
               height: "300px",
               backgroundImage: `url(${getImageUrl('cover')})`,
               backgroundSize: "cover",
-              backgroundPosition: "center",
+              backgroundPosition: `${profile.coverImagePosition?.x ?? 50}% ${profile.coverImagePosition?.y ?? 50}%`,
               position: "relative",
             }}
           >
@@ -384,23 +390,32 @@ const PhotographerProfile = () => {
               }}
             ></div>
 
-            {editing && (
-              <div className="position-absolute bottom-0 end-0 m-3">
-                <label className="mc-btn mc-btn-ghost">
-                  {uploadingImage ? (
-                    <span className="spinner-border spinner-border-sm me-2"></span>
-                  ) : (
-                    <i className="fas fa-camera me-2"></i>
-                  )}
-                  Change Cover
-                  <input
-                    type="file"
-                    className="d-none"
-                    accept="image/*"
-                    onChange={(e) => handleImageUpload('cover', e.target.files[0])}
-                    disabled={uploadingImage}
-                  />
-                </label>
+              {editing && (
+              <div className="position-absolute bottom-0 end-0 m-3" style={{ minWidth: "260px" }}>
+                <div className="d-flex flex-column gap-2">
+                  <label className="mc-btn mc-btn-ghost">
+                    {uploadingImage ? (
+                      <span className="spinner-border spinner-border-sm me-2"></span>
+                    ) : (
+                      <i className="fas fa-camera me-2"></i>
+                    )}
+                    Change Cover
+                    <input
+                      type="file"
+                      className="d-none"
+                      accept="image/*"
+                      onChange={(e) => handleImageUpload('cover', e.target.files[0])}
+                      disabled={uploadingImage}
+                    />
+                  </label>
+                  <div style={{ background: "rgba(9, 14, 20, 0.68)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14, padding: "0.7rem 0.85rem", color: "#fff" }}>
+                    <div style={{ fontSize: "0.75rem", fontWeight: 700, marginBottom: "0.45rem" }}>Position Cover</div>
+                    <label style={{ display: "block", fontSize: "0.72rem", color: "rgba(255,255,255,0.8)" }}>Horizontal</label>
+                    <input type="range" min="0" max="100" value={profile.coverImagePosition?.x ?? 50} onChange={(e) => setProfile(prev => ({ ...prev, coverImagePosition: { ...prev.coverImagePosition, x: Number(e.target.value) } }))} style={{ width: "100%" }} />
+                    <label style={{ display: "block", fontSize: "0.72rem", color: "rgba(255,255,255,0.8)" }}>Vertical</label>
+                    <input type="range" min="0" max="100" value={profile.coverImagePosition?.y ?? 50} onChange={(e) => setProfile(prev => ({ ...prev, coverImagePosition: { ...prev.coverImagePosition, y: Number(e.target.value) } }))} style={{ width: "100%" }} />
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -412,7 +427,7 @@ const PhotographerProfile = () => {
                 src={getImageUrl('profile')}
                 alt={profile.name}
                 className="rounded-circle border border-4 border-warning"
-                style={{ width: "150px", height: "150px", objectFit: "cover" }}
+                style={{ width: "150px", height: "150px", objectFit: "cover", objectPosition: `${profile.profileImagePosition?.x ?? 50}% ${profile.profileImagePosition?.y ?? 50}%` }}
                 onError={() => handleImageError('profile')}
               />
               {editing && (
@@ -433,6 +448,15 @@ const PhotographerProfile = () => {
                 </label>
               )}
             </div>
+            {editing && (
+              <div style={{ marginTop: "1rem", width: "220px", background: "rgba(12, 20, 28, 0.78)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 14, padding: "0.7rem 0.85rem" }}>
+                <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "#fff", marginBottom: "0.45rem" }}>Position Profile Photo</div>
+                <label style={{ display: "block", fontSize: "0.72rem", color: "rgba(255,255,255,0.78)" }}>Horizontal</label>
+                <input type="range" min="0" max="100" value={profile.profileImagePosition?.x ?? 50} onChange={(e) => setProfile(prev => ({ ...prev, profileImagePosition: { ...prev.profileImagePosition, x: Number(e.target.value) } }))} style={{ width: "100%" }} />
+                <label style={{ display: "block", fontSize: "0.72rem", color: "rgba(255,255,255,0.78)" }}>Vertical</label>
+                <input type="range" min="0" max="100" value={profile.profileImagePosition?.y ?? 50} onChange={(e) => setProfile(prev => ({ ...prev, profileImagePosition: { ...prev.profileImagePosition, y: Number(e.target.value) } }))} style={{ width: "100%" }} />
+              </div>
+            )}
           </div>
 
           {/* Edit Button */}
