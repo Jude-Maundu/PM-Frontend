@@ -162,6 +162,7 @@ function PhotoActionsModal({
 export default function AlbumManage() {
   const { albumId } = useParams();
   const uploadRef = useRef();
+  const coverDragRef = useRef();
 
   const [album, setAlbum] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -329,6 +330,36 @@ export default function AlbumManage() {
     }
   };
 
+  const updateCoverPositionFromPointer = useCallback((event) => {
+    const rect = coverDragRef.current?.getBoundingClientRect?.();
+    if (!rect) return;
+    const point = "touches" in event ? event.touches[0] : event;
+    const x = ((point.clientX - rect.left) / rect.width) * 100;
+    const y = ((point.clientY - rect.top) / rect.height) * 100;
+    setEditCoverPosition({
+      x: Math.min(100, Math.max(0, x)),
+      y: Math.min(100, Math.max(0, y)),
+    });
+  }, []);
+
+  const beginCoverDrag = useCallback((event) => {
+    event.preventDefault();
+    updateCoverPositionFromPointer(event);
+
+    const move = (moveEvent) => updateCoverPositionFromPointer(moveEvent);
+    const stop = () => {
+      window.removeEventListener("mousemove", move);
+      window.removeEventListener("mouseup", stop);
+      window.removeEventListener("touchmove", move);
+      window.removeEventListener("touchend", stop);
+    };
+
+    window.addEventListener("mousemove", move);
+    window.addEventListener("mouseup", stop);
+    window.addEventListener("touchmove", move, { passive: false });
+    window.addEventListener("touchend", stop);
+  }, [updateCoverPositionFromPointer]);
+
   const handleUpload = async (files) => {
     if (!files || files.length === 0) return;
     const valid = Array.from(files).filter(f => f.type.startsWith("image/") || f.type.startsWith("video/"));
@@ -403,7 +434,12 @@ export default function AlbumManage() {
         {/* Header card */}
         <div style={{ background: "var(--mc-card-bg, #fff)", borderRadius: 20, overflow: "hidden", boxShadow: "0 2px 20px rgba(26,46,59,0.08)", marginBottom: "2rem" }}>
           {/* Cover strip */}
-          <div style={{ height: 220, background: cover ? "#dfe8ee" : "var(--pm-teal-pale, #EEF8FB)", position: "relative", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+          <div
+            ref={coverDragRef}
+            onMouseDown={editing ? beginCoverDrag : undefined}
+            onTouchStart={editing ? beginCoverDrag : undefined}
+            style={{ height: 220, background: cover ? "#dfe8ee" : "var(--pm-teal-pale, #EEF8FB)", position: "relative", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", cursor: editing ? "grab" : "default" }}
+          >
             {cover ? (
               <>
                 <img
@@ -453,10 +489,7 @@ export default function AlbumManage() {
                 <div className="col-12">
                   <label style={{ fontWeight: 600, fontSize: "0.83rem", color: nav, marginBottom: "0.55rem", display: "block" }}>Cover Position</label>
                   <div style={{ background: "var(--pm-gray-100, #F2F5F7)", borderRadius: 12, padding: "0.9rem 1rem" }}>
-                    <label style={{ display: "block", fontSize: "0.78rem", color: "var(--pm-text-muted)", marginBottom: "0.25rem" }}>Horizontal</label>
-                    <input type="range" min="0" max="100" value={editCoverPosition?.x ?? 50} onChange={e => setEditCoverPosition(prev => ({ ...prev, x: Number(e.target.value) }))} style={{ width: "100%" }} />
-                    <label style={{ display: "block", fontSize: "0.78rem", color: "var(--pm-text-muted)", margin: "0.45rem 0 0.25rem" }}>Vertical</label>
-                    <input type="range" min="0" max="100" value={editCoverPosition?.y ?? 50} onChange={e => setEditCoverPosition(prev => ({ ...prev, y: Number(e.target.value) }))} style={{ width: "100%" }} />
+                    <div style={{ fontSize: "0.78rem", color: "var(--pm-text-muted)" }}>Drag the cover preview above to choose the visible part of the image.</div>
                   </div>
                 </div>
                 <div className="col-12">

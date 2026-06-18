@@ -36,6 +36,8 @@ const PhotographerProfile = () => {
   const [imageError, setImageError] = useState({ profile: false, cover: false });
   const [error, setError] = useState(null);
   const profilePreviewRef = useRef(null);
+  const coverDragRef = useRef(null);
+  const profileDragRef = useRef(null);
 
   const user = useMemo(() => {
     try {
@@ -309,6 +311,39 @@ const PhotographerProfile = () => {
     setImageError(prev => ({ ...prev, [type]: true }));
   };
 
+  const updatePositionFromPointer = useCallback((event, targetRef, key) => {
+    const rect = targetRef.current?.getBoundingClientRect?.();
+    if (!rect) return;
+    const point = "touches" in event ? event.touches[0] : event;
+    const x = ((point.clientX - rect.left) / rect.width) * 100;
+    const y = ((point.clientY - rect.top) / rect.height) * 100;
+    setProfile(prev => ({
+      ...prev,
+      [key]: {
+        x: Math.min(100, Math.max(0, x)),
+        y: Math.min(100, Math.max(0, y)),
+      },
+    }));
+  }, []);
+
+  const beginDragPosition = useCallback((event, targetRef, key) => {
+    event.preventDefault();
+    updatePositionFromPointer(event, targetRef, key);
+
+    const move = (moveEvent) => updatePositionFromPointer(moveEvent, targetRef, key);
+    const stop = () => {
+      window.removeEventListener("mousemove", move);
+      window.removeEventListener("mouseup", stop);
+      window.removeEventListener("touchmove", move);
+      window.removeEventListener("touchend", stop);
+    };
+
+    window.addEventListener("mousemove", move);
+    window.addEventListener("mouseup", stop);
+    window.addEventListener("touchmove", move, { passive: false });
+    window.addEventListener("touchend", stop);
+  }, [updatePositionFromPointer]);
+
   // Show loading state
   if (loading) {
     return (
@@ -374,13 +409,17 @@ const PhotographerProfile = () => {
         {/* Cover Image */}
         <div className="position-relative mb-5">
           <div
+            ref={coverDragRef}
             className="rounded-3"
+            onMouseDown={editing ? (e) => beginDragPosition(e, coverDragRef, "coverImagePosition") : undefined}
+            onTouchStart={editing ? (e) => beginDragPosition(e, coverDragRef, "coverImagePosition") : undefined}
             style={{
               height: "300px",
               backgroundImage: `url(${getImageUrl('cover')})`,
               backgroundSize: "cover",
               backgroundPosition: `${profile.coverImagePosition?.x ?? 50}% ${profile.coverImagePosition?.y ?? 50}%`,
               position: "relative",
+              cursor: editing ? "grab" : "default",
             }}
           >
             <div
@@ -409,11 +448,8 @@ const PhotographerProfile = () => {
                     />
                   </label>
                   <div style={{ background: "rgba(9, 14, 20, 0.68)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14, padding: "0.7rem 0.85rem", color: "#fff" }}>
-                    <div style={{ fontSize: "0.75rem", fontWeight: 700, marginBottom: "0.45rem" }}>Position Cover</div>
-                    <label style={{ display: "block", fontSize: "0.72rem", color: "rgba(255,255,255,0.8)" }}>Horizontal</label>
-                    <input type="range" min="0" max="100" value={profile.coverImagePosition?.x ?? 50} onChange={(e) => setProfile(prev => ({ ...prev, coverImagePosition: { ...prev.coverImagePosition, x: Number(e.target.value) } }))} style={{ width: "100%" }} />
-                    <label style={{ display: "block", fontSize: "0.72rem", color: "rgba(255,255,255,0.8)" }}>Vertical</label>
-                    <input type="range" min="0" max="100" value={profile.coverImagePosition?.y ?? 50} onChange={(e) => setProfile(prev => ({ ...prev, coverImagePosition: { ...prev.coverImagePosition, y: Number(e.target.value) } }))} style={{ width: "100%" }} />
+                    <div style={{ fontSize: "0.75rem", fontWeight: 700, marginBottom: "0.25rem" }}>Drag Cover To Position</div>
+                    <div style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.8)" }}>Press and drag anywhere on the cover preview.</div>
                   </div>
                 </div>
               </div>
@@ -424,9 +460,12 @@ const PhotographerProfile = () => {
           <div className="position-absolute bottom-0 start-0 translate-middle-y ms-4">
             <div className="position-relative">
               <img
+                ref={profileDragRef}
                 src={getImageUrl('profile')}
                 alt={profile.name}
                 className="rounded-circle border border-4 border-warning"
+                onMouseDown={editing ? (e) => beginDragPosition(e, profileDragRef, "profileImagePosition") : undefined}
+                onTouchStart={editing ? (e) => beginDragPosition(e, profileDragRef, "profileImagePosition") : undefined}
                 style={{ width: "150px", height: "150px", objectFit: "cover", objectPosition: `${profile.profileImagePosition?.x ?? 50}% ${profile.profileImagePosition?.y ?? 50}%` }}
                 onError={() => handleImageError('profile')}
               />
@@ -450,11 +489,8 @@ const PhotographerProfile = () => {
             </div>
             {editing && (
               <div style={{ marginTop: "1rem", width: "220px", background: "rgba(12, 20, 28, 0.78)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 14, padding: "0.7rem 0.85rem" }}>
-                <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "#fff", marginBottom: "0.45rem" }}>Position Profile Photo</div>
-                <label style={{ display: "block", fontSize: "0.72rem", color: "rgba(255,255,255,0.78)" }}>Horizontal</label>
-                <input type="range" min="0" max="100" value={profile.profileImagePosition?.x ?? 50} onChange={(e) => setProfile(prev => ({ ...prev, profileImagePosition: { ...prev.profileImagePosition, x: Number(e.target.value) } }))} style={{ width: "100%" }} />
-                <label style={{ display: "block", fontSize: "0.72rem", color: "rgba(255,255,255,0.78)" }}>Vertical</label>
-                <input type="range" min="0" max="100" value={profile.profileImagePosition?.y ?? 50} onChange={(e) => setProfile(prev => ({ ...prev, profileImagePosition: { ...prev.profileImagePosition, y: Number(e.target.value) } }))} style={{ width: "100%" }} />
+                <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "#fff", marginBottom: "0.25rem" }}>Drag Profile Photo</div>
+                <div style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.78)" }}>Press and drag the profile image to frame it.</div>
               </div>
             )}
           </div>
