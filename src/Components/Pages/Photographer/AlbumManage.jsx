@@ -4,6 +4,7 @@ import axios from "axios";
 import { API_ENDPOINTS } from "../../../api/apiConfig";
 import PhotographerLayout from "./PhotographerLayout";
 import { Helmet } from "react-helmet-async";
+import MediaEditingStudio from "./MediaEditingStudio";
 
 const token = () => localStorage.getItem("token");
 const headers = () => ({ Authorization: `Bearer ${token()}` });
@@ -27,6 +28,7 @@ function PhotoActionsModal({
   onRename,
   onSetCover,
   onDelete,
+  onEdit,
   busyAction,
 }) {
   if (!photo) return null;
@@ -125,6 +127,13 @@ function PhotoActionsModal({
 
             <div style={{ display: "grid", gap: "0.7rem" }}>
               <button
+                onClick={onEdit}
+                disabled={isBusy}
+                style={{ padding: "0.78rem 1rem", borderRadius: 14, border: "none", background: "var(--pm-teal, #6BBDD0)", color: "#072030", fontWeight: 800, cursor: "pointer" }}
+              >
+                <i className="fas fa-sliders me-2"></i>Edit Photo
+              </button>
+              <button
                 onClick={onRename}
                 disabled={isBusy || !renameValue.trim()}
                 style={{ padding: "0.78rem 1rem", borderRadius: 14, border: "none", background: "var(--pm-navy, #1A2E3B)", color: "#fff", fontWeight: 700, cursor: "pointer" }}
@@ -187,6 +196,8 @@ export default function AlbumManage() {
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [renameValue, setRenameValue] = useState("");
   const [busyAction, setBusyAction] = useState("");
+  const [selectedMediaIds, setSelectedMediaIds] = useState([]);
+  const [editingPhoto, setEditingPhoto] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -328,6 +339,36 @@ export default function AlbumManage() {
       setSelectedPhoto(null);
       setRenameValue("");
     }
+  };
+
+  const toggleSelectedMedia = (mediaId) => {
+    setSelectedMediaIds((prev) => (
+      prev.includes(mediaId) ? prev.filter((id) => id !== mediaId) : [...prev, mediaId]
+    ));
+  };
+
+  const openEditor = () => {
+    if (!selectedPhoto) return;
+    setEditingPhoto(selectedPhoto);
+    setSelectedPhoto(null);
+  };
+
+  const handlePublishEditedMedia = async ({ blob, applyToSelected }) => {
+    const targetIds = applyToSelected && selectedMediaIds.length > 0
+      ? selectedMediaIds
+      : [editingPhoto?._id].filter(Boolean);
+
+    for (const targetId of targetIds) {
+      const formData = new FormData();
+      const ext = blob.type === "image/png" ? "png" : blob.type === "image/webp" ? "webp" : "jpg";
+      formData.append("file", new File([blob], `${targetId}-edited.${ext}`, { type: blob.type || "image/jpeg" }));
+      await axios.put(API_ENDPOINTS.MEDIA.UPDATE(targetId), formData, {
+        headers: { ...headers(), "Content-Type": "multipart/form-data" },
+      });
+    }
+
+    await load();
+    setEditingPhoto(null);
   };
 
   const updateCoverPositionFromPointer = useCallback((event) => {
@@ -556,6 +597,31 @@ export default function AlbumManage() {
           </div>
         </div>
 
+        {selectedMediaIds.length > 0 && (
+          <div style={{ marginBottom: "1rem", background: "rgba(107,189,208,0.08)", border: "1px solid rgba(107,189,208,0.18)", borderRadius: 14, padding: "0.75rem 1rem", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.75rem", flexWrap: "wrap" }}>
+            <div style={{ fontSize: "0.85rem", color: nav, fontWeight: 600 }}>
+              {selectedMediaIds.length} photo{selectedMediaIds.length !== 1 ? "s" : ""} selected for batch editing
+            </div>
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              <button
+                onClick={() => {
+                  const current = photos.find((item) => selectedMediaIds.includes(item._id));
+                  if (current) setEditingPhoto(current);
+                }}
+                style={{ padding: "0.55rem 1rem", background: nav, color: "#fff", border: "none", borderRadius: 10, fontWeight: 700, cursor: "pointer" }}
+              >
+                <i className="fas fa-sliders me-2"></i>Batch Edit
+              </button>
+              <button
+                onClick={() => setSelectedMediaIds([])}
+                style={{ padding: "0.55rem 1rem", background: "transparent", color: "var(--pm-text-muted)", border: "1px solid var(--pm-gray-200)", borderRadius: 10, fontWeight: 700, cursor: "pointer" }}
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Upload progress bar */}
         {uploading && (
           <div style={{ marginBottom: "1rem" }}>
@@ -596,6 +662,32 @@ export default function AlbumManage() {
                 >
                   {/* Thumbnail */}
                   <div style={{ height: 160, background: "var(--pm-teal-pale, #EEF8FB)", overflow: "hidden", position: "relative" }}>
+                    {typeof photo === "object" && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleSelectedMedia(id);
+                        }}
+                        style={{
+                          position: "absolute",
+                          top: 8,
+                          left: 8,
+                          width: 28,
+                          height: 28,
+                          borderRadius: 8,
+                          border: selectedMediaIds.includes(id) ? "1px solid var(--pm-teal, #6BBDD0)" : "1px solid rgba(255,255,255,0.4)",
+                          background: selectedMediaIds.includes(id) ? "var(--pm-teal, #6BBDD0)" : "rgba(11,23,33,0.45)",
+                          color: "#fff",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          cursor: "pointer",
+                          zIndex: 3,
+                        }}
+                      >
+                        <i className={`fas ${selectedMediaIds.includes(id) ? "fa-check" : "fa-plus"}`}></i>
+                      </button>
+                    )}
                     {src
                       ? photo.mediaType === "video"
                         ? <video src={src} style={{ width: "100%", height: "100%", objectFit: "cover" }} muted playsInline preload="metadata" />
@@ -650,8 +742,18 @@ export default function AlbumManage() {
         onRename={handleRenamePhoto}
         onSetCover={handleSetAlbumCover}
         onDelete={handleDeleteFromModal}
+        onEdit={openEditor}
         busyAction={busyAction}
       />
+      {editingPhoto && (
+        <MediaEditingStudio
+          photo={editingPhoto}
+          albumName={album.name}
+          selectedCount={selectedMediaIds.length || 1}
+          onClose={() => setEditingPhoto(null)}
+          onPublish={handlePublishEditedMedia}
+        />
+      )}
     </PhotographerLayout>
   );
 }
